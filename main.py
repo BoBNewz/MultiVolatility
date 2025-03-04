@@ -42,8 +42,8 @@ def runner(arguments):
             pool.starmap(
                 volatility2_instance.execute_command_volatility2, 
                 [(cmd, 
-                arguments.dump, 
-                os.path.dirname(os.path.abspath(arguments.dump.split("/")[-1])), 
+                os.path.basename(arguments.dump), 
+                os.path.abspath(arguments.dump), 
                 arguments.profiles_path, 
                 arguments.image, 
                 arguments.profile, 
@@ -54,8 +54,8 @@ def runner(arguments):
             if arguments.symbols_path == "./volatility3_symbols":
            
                 volatility3_instance.execute_command_volatility3("windows.info.Info", 
-                                                                arguments.dump, 
-                                                                os.path.dirname(os.path.abspath(arguments.dump.split("/")[-1])), 
+                                                                os.path.basename(arguments.dump), 
+                                                                os.path.abspath(arguments.dump), 
                                                                 arguments.symbols_path, 
                                                                 arguments.image,
                                                                 os.path.abspath(arguments.cache_path),
@@ -66,8 +66,8 @@ def runner(arguments):
             pool.starmap(
                 volatility3_instance.execute_command_volatility3, 
                 [(cmd, 
-                arguments.dump, 
-                os.path.dirname(os.path.abspath(arguments.dump.split("/")[-1])), 
+                os.path.basename(arguments.dump), 
+                os.path.abspath(arguments.dump), 
                 arguments.symbols_path, 
                 arguments.image, 
                 os.path.abspath(arguments.cache_path),
