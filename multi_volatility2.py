@@ -3,6 +3,7 @@ import multiprocessing
 import time
 import os
 import argparse
+import json
 
 class multi_volatility2:
     def __init__(self):
@@ -11,7 +12,7 @@ class multi_volatility2:
     def generate_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile):
         return [
             "docker", "run", "--rm", 
-            "-v", f"{dump_dir}:/dumps", 
+            "-v", f"{dump_dir}:/dumps/{dump}", 
             "-v", f"{profiles_path}:/home/vol/profiles",  
             "-t", docker_image, "--plugins=/home/vol/profiles",
             "-f", f"/dumps/{dump}",
@@ -37,14 +38,18 @@ class multi_volatility2:
         with open(self.output_file,"w") as f:
             f.writelines(lines[-1])
 
-        """
         if command == "filescan":
-            with open(os.path.join(output_dir, "filescan_filtered_output.txt"), "w") as file:
+            with open(os.path.join(output_dir, "filescan_filtered_output.json"), "w") as file:
                 with open(self.output_file, "r") as full_filescan:
-                    for line in full_filescan:
-                        if "Users" in line:
-                            file.write(line)
-        """
+                    data = json.load(full_filescan)
+
+                user_json_file = []
+                for row in data["rows"]:
+                    if "Users" in row[4]:
+                        user_json_file.append(row)
+
+                json.dump(user_json_file, file)
+
 
         print(f"[+] {command} finished.")
         return command
