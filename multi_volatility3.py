@@ -58,7 +58,7 @@ class multi_volatility3:
         return command
 
     def getCommands(self, opsys):
-        if opsys == "windows":
+        if opsys == "windows.full":
             return ["windows.cmdline.CmdLine", 
                     "windows.cachedump.Cachedump", 
                     "windows.dlllist.DllList", 
@@ -87,6 +87,17 @@ class multi_volatility3:
                     "windows.registry.hivescan.HiveScan", 
                     "windows.registry.userassist.UserAssist", 
                     "windows.sessions.Sessions"
+                ]
+        elif opsys == "windows.light":
+            return ["windows.cmdline.CmdLine",
+                    "windows.filescan.FileScan",
+                    "windows.netscan.NetScan",
+                    "windows.netstat.NetStat",
+                    "windows.pslist.PsList",
+                    "windows.psscan.PsScan",
+                    "windows.pstree.PsTree",
+                    "windows.dlllist.DllList",
+                    "windows.hashdump.Hashdump"
                 ]
         elif opsys == "linux":
             return ["linux.bash.Bash", 

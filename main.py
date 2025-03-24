@@ -4,9 +4,15 @@ from multi_volatility3 import multi_volatility3
 
 def runner(arguments):
 
+    os.makedirs(f"{os.getcwd()}/volatility3_symbols", exist_ok=True)
+    os.makedirs(f"{os.getcwd()}/volatility2_profiles", exist_ok=True)
+    os.makedirs(f"{os.getcwd()}/volatility3_cache", exist_ok=True)
+    os.makedirs(f"{os.getcwd()}/volatility3_plugins", exist_ok=True)
+
+    if not args.light and not args.full:
+        arguments.light = True
+
     if arguments.mode == "vol2":
-        if not args.light and not args.full:
-            arguments.light = True
 
         volatility2_instance = multi_volatility2()
         output_dir = f"volatility2_{arguments.dump.split("/")[-1]}__output"
@@ -27,7 +33,10 @@ def runner(arguments):
         output_dir = f"volatility3_{arguments.dump.split("/")[-1]}__output"
         os.makedirs(output_dir, exist_ok=True)
         if arguments.windows:
-            commands = volatility3_instance.getCommands("windows")
+            if arguments.light:
+                commands = volatility3_instance.getCommands("windows.light")
+            else:
+                commands = volatility3_instance.getCommands("windows.full")
         elif arguments.linux:
             commands = volatility3_instance.getCommands("linux")
 
@@ -51,7 +60,7 @@ def runner(arguments):
                 ) for cmd in commands]
             )
         else:
-            if arguments.symbols_path == "./volatility3_symbols":
+            if arguments.symbols_path == f"{os.getcwd()}/volatility3_symbols":
            
                 volatility3_instance.execute_command_volatility3("windows.info.Info", 
                                                                 os.path.basename(arguments.dump), 
@@ -84,28 +93,33 @@ if __name__ == "__main__":
 
     subparser = parser.add_subparsers(dest="mode", required=True)
     vol2_parser = subparser.add_parser("vol2", help="Use volatility2.")
-    vol2_parser.add_argument("--profiles-path", help="Path to the directory with the profiles.", default="./volatility2_profiles")
+    vol2_parser.add_argument("--profiles-path", help="Path to the directory with the profiles.", default=f"{os.getcwd()}/volatility2_profiles")
     vol2_parser.add_argument("--profile", help="Profile to use.", required=True)
     vol2_parser.add_argument("--dump", help="Dump to parse.", required=True)
     vol2_parser.add_argument("--image", help="Docker image to use.", required=True)
     vol2_parser.add_argument( "--linux", action="store_true", help="It's a Linux memory dump")
     vol2_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol2_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
-    vol2_parser.add_argument("--full", action="store_true", help="Use 69 modules.")
+    vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
 
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
     vol3_parser.add_argument("--dump", help="Dump to parse.", required=True)
     vol3_parser.add_argument("--image", help="Docker image to use.", required=True)
-    vol3_parser.add_argument("--symbols-path", help="Path to the directory with the symbols.", required=False, default="./volatility3_symbols")
-    vol3_parser.add_argument("--cache-path", help="Path to directory with the cache for volatility3.", required=False, default="./volatility3_cache")
-    vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default="./volatility3_plugins")
+    vol3_parser.add_argument("--symbols-path", help="Path to the directory with the symbols.", required=False, default=f"{os.getcwd()}/volatility3_symbols")
+    vol3_parser.add_argument("--cache-path", help="Path to directory with the cache for volatility3.", required=False, default=f"{os.getcwd()}/volatility3_cache")
+    vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default=f"{os.getcwd()}/volatility3_plugins")
     vol3_parser.add_argument("--linux", action="store_true", help="It's a Linux memory dump")
     vol3_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
+    vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
+    vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
 
     args = parser.parse_args()
 
     if not args.linux and not args.windows:
         print("[-] --linux or --windows required.")
         sys.exit(1)
+
+    if (args.linux and args.light) or (args.linux and args.full):
+        print("[-] --linux not available with --full or --light")
     
     runner(args)
