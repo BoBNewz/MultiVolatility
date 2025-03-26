@@ -4,10 +4,55 @@ import time
 import os
 import argparse
 import json
-
+import requests
+import hashlib
+import yaml
 class multi_volatility3:
     def __init__(self):
         pass
+
+    def send_output_to_backend(self,lines,user_dump_name,command):
+        try:
+            command_output = ''.join(lines[2:])
+            json_str_command_output = json.loads(command_output)
+            self.send_json_to_backend(json_str_command_output,user_dump_name,command)
+        except Exception as e:
+            print(f"[!] An error occured while sending to backend : {e}")
+
+    def read_config(self):
+        with open("config.yml", "r") as f:
+            data = yaml.safe_load(f)
+        backend_address = data['config']['backend_address']
+        backend_port = data['config']['backend_port']
+        backend_password = data['config']['backend_password']
+        return backend_address, backend_port, backend_password
+
+    def sha512_hash(self, text: str) -> str:
+        return hashlib.sha512(text.encode("utf-8")).hexdigest()
+
+    def send_json_to_backend(self, payload, dump_name, module_name):
+        backend_address, backend_port, backend_password = self.read_config()
+        hashed_password = self.sha512_hash(backend_password)
+
+        module_name = f"vol3_{module_name}"
+        headers = {
+            "Content-Type": "application/json",
+            "dump-name": dump_name,
+            "module-name": module_name,
+            "api-password": hashed_password
+        }
+
+        response = requests.post(f"{backend_address}:{backend_port}/receive-json/", headers=headers, json=payload)
+
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            print(f"[!] Request to backend failed: {e}")
+            print("Response content:", response.text)
+            return None
+
+        print(f"[*] {module_name} output was sent to multivol backend")
+        return response.json()
 
     def generate_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
         return [
@@ -26,7 +71,7 @@ class multi_volatility3:
             command
         ]
 
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir):
+    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir,user_dump_name,send_online):
         print(f"[+] Starting {command}...")
 
         self.cmd = self.generate_command_volatility3(command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir)
@@ -53,7 +98,9 @@ class multi_volatility3:
                     if "Users" in i['Name']:
                         user_json_file.append(i)
                 json.dump(user_json_file, file)
-
+        
+        if send_online:
+            self.send_output_to_backend(lines,user_dump_name,command)
         print(f"[+] {command} finished.")
         return command
 

@@ -15,7 +15,7 @@ def runner(arguments):
     if arguments.mode == "vol2":
 
         volatility2_instance = multi_volatility2()
-        output_dir = f"volatility2_{arguments.dump.split("/")[-1]}__output"
+        output_dir = f"volatility2_{arguments.dump.split('/')[-1]}__output"
         os.makedirs(output_dir, exist_ok=True)
         if arguments.windows:
             if arguments.light:
@@ -30,7 +30,7 @@ def runner(arguments):
 
     elif arguments.mode == "vol3":
         volatility3_instance = multi_volatility3()
-        output_dir = f"volatility3_{arguments.dump.split("/")[-1]}__output"
+        output_dir = f"volatility3_{arguments.dump.split('/')[-1]}__output"
         os.makedirs(output_dir, exist_ok=True)
         if arguments.windows:
             if arguments.light:
@@ -56,7 +56,9 @@ def runner(arguments):
                 arguments.profiles_path, 
                 arguments.image, 
                 arguments.profile, 
-                output_dir
+                output_dir,
+                arguments.dump_name,
+                arguments.online
                 ) for cmd in commands]
             )
         else:
@@ -69,7 +71,9 @@ def runner(arguments):
                                                                 arguments.image,
                                                                 os.path.abspath(arguments.cache_path),
                                                                 os.path.abspath(arguments.plugins_dir),
-                                                                output_dir
+                                                                output_dir,
+                                                                arguments.dump_name,
+                                                                arguments.online
                                                             )
         
             pool.starmap(
@@ -81,7 +85,9 @@ def runner(arguments):
                 arguments.image, 
                 os.path.abspath(arguments.cache_path),
                 os.path.abspath(arguments.plugins_dir), 
-                output_dir
+                output_dir,
+                arguments.dump_name,
+                arguments.online
                 ) for cmd in commands]
             )
 
@@ -97,10 +103,12 @@ if __name__ == "__main__":
     vol2_parser.add_argument("--profile", help="Profile to use.", required=True)
     vol2_parser.add_argument("--dump", help="Dump to parse.", required=True)
     vol2_parser.add_argument("--image", help="Docker image to use.", required=True)
-    vol2_parser.add_argument( "--linux", action="store_true", help="It's a Linux memory dump")
+    vol2_parser.add_argument("--linux", action="store_true", help="It's a Linux memory dump")
     vol2_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol2_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
+    vol2_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
+    vol2_parser.add_argument("--dump-name", type=str, required=True, help="Dump name for multivol backend.")
 
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
     vol3_parser.add_argument("--dump", help="Dump to parse.", required=True)
@@ -112,7 +120,8 @@ if __name__ == "__main__":
     vol3_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
-
+    vol3_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
+    vol3_parser.add_argument("--dump-name", type=str, required=True, help="Dump name for multivol backend.")
     args = parser.parse_args()
 
     if not args.linux and not args.windows:
