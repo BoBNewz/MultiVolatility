@@ -1,0 +1,10 @@
+__pycache__
+volatility2_profiles
+volatility3_cache
+volatility3_plugins
+volatility3_symbols
+*_output
+memdump.elf
+memory.dump
+config.yml
+Win7SP1x86.dmp
