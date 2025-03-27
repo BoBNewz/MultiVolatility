@@ -83,6 +83,7 @@ class multi_volatility2:
         with open(self.output_file,"w") as f:
             f.writelines(lines[-1])
 
+        """
         if command == "filescan":
             with open(os.path.join(output_dir, "filescan_filtered_output.json"), "w") as file:
                 with open(self.output_file, "r") as full_filescan:
@@ -94,6 +95,8 @@ class multi_volatility2:
                         user_json_file.append(row)
 
                 json.dump(user_json_file, file)
+        """
+        
         if send_online:
             self.send_output_to_backend(lines,user_dump_name,command)
         print(f"[+] {command} finished.")

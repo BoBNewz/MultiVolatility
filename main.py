@@ -15,7 +15,7 @@ def runner(arguments):
     if arguments.mode == "vol2":
 
         volatility2_instance = multi_volatility2()
-        output_dir = f"volatility2_{arguments.dump.split('/')[-1]}__output"
+        output_dir = f"volatility2_{os.path.basename(arguments.dump)}__output"
         os.makedirs(output_dir, exist_ok=True)
         if arguments.windows:
             if arguments.light:
@@ -30,7 +30,7 @@ def runner(arguments):
 
     elif arguments.mode == "vol3":
         volatility3_instance = multi_volatility3()
-        output_dir = f"volatility3_{arguments.dump.split('/')[-1]}__output"
+        output_dir = f"volatility3_{os.path.basename(arguments.dump)}__output"
         os.makedirs(output_dir, exist_ok=True)
         if arguments.windows:
             if arguments.light:
@@ -62,7 +62,7 @@ def runner(arguments):
                 ) for cmd in commands]
             )
         else:
-            if arguments.symbols_path == f"{os.getcwd()}/volatility3_symbols":
+            if arguments.symbols_path == os.path.join(os.getcwd(), "volatility3_symbols"):
            
                 volatility3_instance.execute_command_volatility3("windows.info.Info", 
                                                                 os.path.basename(arguments.dump), 
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     subparser = parser.add_subparsers(dest="mode", required=True)
     vol2_parser = subparser.add_parser("vol2", help="Use volatility2.")
-    vol2_parser.add_argument("--profiles-path", help="Path to the directory with the profiles.", default=f"{os.getcwd()}/volatility2_profiles")
+    vol2_parser.add_argument("--profiles-path", help="Path to the directory with the profiles.", default=os.path.join(os.getcwd(), "volatility2_profiles"))
     vol2_parser.add_argument("--profile", help="Profile to use.", required=True)
     vol2_parser.add_argument("--dump", help="Dump to parse.", required=True)
     vol2_parser.add_argument("--image", help="Docker image to use.", required=True)
@@ -108,20 +108,20 @@ if __name__ == "__main__":
     vol2_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol2_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
-    vol2_parser.add_argument("--dump-name", type=str, required=True, help="Dump name for multivol backend.")
+    vol2_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.")
 
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
     vol3_parser.add_argument("--dump", help="Dump to parse.", required=True)
     vol3_parser.add_argument("--image", help="Docker image to use.", required=True)
-    vol3_parser.add_argument("--symbols-path", help="Path to the directory with the symbols.", required=False, default=f"{os.getcwd()}/volatility3_symbols")
-    vol3_parser.add_argument("--cache-path", help="Path to directory with the cache for volatility3.", required=False, default=f"{os.getcwd()}/volatility3_cache")
-    vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default=f"{os.getcwd()}/volatility3_plugins")
+    vol3_parser.add_argument("--symbols-path", help="Path to the directory with the symbols.", required=False, default=os.path.join(os.getcwd(), "volatility3_symbols"))
+    vol3_parser.add_argument("--cache-path", help="Path to directory with the cache for volatility3.", required=False, default=os.path.join(os.getcwd(), "volatility3_cache"))
+    vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default=os.path.join(os.getcwd(), "volatility3_plugins"))
     vol3_parser.add_argument("--linux", action="store_true", help="It's a Linux memory dump")
     vol3_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol3_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
-    vol3_parser.add_argument("--dump-name", type=str, required=True, help="Dump name for multivol backend.")
+    vol3_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.")
     args = parser.parse_args()
 
     if not args.linux and not args.windows:

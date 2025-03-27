@@ -56,7 +56,7 @@ class multi_volatility3:
 
     def generate_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
         return [
-            "sudo", "docker", "run", "--rm", 
+            "docker", "run", "--rm", 
             "-v", f"{dump_dir}:/dumps/{dump}", 
             "-v", f"{cache_dir}:/home/root/.cache",
             "-v", f"{symbols_path}:/tmp", 
@@ -88,6 +88,7 @@ class multi_volatility3:
         with open(self.output_file,"w") as f:
             f.writelines(lines[2:])
 
+        """
         if command == "windows.filescan.FileScan":
             #If JSON format
             with open(os.path.join(output_dir, "windows.filescan.FileScan_filtered_output.json"), "w") as file:
@@ -98,6 +99,7 @@ class multi_volatility3:
                     if "Users" in i['Name']:
                         user_json_file.append(i)
                 json.dump(user_json_file, file)
+        """
         
         if send_online:
             self.send_output_to_backend(lines,user_dump_name,command)
