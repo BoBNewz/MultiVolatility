@@ -4,10 +4,10 @@ from multi_volatility3 import multi_volatility3
 
 def runner(arguments):
 
-    os.makedirs(os.path.join(os.getcwd(), "volatility3_symbols", exist_ok=True))
-    os.makedirs(os.path.join(os.getcwd(), "volatility2_profiles", exist_ok=True))
-    os.makedirs(os.path.join(os.getcwd(), "volatility3_cache", exist_ok=True))
-    os.makedirs(os.path.join(os.getcwd(), "volatility3_plugins", exist_ok=True))
+    os.makedirs(os.path.join(os.getcwd(), "volatility3_symbols"), exist_ok=True)
+    os.makedirs(os.path.join(os.getcwd(), "volatility2_profiles"), exist_ok=True)
+    os.makedirs(os.path.join(os.getcwd(), "volatility3_cache"), exist_ok=True)
+    os.makedirs(os.path.join(os.getcwd(), "volatility3_plugins"), exist_ok=True)
 
     if not args.light and not args.full:
         arguments.light = True
