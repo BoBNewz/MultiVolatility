@@ -108,7 +108,7 @@ if __name__ == "__main__":
     vol2_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol2_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
-    vol2_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.")
+    vol2_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.", default="default")
 
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
     vol3_parser.add_argument("--dump", help="Dump to parse.", required=True)
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol3_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
-    vol3_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.")
+    vol3_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.", default="default")
     args = parser.parse_args()
 
     if not args.linux and not args.windows:
