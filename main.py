@@ -1,4 +1,4 @@
-import subprocess, multiprocessing, time, os, argparse, sys
+import multiprocessing, time, os, argparse, sys
 from multi_volatility2 import multi_volatility2
 from multi_volatility3 import multi_volatility3
 
@@ -58,7 +58,8 @@ def runner(arguments):
                 arguments.profile, 
                 output_dir,
                 arguments.dump_name,
-                arguments.online
+                arguments.online,
+                arguments.format
                 ) for cmd in commands]
             )
         else:
@@ -73,7 +74,8 @@ def runner(arguments):
                                                                 os.path.abspath(arguments.plugins_dir),
                                                                 output_dir,
                                                                 arguments.dump_name,
-                                                                arguments.online
+                                                                arguments.online,
+                                                                arguments.format
                                                             )
         
             pool.starmap(
@@ -87,7 +89,8 @@ def runner(arguments):
                 os.path.abspath(arguments.plugins_dir), 
                 output_dir,
                 arguments.dump_name,
-                arguments.online
+                arguments.online,
+                arguments.format
                 ) for cmd in commands]
             )
 
@@ -107,6 +110,7 @@ if __name__ == "__main__":
     vol2_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol2_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
+    vol2_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
     vol2_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
     vol2_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.", default="default")
 
@@ -120,6 +124,7 @@ if __name__ == "__main__":
     vol3_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
+    vol3_parser.add_argument("--format", help="Format of the outputs.", required=False, default="text")
     vol3_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
     vol3_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.", default="default")
     args = parser.parse_args()
@@ -130,5 +135,14 @@ if __name__ == "__main__":
 
     if (args.linux and args.light) or (args.linux and args.full):
         print("[-] --linux not available with --full or --light")
+        sys.exit(1)
+
+    if args.online and (args.format == "text"):
+        print("Modifying format outputs to JSON.")
+        args.format = "json"
+
+    if (args.format != "json") and (args.format != "text"):
+        print("Format not supported !")
+        sys.exit(1)
     
     runner(args)

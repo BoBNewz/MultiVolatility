@@ -1,12 +1,11 @@
 import subprocess
-import multiprocessing
 import time
 import os
-import argparse
 import json
 import yaml
 import hashlib
 import requests
+
 class multi_volatility2:
     def __init__(self):
         pass    
@@ -54,7 +53,7 @@ class multi_volatility2:
         print(f"[*] {module_name} output was sent to multivol backend")
         return response.json()
 
-    def generate_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile):
+    def generate_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, format):
         return [
             "docker", "run", "--rm", 
             "-v", f"{dump_dir}:/dumps/{dump}", 
@@ -62,26 +61,31 @@ class multi_volatility2:
             "-t", docker_image, "--plugins=/home/vol/profiles",
             "-f", f"/dumps/{dump}",
             f"--profile={profile}",
-            f"--output=json",
+            f"--output={format}",
             f"{command}"
         ]
 
-    def execute_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, output_dir, user_dump_name,send_online):
+    def execute_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, output_dir, user_dump_name,send_online, format):
         print(f"[+] Starting {command}...")
 
-        self.cmd = self.generate_command_volatility2(command, dump, dump_dir, profiles_path, docker_image, profile)
-        
-        self.output_file = os.path.join(output_dir, f"{command}_output.json")
+        if format == "json":
+            self.cmd = self.generate_command_volatility2(command, dump, dump_dir, profiles_path, docker_image, profile, "json")
+            self.output_file = os.path.join(output_dir, f"{command}_output.json")
+        else:
+            self.cmd = self.generate_command_volatility2(command, dump, dump_dir, profiles_path, docker_image, profile, "text")
+            self.output_file = os.path.join(output_dir, f"{command}_output.txt")
+
         with open(self.output_file, "w") as file:
             subprocess.run(self.cmd, stdout=file, stderr=file)
         
         time.sleep(0.5)
 
-        with open(self.output_file,"r") as f:
-            lines = f.readlines()
+        if format == "json":
+            with open(self.output_file,"r") as f:
+                lines = f.readlines()
 
-        with open(self.output_file,"w") as f:
-            f.writelines(lines[-1])
+            with open(self.output_file,"w") as f:
+                f.writelines(lines[-1])
 
         """
         if command == "filescan":

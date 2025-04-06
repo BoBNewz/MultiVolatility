@@ -1,8 +1,6 @@
 import subprocess
-import multiprocessing
 import time
 import os
-import argparse
 import json
 import requests
 import hashlib
@@ -54,7 +52,7 @@ class multi_volatility3:
         print(f"[*] {module_name} output was sent to multivol backend")
         return response.json()
 
-    def generate_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
+    def generate_command_volatility3_json(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
         return [
             "docker", "run", "--rm", 
             "-v", f"{dump_dir}:/dumps/{dump}", 
@@ -70,23 +68,44 @@ class multi_volatility3:
             "-r", "json",
             command
         ]
+    
+    def generate_command_volatility3_text(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
+        return [
+            "docker", "run", "--rm", 
+            "-v", f"{dump_dir}:/dumps/{dump}", 
+            "-v", f"{cache_dir}:/home/root/.cache",
+            "-v", f"{symbols_path}:/tmp", 
+            "-v", f"{plugin_dir}:/root/plugins_dir",
+            "-ti", docker_image,
+            "vol",
+            "-q",
+            "-f", f"/dumps/{dump}",
+            "-s", "/tmp",
+            "-p", "/root/plugins_dir",
+            command
+        ]
 
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir,user_dump_name,send_online):
+    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir,user_dump_name,send_online, format):
         print(f"[+] Starting {command}...")
 
-        self.cmd = self.generate_command_volatility3(command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir)
+        if format == "json":
+            self.cmd = self.generate_command_volatility3_json(command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir)
+            self.output_file = os.path.join(output_dir, f"{command}_output.json")
+        else:
+            self.cmd = self.generate_command_volatility3_text(command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir)
+            self.output_file = os.path.join(output_dir, f"{command}_output.txt")
 
-        self.output_file = os.path.join(output_dir, f"{command}_output.json")
         with open(self.output_file, "w") as file:
             subprocess.run(self.cmd, stdout=file, stderr=file)
         
         time.sleep(0.5)
 
-        with open(self.output_file,"r") as f:
-            lines = f.readlines()
+        if format == "json":
+            with open(self.output_file,"r") as f:
+                lines = f.readlines()
 
-        with open(self.output_file,"w") as f:
-            f.writelines(lines[2:])
+            with open(self.output_file,"w") as f:
+                f.writelines(lines[2:])
 
         """
         if command == "windows.filescan.FileScan":
