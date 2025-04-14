@@ -130,7 +130,7 @@ if __name__ == "__main__":
     vol3_parser.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
-    vol3_parser.add_argument("--format", help="Format of the outputs.", required=False, default="text")
+    vol3_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
     vol3_parser.add_argument("--online", action="store_true", help="Send data to backend for processing")
     vol3_parser.add_argument("--dump-name", type=str, required=False, help="Dump name for multivol backend.", default="default")
     args = parser.parse_args()
