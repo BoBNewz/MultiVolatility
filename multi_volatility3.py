@@ -1,3 +1,5 @@
+# multi_volatility3.py
+# Implements Volatility3 memory analysis orchestration, Docker command generation, and backend communication.
 import subprocess
 import time
 import os
@@ -5,11 +7,14 @@ import json
 import requests
 import hashlib
 import yaml
+
 class multi_volatility3:
     def __init__(self):
+        # Constructor for multi_volatility3 class
         pass
 
     def send_output_to_backend(self,lines,user_dump_name,command):
+        # Sends the output of a command to the backend server as JSON
         try:
             command_output = ''.join(lines[2:])
             json_str_command_output = json.loads(command_output)
@@ -18,6 +23,7 @@ class multi_volatility3:
             print(f"[!] An error occured while sending to backend : {e}")
 
     def read_config(self):
+        # Reads backend configuration from config.yml
         with open("config.yml", "r") as f:
             data = yaml.safe_load(f)
         backend_address = data['config']['backend_address']
@@ -26,12 +32,13 @@ class multi_volatility3:
         return backend_address, backend_port, backend_password
 
     def sha512_hash(self, text: str) -> str:
+        # Returns the SHA-512 hash of the given text
         return hashlib.sha512(text.encode("utf-8")).hexdigest()
 
     def send_json_to_backend(self, payload, dump_name, module_name):
+        # Sends a JSON payload to the backend server with authentication
         backend_address, backend_port, backend_password = self.read_config()
         hashed_password = self.sha512_hash(backend_password)
-
         module_name = f"vol3_{module_name}"
         headers = {
             "Content-Type": "application/json",
@@ -39,20 +46,18 @@ class multi_volatility3:
             "module-name": module_name,
             "api-password": hashed_password
         }
-
         response = requests.post(f"{backend_address}:{backend_port}/receive-json/", headers=headers, json=payload)
-
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
             print(f"[!] Request to backend failed: {e}")
             print("Response content:", response.text)
             return None
-
         print(f"[*] {module_name} output was sent to multivol backend")
         return response.json()
 
     def generate_command_volatility3_json(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
+        # Generates the Docker command to run a Volatility3 module with JSON output
         return [
             "docker", "run", "--rm", 
             "-v", f"{dump_dir}:/dumps/{dump}", 
@@ -70,6 +75,7 @@ class multi_volatility3:
         ]
     
     def generate_command_volatility3_text(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
+        # Generates the Docker command to run a Volatility3 module with text output
         return [
             "docker", "run", "--rm", 
             "-v", f"{dump_dir}:/dumps/{dump}", 
@@ -86,27 +92,23 @@ class multi_volatility3:
         ]
 
     def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir,user_dump_name,send_online, format):
+        # Executes a Volatility3 command in Docker and handles output
         print(f"[+] Starting {command}...")
-
         if format == "json":
             self.cmd = self.generate_command_volatility3_json(command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir)
             self.output_file = os.path.join(output_dir, f"{command}_output.json")
         else:
             self.cmd = self.generate_command_volatility3_text(command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir)
             self.output_file = os.path.join(output_dir, f"{command}_output.txt")
-
         with open(self.output_file, "w") as file:
             subprocess.run(self.cmd, stdout=file, stderr=file)
-        
         time.sleep(0.5)
-
         if format == "json":
             with open(self.output_file,"r") as f:
                 lines = f.readlines()
-
             with open(self.output_file,"w") as f:
                 f.writelines(lines[2:])
-
+        # Optionally filter filescan output (commented out)
         """
         if command == "windows.filescan.FileScan":
             #If JSON format
@@ -119,13 +121,13 @@ class multi_volatility3:
                         user_json_file.append(i)
                 json.dump(user_json_file, file)
         """
-        
         if send_online:
             self.send_output_to_backend(lines,user_dump_name,command)
         print(f"[+] {command} finished.")
         return command
 
     def getCommands(self, opsys):
+        # Returns a list of Volatility3 commands for the specified OS and mode
         if opsys == "windows.full":
             return ["windows.cmdline.CmdLine", 
                     "windows.cachedump.Cachedump", 
