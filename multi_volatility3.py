@@ -184,5 +184,19 @@ class multi_volatility3:
                     "linux.pslist.PsList", 
                     "linux.psscan.PsScan", 
                     "linux.pstree.PsTree", 
-                    "linux.sockstat.Sockstat"
+                    "linux.sockstat.Sockstat",
+                    "linux.boottime.Boottime",
+                    "linux.check_creds.Check_creds",
+                    "linux.hidden_modules.Hidden_modules",
+                    "linux.ip.Addr",
+                    "linux.ip.Link",
+                    "linux.keyboard_notifiers.Keyboard_notifiers",
+                    "linux.modxview.Modxview",
+                    "linux.netfilter.Netfilter",
+                    "linux.pagecache.Files",
+                    "linux.pidhashtable.PIDHashTable",
+                    "linux.tracing.ftrace.CheckFtrace",
+                    "linux.tracing.perf_events.PerfEvents",
+                    "linux.tracing.tracepoints.CheckTracepoints",
+                    "linux.tty_check.tty_check"
                 ]
