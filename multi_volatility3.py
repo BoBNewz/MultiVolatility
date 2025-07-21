@@ -16,6 +16,7 @@ class multi_volatility3:
             self.send_json_to_backend(json_str_command_output,user_dump_name,command)
         except Exception as e:
             print(f"[!] An error occured while sending to backend : {e}")
+            print(e)
 
     def read_config(self):
         with open("config.yml", "r") as f:

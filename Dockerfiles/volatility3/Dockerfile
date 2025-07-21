@@ -1,15 +1,22 @@
-# This Dockerfile is not optimized with a ton of RUN statements. This is for easier debugging
-FROM accenturecifr/volatility3
+FROM python:3.13
 
-RUN apk add git curl gcc musl-dev linux-headers python3-dev
+# Install system dependencies and clone repo
+RUN apt update && \
+    apt install -y libusb-1.0-0-dev git && \
+    git clone https://github.com/volatilityfoundation/volatility3.git && \
+    python3 -m venv /volatility3/venv && \
+    /volatility3/venv/bin/pip install -e "/volatility3[dev]" && \
+    ln -s /volatility3/vol.py /usr/local/bin/vol && \
+    chmod +x /volatility3/vol.py && \
+    apt clean && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/spitfirerxf/vol3-plugins.git && \
-    git clone https://github.com/kudelskisecurity/volatility-gpg.git && \
-    git clone https://github.com/fox-it/OpenSSH-Session-Key-Recovery.git 
+COPY keepass.py /volatility3/volatility3/plugins/keepass.py
 
-ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.1
-RUN python3 -m pip install --use-pep517 cryptography stream_sqlite
-RUN cd OpenSSH-Session-Key-Recovery && cd pip-package && python3 setup.py install
-RUN cp vol3-plugins/* /usr/lib/python3.10/site-packages/volatility3-2.11.0-py3.10.egg/volatility3/framework/plugins/windows
-RUN cp volatility-gpg/linux/* /usr/lib/python3.10/site-packages/volatility3-2.11.0-py3.10.egg/volatility3/framework/plugins/linux
-RUN curl https://raw.githubusercontent.com/fox-it/OpenSSH-Session-Key-Recovery/main/volatility3/openssh_sessionkeys.py --output /usr/lib/python3.10/site-packages/volatility3-2.11.0-py3.10.egg/volatility3/framework/plugins/linux/openssh_sessionkeys.py
+# Use the virtual environment by default
+ENV PATH="/volatility3/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/volatility3/venv"
+ENV PYTHONWARNINGS=ignore
+
+WORKDIR /volatility3
+
+CMD ["vol"]
