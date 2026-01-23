@@ -1,0 +1,6 @@
+pyyaml
+requests
+flask
+flask-cors
+docker
+rich
