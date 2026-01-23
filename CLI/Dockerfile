@@ -2,6 +2,8 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+ENV STORAGE_DIR=/storage
+
 # Install system dependencies if any (we might need gcc for some python packages, but trying slim first)
 # Volatility usage inside is via Docker SDK, so we don't need vol2/vol3 deps here, 
 # just the MultiVol CLI deps.

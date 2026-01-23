@@ -20,7 +20,7 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 
 CORS(app, resources={r"/*": {"origins": "*"}}) # Explicitly allow all origins
 
-STORAGE_DIR = "/storage"
+STORAGE_DIR = os.environ.get("STORAGE_DIR", os.path.join(os.getcwd(), "storage"))
 if not os.path.exists(STORAGE_DIR):
     os.makedirs(STORAGE_DIR)
 
