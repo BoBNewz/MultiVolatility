@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Python Backend API
+  api:
+    build: ./CLI
+    image: multivol-api
+    container_name: multivol-api
+    ports:
+      - "5001:5001"
+    environment:
+      - HOST_PATH=${PWD} # Valid path to project root on Host, required for DooD
+      - DISABLE_LOCALHOST_ONLY=1 # Allow connections from other containers/host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
+      - ./CLI/scans.db:/app/scans.db # Persist DB
+      - ./storage/data:/storage
+
+  # React Frontend
+  web:
+    build: ./Web
+    image: multivol-web
+    container_name: multivol-web
+    ports:
+      - "80:80"
+    depends_on:
+      - api

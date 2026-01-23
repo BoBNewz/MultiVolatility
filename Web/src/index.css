@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  /* Modern "Pretty" VolWeb Palette */
+  --color-background: #0b0a12;
+  /* Deep Purple-Black */
+  --color-surface: rgba(255, 255, 255, 0.03);
+  /* Glassy Surface */
+  --color-surface-hover: rgba(255, 255, 255, 0.08);
+
+  --color-primary: #a855f7;
+  /* Purple 500 */
+  --color-primary-hover: #9333ea;
+  /* Purple 600 */
+  --color-secondary: #ec4899;
+  /* Pink 500 */
+  --color-accent: #8b5cf6;
+  /* Violet 500 */
+
+  --color-success: #10b981;
+  /* Emerald 500 */
+  --color-warning: #f59e0b;
+  /* Amber 500 */
+  --color-error: #ef4444;
+  /* Red 500 */
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-sm: 0.5rem;
+  /* 8px - Softer */
+  --radius-md: 0.75rem;
+  /* 12px */
+  --radius-lg: 1rem;
+  /* 16px */
+
+  --shadow-glow: 0 0 20px -5px rgba(168, 85, 247, 0.4);
+}
+
+:root {
+  font-family: 'Inter', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: #e2e8f0;
+  /* slate-200 */
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15), transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(236, 72, 153, 0.1), transparent 30%);
+  background-attachment: fixed;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: flex-start;
+  min-width: 320px;
+  min-height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Glass Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+* {
+  border-radius: initial;
+}
+
+input,
+button,
+select {
+  border-radius: var(--radius-sm);
+}
