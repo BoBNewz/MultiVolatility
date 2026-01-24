@@ -14,9 +14,16 @@ class multi_volatility2:
     
     def resolve_path(self, path, host_path):
         # If host_path is set, replacing the current working directory prefix with host_path
-        if host_path and path.startswith(os.getcwd()):
-            rel_path = os.path.relpath(path, os.getcwd())
-            return os.path.join(host_path, rel_path)
+        if host_path:
+            if path.startswith("/storage"):
+                 # Handle special storage mapping for Docker
+                 # Map /storage -> {host_path}/storage/data
+                 rel_path = os.path.relpath(path, "/storage")
+                 return os.path.join(host_path, "storage", "data", rel_path)
+
+            if path.startswith(os.getcwd()):
+                rel_path = os.path.relpath(path, os.getcwd())
+                return os.path.join(host_path, rel_path)
         return path
     
     def generate_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, format):

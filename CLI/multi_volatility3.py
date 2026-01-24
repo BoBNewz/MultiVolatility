@@ -14,9 +14,16 @@ class multi_volatility3:
 
     def resolve_path(self, path, host_path):
         # If host_path is set, replacing the current working directory prefix with host_path
-        if host_path and path.startswith(os.getcwd()):
-            rel_path = os.path.relpath(path, os.getcwd())
-            return os.path.join(host_path, rel_path)
+        if host_path: 
+            if path.startswith("/storage"):
+                 # Handle special storage mapping for Docker
+                 # Map /storage -> {host_path}/storage/data
+                 rel_path = os.path.relpath(path, "/storage")
+                 return os.path.join(host_path, "storage", "data", rel_path)
+
+            if path.startswith(os.getcwd()):
+                rel_path = os.path.relpath(path, os.getcwd())
+                return os.path.join(host_path, rel_path)
         return path
 
 
@@ -73,7 +80,7 @@ class multi_volatility3:
         
         volumes = {
              host_dump_dir: {'bind': '/dump_dir', 'mode': 'ro'},
-             host_symbols_path: {'bind': '/symbols', 'mode': 'ro'},
+             host_symbols_path: {'bind': '/symbols', 'mode': 'rw'},
              host_cache_path: {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
              host_plugin_dir: {'bind': '/plugins', 'mode': 'ro'},
              host_output_dir: {'bind': '/output', 'mode': 'rw'}
