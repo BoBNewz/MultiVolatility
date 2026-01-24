@@ -295,7 +295,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                     </div>
                                     <div>
                                         <h4 className="text-emerald-400 font-bold text-lg mb-1">Ready to Analyze</h4>
-                                        <p className="text-slate-400 text-sm">Integrity check passed (SHA-256 Verified). Estimated runtime: <span className="text-white font-mono font-bold">15m 30s</span>.</p>
+                                        <p className="text-slate-400 text-sm">Confirm data below is correct</p>
                                     </div>
                                 </div>
 
