@@ -59,12 +59,21 @@ def init_db():
         print("[INFO] Migrating DB: Adding 'name' column to scans table")
         c.execute("ALTER TABLE scans ADD COLUMN name TEXT")
 
+    # Migration: Check if 'image' column exists (New for file download)
+    try:
+        c.execute("SELECT image FROM scans LIMIT 1")
+    except sqlite3.OperationalError:
+        print("[INFO] Migrating DB: Adding 'image' column to scans table")
+        c.execute("ALTER TABLE scans ADD COLUMN image TEXT")
+
+    # Table for async dump tasks
+    c.execute('''CREATE TABLE IF NOT EXISTS dump_tasks
+                 (task_id TEXT PRIMARY KEY, scan_id TEXT, status TEXT, output_path TEXT, error TEXT, created_at REAL)''')
+
     conn.commit()
     conn.close()
 
 init_db()
-
-# ... (rest of imports/helpers)
 
 @app.route('/scans/<uuid>', methods=['PUT'])
 def rename_scan(uuid):
@@ -137,19 +146,9 @@ def download_scan_zip(uuid):
              # Validate JSON
             parsed = clean_and_parse_json(f)
             # Only include if valid JSON and not an error object we created
-            if parsed and not (isinstance(parsed, dict) and "error" in parsed and parsed["error"] == "Invalid JSON output"):
-                 # Also exclude if it's just an empty object or error? User said "working one"
-                 # Let's trust our clean_and_parse_json returns valid structure or error dict.
-                 # If it's a real tool error that returns valid JSON, we might keep it.
-                 # User said: "parse as working json". clean_and_parse_json handles the "parse" part.
-                 # User said: "Only keep the working modules".
-                 
+            if parsed and not (isinstance(parsed, dict) and "error" in parsed and parsed["error"] == "Invalid JSON output"):                 
                  # Add to zip
                  arcname = os.path.basename(f)
-                 # We can store the cleaned content or the original file. 
-                 # User said "parsed as working json" which implies validity. 
-                 # Storing the original file is safer for exact reproduction, but clean_and_parse fixes junk.
-                 # Let's write the CLEANED content to ensure it's valid JSON for the user.
                  zf.writestr(arcname, json.dumps(parsed, indent=2))
 
     memory_file.seek(0)
@@ -328,10 +327,13 @@ def scan():
     if not os.path.exists(args_obj.dump):
         return jsonify({"error": f"Dump file not found at {args_obj.dump}"}), 400
 
+    args_obj.image = data.get("image") # Ensure image is passed
+    case_name = data.get("name") # Optional custom case name
+
     conn = sqlite3.connect('scans.db')
     c = conn.cursor()
-    c.execute("INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-              (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version, args_obj.dump, final_output_dir, time.time()))
+    c.execute("INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at, image, name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version, args_obj.dump, final_output_dir, time.time(), args_obj.image, case_name))
     conn.commit()
     conn.close()
 
@@ -526,7 +528,6 @@ def list_scans():
 
         # Fallback to filesystem count (only if DB count is 0 and we want to be sure? 
         # Actually DB is source of truth for results now. If ingest failed, it's failed.)
-        # Removing filesystem fallback for module counting to be consistent with "valid parsable json" rule.
         
         scan_dict['findings'] = 0 
         scans_list.append(scan_dict)
@@ -567,25 +568,149 @@ def get_stats():
 
 @app.route('/evidences', methods=['GET'])
 def list_evidences():
-    # List files in /storage directly as source of truth for evidences
+    # Helper to calculate size recursively
+    def get_dir_size(start_path):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(start_path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                total_size += os.path.getsize(fp)
+        return total_size
+
     try:
-        files = os.listdir(STORAGE_DIR)
-        valid_files = [f for f in files if os.path.isfile(os.path.join(STORAGE_DIR, f)) and not f.endswith('.sha256')]
+        items = os.listdir(STORAGE_DIR)
+        print(f"[DEBUG] list_evidences found {len(items)} items in {STORAGE_DIR}")
+        print(f"[DEBUG] Items: {items}")
     except FileNotFoundError:
-        valid_files = []
+        print(f"[ERROR] Storage dir not found: {STORAGE_DIR}")
+        items = []
+
+    # Pre-load Case Name map from DB
+    case_map = {} # filename -> case name
+    try:
+        conn = sqlite3.connect('scans.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT name, dump_path FROM scans")
+        rows = c.fetchall()
+        for r in rows:
+            if r['name'] and r['dump_path']:
+                fname = os.path.basename(r['dump_path'])
+                case_map[fname] = r['name']
+        conn.close()
+    except:
+        pass
 
     evidences = []
-    for f in valid_files:
-        path = os.path.join(STORAGE_DIR, f)
-        evidences.append({
-            "id": f, # Use filename as ID for frontend actions
-            "name": f,
-            "size": os.path.getsize(path), 
-            "type": "Memory Dump",
-            "hash": get_file_hash(path), 
-            "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path)))
-        })
-        
+    
+    # First pass: Identify extracted folders
+    processed_dumps = set()
+    extracted_map = {} # Unused but keeping for minimization if referenced elsewhere, though we will ignore it.
+
+    
+    for item in items:
+        path = os.path.join(STORAGE_DIR, item)
+        if os.path.isdir(path) and item.endswith("_extracted"):
+             # This is an extracted folder
+             dump_base = item[:-10] # remove _extracted
+             files = []
+             try:
+                  subitems = os.listdir(path)
+                  for sub in subitems:
+                      if sub.endswith('.sha256'):
+                          continue
+                      
+                      subpath = os.path.join(path, sub)
+                      if os.path.isfile(subpath):
+                         files.append({
+                             "id": os.path.join(item, sub), # Relative path ID for download
+                             "name": sub,
+                             "size": os.path.getsize(subpath),
+                             "type": "Extracted File"
+                         })
+             except Exception as e:
+                 print(f"Error reading subdir {path}: {e}")
+            
+             # Resolve Source Dump from DB using Folder Name matches
+             source_dump = "Unknown Source"
+             # 1. Check if dump_base matches a Case Name (Case Name Extraction)
+             # If so, source is the dump file associated with that case
+             # 2. Check if dump_base matches a Filename (Legacy Extraction)
+             
+             # Case Name match attempt
+             matched_case_name = dump_base
+             try:
+                 conn = sqlite3.connect('scans.db')
+                 conn.row_factory = sqlite3.Row
+                 c = conn.cursor()
+                 c.execute("SELECT dump_path FROM scans WHERE name = ? ORDER BY created_at DESC LIMIT 1", (dump_base,))
+                 row = c.fetchone()
+                 if row:
+                     source_dump = os.path.basename(row['dump_path'])
+                 else:
+                     source_dump = dump_base
+                 conn.close()
+             except:
+                 source_dump = dump_base
+
+             # If source dump exists in storage, add it to children list as requested
+             if source_dump and source_dump != "Unknown Source":
+                 dump_path = os.path.join(STORAGE_DIR, source_dump)
+                 if os.path.exists(dump_path):
+                     processed_dumps.add(source_dump)
+                     files.insert(0, {
+                         "id": source_dump, # Relative path (just filename)
+                         "name": source_dump,
+                         "size": os.path.getsize(dump_path),
+                         "type": "Memory Dump",
+                         "is_source": True
+                     })
+
+             evidences.append({
+                 "id": item,
+                 "name": matched_case_name, 
+                 "type": "Evidence Group",
+                 "size": get_dir_size(path),
+                 "hash": source_dump, 
+                 "source_id": source_dump if os.path.exists(os.path.join(STORAGE_DIR, source_dump)) else None, 
+                 "uploaded": "Extracted group",
+                 "children": files
+             })
+             
+    # Second pass: List main dumps and attach extracted files
+    for item in items:
+        path = os.path.join(STORAGE_DIR, item)
+        if os.path.isfile(path) and not item.endswith('.sha256'):
+            # It's a dump file (or other uploaded file)
+            # Skip if it's already included in an evidence group
+            if item in processed_dumps:
+                continue
+
+            # Resolve Display Name (Case Name)
+            display_name = case_map.get(item, item)
+            
+            # WRAP IN GROUP to ensure Folder Style
+            child_file = {
+                "id": item,
+                "name": item,
+                "size": os.path.getsize(path),
+                "type": "Memory Dump",
+                "hash": get_file_hash(path),
+                "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path))),
+                "is_source": True
+            }
+            
+            evidences.append({
+                "id": f"group_{item}", # Virtual ID for the group
+                "name": display_name,
+                "size": os.path.getsize(path),
+                "type": "Evidence Group",
+                "hash": item, 
+                "source_id": item,
+                "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path))),
+                "children": [child_file] 
+            })
+            
     return jsonify(evidences)
 
 def calculate_sha256(filepath):
@@ -623,19 +748,32 @@ def delete_evidence(filename):
     filename = secure_filename(filename)
     path = os.path.join(STORAGE_DIR, filename)
     if os.path.exists(path):
+        import shutil
         try:
-            os.remove(path)
-            # Remove sidecar hash if exists
-            if os.path.exists(path + ".sha256"):
-                os.remove(path + ".sha256")
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+                # Remove sidecar hash if exists
+                if os.path.exists(path + ".sha256"):
+                     os.remove(path + ".sha256")
+                
+                # Also remove extracted directory (if this was a dump file)
+                # Checks for standard <filename>_extracted pattern
+                extracted_dir = os.path.join(STORAGE_DIR, f"{filename}_extracted")
+                if os.path.exists(extracted_dir):
+                    shutil.rmtree(extracted_dir)
+                
             return jsonify({"status": "deleted"})
         except Exception as e:
+            print(f"[ERROR] Failed to delete {path}: {e}")
             return jsonify({"error": str(e)}), 500
     return jsonify({"error": "File not found"}), 404
 
-@app.route('/evidence/<filename>/download', methods=['GET'])
+@app.route('/evidence/<path:filename>/download', methods=['GET'])
 def download_evidence(filename):
-    filename = secure_filename(filename)
+    # Allow nested paths for extracted files
+    # send_from_directory handles traversal attacks (mostly), but we shouldn't use secure_filename on the whole path
     return send_from_directory(STORAGE_DIR, filename, as_attachment=True)
 
 
@@ -659,8 +797,205 @@ def cleanup_timeouts():
     except Exception as e:
         print(f"Error cleaning up timeouts: {e}")
 
+def background_dump_task(task_id, scan_id, virt_addr, docker_image):
+    """Background worker for extracting files from memory dump."""
+    conn = sqlite3.connect('scans.db')
+    c = conn.cursor()
+    c.row_factory = sqlite3.Row
+    
+    try:
+        c.execute("UPDATE dump_tasks SET status = 'running' WHERE task_id = ?", (task_id,))
+        conn.commit()
+        
+        # 1. Get Scan Details
+        c.execute("SELECT * FROM scans WHERE uuid = ?", (scan_id,))
+        scan = c.fetchone()
+        
+        if not scan:
+             raise Exception("Scan not found")
+             
+        dump_path = scan['dump_path']
+        if not os.path.isabs(dump_path) and not dump_path.startswith('/'):
+            dump_path = os.path.join(STORAGE_DIR, dump_path)
+            
+        # 2. Setup Output Paths
+        scan_output_dir = scan['output_dir']
+        # Ensure scan output dir exists
+        if not scan_output_dir or not os.path.exists(scan_output_dir):
+             scan_output_dir = os.path.join(os.getcwd(), "outputs", f"volatility3_{scan_id}")
+             os.makedirs(scan_output_dir, exist_ok=True)
+             
+        target_output_dir = os.path.join(scan_output_dir, "downloads", task_id)
+        os.makedirs(target_output_dir, exist_ok=True)
+        
+        # 3. Resolve Paths & Volumes
+        host_path = os.environ.get("HOST_PATH")
+        def resolve(p):
+            if host_path:
+                if p.startswith(os.getcwd()):
+                    rel = os.path.relpath(p, os.getcwd())
+                    return os.path.join(host_path, rel)
+                if p.startswith("/storage"):
+                     return os.path.join(host_path, "storage", "data", os.path.relpath(p, "/storage"))
+            return p
+
+        abs_dump_path = os.path.abspath(dump_path)
+        abs_dump_dir = os.path.dirname(abs_dump_path)
+        dump_filename = os.path.basename(abs_dump_path)
+
+        symbols_path = os.path.join(os.getcwd(), "volatility3_symbols")
+        cache_path = os.path.join(os.getcwd(), "volatility3_cache")
+        plugins_path = os.path.join(os.getcwd(), "volatility3_plugins")
+
+        volumes = {
+            resolve(abs_dump_dir): {'bind': '/dump_dir', 'mode': 'ro'},
+            resolve(target_output_dir): {'bind': '/output', 'mode': 'rw'},
+            resolve(symbols_path): {'bind': '/symbols', 'mode': 'rw'},
+            resolve(cache_path): {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
+            resolve(plugins_path): {'bind': '/plugins', 'mode': 'ro'}
+        }
+
+        # 4. Run Docker Command
+        client = docker.from_env()
+        cmd = [
+            "vol", "-q", 
+            "-f", f"/dump_dir/{dump_filename}", 
+            "-o", "/output", 
+            "windows.dumpfiles.DumpFiles", 
+            "--virtaddr", str(virt_addr)
+        ]
+        
+        print(f"[DEBUG] [Task {task_id}] Running: {cmd}")
+        
+        client.containers.run(
+            image=docker_image,
+            command=cmd,
+            volumes=volumes,
+            remove=True,
+            stderr=True,
+            stdout=True
+        ) # This blocks until completion
+
+        # 5. Identify Result File
+        files = os.listdir(target_output_dir)
+        target_file = None
+
+        for f in files:
+            if not f.endswith(".json") and f != "." and f != "..":
+                target_file = f
+                break
+        
+        if not target_file:
+             raise Exception("No file extracted (DumpFiles returned no candidate)")
+
+        # Organize downloads in STORAGE_DIR / <CaseName_or_DumpName>_extracted / <target_file>
+        # Use Case Name if available, otherwise dump filename
+        case_name = scan['name']
+        if case_name:
+             # Sanitize case name for folder usage
+             safe_case_name = secure_filename(case_name)
+             extracted_dir_name = f"{safe_case_name}_extracted"
+        else:
+             extracted_dir_name = f"{dump_filename}_extracted"
+             
+        storage_extracted_dir = os.path.join(STORAGE_DIR, extracted_dir_name)
+        os.makedirs(storage_extracted_dir, exist_ok=True)
+        
+        final_path = os.path.join(storage_extracted_dir, target_file)
+        
+        # Move from temp output to final storage
+        import shutil
+        shutil.move(os.path.join(target_output_dir, target_file), final_path)
+        
+        # 6. Mark Completed
+        c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?", (final_path, task_id))
+        conn.commit()
+        print(f"[DEBUG] [Task {task_id}] Completed. Moved to: {final_path}")
+
+    except Exception as e:
+        print(f"[ERROR] [Task {task_id}] Failed: {e}")
+        c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?", (str(e), task_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+@app.route('/scan/<scan_id>/dump-file', methods=['POST'])
+def dump_file_from_memory(scan_id):
+    data = request.json
+    virt_addr = data.get('virt_addr')
+    docker_image = data.get('image')
+    
+    if not virt_addr:
+        return jsonify({"error": "Missing 'virt_addr'"}), 400
+    if not docker_image:
+        return jsonify({"error": "Missing 'image'"}), 400
+
+    conn = sqlite3.connect('scans.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM scans WHERE uuid = ?", (scan_id,))
+    scan = c.fetchone()
+    
+    if not scan:
+        conn.close()
+        return jsonify({"error": "Scan not found"}), 404
+
+    # Create Task
+    task_id = str(uuid.uuid4())
+    c.execute("INSERT INTO dump_tasks (task_id, scan_id, status, created_at) VALUES (?, ?, ?, ?)",
+              (task_id, scan_id, "pending", time.time()))
+    conn.commit()
+    conn.close()
+    
+    # Start Background Thread
+    thread = threading.Thread(target=background_dump_task, args=(task_id, scan_id, virt_addr, docker_image))
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({"task_id": task_id, "status": "pending"})
+
+@app.route('/dump-task/<task_id>', methods=['GET'])
+def get_dump_status(task_id):
+    conn = sqlite3.connect('scans.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM dump_tasks WHERE task_id = ?", (task_id,))
+    task = c.fetchone()
+    conn.close()
+    
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+        
+    return jsonify(dict(task))
+
+@app.route('/dump-task/<task_id>/download', methods=['GET'])
+def download_dump_result(task_id):
+    conn = sqlite3.connect('scans.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM dump_tasks WHERE task_id = ?", (task_id,))
+    task = c.fetchone()
+    conn.close()
+    
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+        
+    if task['status'] != 'completed':
+        return jsonify({"error": "Task not completed"}), 400
+        
+    file_path = task['output_path']
+    if not file_path or not os.path.exists(file_path):
+        return jsonify({"error": "File not found on server"}), 404
+        
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=os.path.basename(file_path)
+    )
+
 def run_api(runner_cb, debug_mode=False):
     global runner_func
     runner_func = runner_cb
     cleanup_timeouts() # Clean up stale tasks on startup
     app.run(host='0.0.0.0', port=5001, debug=debug_mode)
+

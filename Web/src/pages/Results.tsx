@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
     ArrowLeft,
     Download,
@@ -9,22 +10,10 @@ import {
     X,
     AlignLeft,
     EyeOff,
-    Columns,
-    Folder,
-    FolderOpen,
-    List,
-    Network
+    Columns
 } from 'lucide-react';
 import { api } from '../services/api';
-import { Tree, type NodeRendererProps } from 'react-arborist';
-
-interface TreeNode {
-    id: string;
-    name: string;
-    children?: TreeNode[];
-    data?: any;
-    isFolder?: boolean;
-}
+import { FileTreeView } from '../components/FileTreeView';
 
 export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> = ({ onBack, caseId: propCaseId }) => {
     const { caseId: paramCaseId } = useParams();
@@ -40,6 +29,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [wrapText, setWrapText] = React.useState(false);
     const [hiddenCols, setHiddenCols] = React.useState<string[]>([]);
     const [viewMode, setViewMode] = React.useState<'table' | 'tree'>('table');
+    const [caseDetails, setCaseDetails] = React.useState<any | null>(null);
 
     // Column resizing state
     const [colWidths, setColWidths] = React.useState<Record<string, number>>({});
@@ -48,8 +38,19 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     React.useEffect(() => {
         if (caseId) {
             loadModules();
+            loadCaseDetails();
         }
     }, [caseId]);
+
+    const loadCaseDetails = async () => {
+        if (!caseId) return;
+        try {
+            const details = await api.getScan(caseId);
+            setCaseDetails(details);
+        } catch (e) {
+            console.error("Failed to load case details", e);
+        }
+    };
 
     // Reset view mode when module changes
     React.useEffect(() => {
@@ -111,6 +112,60 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         a.remove();
     };
 
+    const handleDownloadFile = async (nodeData: any) => {
+        if (!caseId || !caseDetails) {
+            toast.error("Case details not loaded.");
+            return;
+        }
+
+        // Try to identify virtual address
+        const virtAddr = nodeData['Virtual'] || nodeData['VirtualAddress'] || nodeData['Offset'] || nodeData['Base'] || nodeData['Address'];
+
+        if (!virtAddr) {
+            toast.error("Could not determine Virtual Address for this item. Cannot download.");
+            return;
+        }
+
+        // STRICT REQUIREMENT: Use the image from the scan triggering. 
+        // NO FALLBACK allowed.
+        if (!caseDetails.image) {
+            toast.error("Scan record missing Docker Image. Cannot reproduce environment (No Fallback).");
+            return;
+        }
+
+        const image = caseDetails.image;
+
+        // Show transient launch message
+        toast.success("Download launched.. (this will take a moment)", { duration: 3000 });
+
+        try {
+            // Start Task
+            const { task_id } = await api.startDumpTask(caseId, String(virtAddr), image);
+
+            // Poll
+            const pollInterval = setInterval(async () => {
+                try {
+                    const status = await api.getDumpTaskStatus(task_id);
+                    if (status.status === 'completed') {
+                        clearInterval(pollInterval);
+                        toast.success("Download ready!");
+                        // Prompt download
+                        window.location.href = api.getDumpDownloadUrl(task_id);
+                    } else if (status.status === 'failed') {
+                        clearInterval(pollInterval);
+                        toast.error(`Extraction failed: ${status.error}`);
+                    }
+                } catch (e) {
+                    clearInterval(pollInterval);
+                    toast.error("Failed to check status");
+                }
+            }, 2000);
+
+        } catch (e: any) {
+            toast.error(e.message || "Failed to start extraction");
+        }
+    };
+
     // --- Column Resizing Logic ---
     const handleMouseDown = React.useCallback((e: React.MouseEvent, col: string) => {
         e.preventDefault();
@@ -146,77 +201,6 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         );
     };
 
-    // --- Tree View Helper ---
-    const buildFileTree = (data: any[]): TreeNode[] => {
-        const root: TreeNode[] = [];
-
-        // Helper to find path-like key
-        const getPath = (item: any): string => {
-            // Common Volatility fields for paths
-            return item['Path'] || item['ImageFileName'] || item['Name'] || '';
-        };
-
-        data.forEach((item, index) => {
-            const path = getPath(item);
-            if (!path) return;
-
-            const parts = path.split('\\').filter(Boolean); // Handle Windows paths
-            // If split didn't work (e.g. linux paths), try forward slash
-            const pathParts = parts.length > 1 ? parts : path.split('/').filter(Boolean);
-
-            let currentLevel = root;
-            let currentPath = '';
-
-            pathParts.forEach((part, i) => {
-                const isFile = i === pathParts.length - 1;
-                currentPath = currentPath ? `${currentPath}\\${part}` : part; // Just for ID uniqueness
-                const existingNode = currentLevel.find(n => n.name === part);
-
-                if (existingNode) {
-                    if (!isFile) {
-                        currentLevel = existingNode.children || [];
-                    }
-                } else {
-                    const newNode: TreeNode = {
-                        id: `node-${index}-${i}-${part}-${Math.random()}`, // Unique ID
-                        name: part,
-                        isFolder: !isFile,
-                        children: isFile ? undefined : [],
-                        data: isFile ? item : undefined
-                    };
-                    currentLevel.push(newNode);
-                    if (!isFile) {
-                        currentLevel = newNode.children!;
-                    }
-                }
-            });
-        });
-
-        return root;
-    };
-
-    const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<TreeNode>) => {
-        return (
-            <div
-                style={style}
-                ref={dragHandle}
-                className={`flex items-center cursor-pointer hover:bg-white/5 py-1 px-2 ${node.isSelected ? 'bg-white/10' : ''
-                    }`}
-                onClick={() => node.toggle()}
-            >
-                <div className="mr-2 text-slate-400">
-                    {node.data.isFolder ? (
-                        node.isOpen ? <FolderOpen size={16} className="text-primary" /> : <Folder size={16} className="text-primary" />
-                    ) : (
-                        <FileIcon size={16} className="text-slate-500" />
-                    )}
-                </div>
-                <span className="truncate text-slate-200 text-sm">{node.data.name}</span>
-            </div>
-        );
-    };
-    // ------------------------
-
     const renderModuleContent = () => {
         if (loading) {
             return (
@@ -238,59 +222,18 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft');
 
-        // Header controls for View Toggle (only for FileScan)
-        const renderViewToggle = () => {
-            if (!isFileScan) return null;
-            return (
-                <div className="flex items-center space-x-2 mb-4">
-                    <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
-                        <button
-                            onClick={() => setViewMode('table')}
-                            className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'table' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                }`}
-                        >
-                            <List size={14} className="mr-2" />
-                            Table
-                        </button>
-                        <button
-                            onClick={() => setViewMode('tree')}
-                            className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'tree' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                }`}
-                        >
-                            <Network size={14} className="mr-2" />
-                            Tree
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
         if (viewMode === 'tree' && isFileScan) {
-            const treeData = buildFileTree(results);
+            // New dedicated component handling its own hooks correctly
             return (
-                <div className="flex flex-col h-full">
-                    {renderViewToggle()}
-                    <div className="flex-1 bg-[#13111c]/95 backdrop-blur-sm rounded-xl border border-white/5 overflow-hidden relative shadow-inner">
-                        <Tree
-                            initialData={treeData}
-                            openByDefault={false}
-                            width={1200}
-                            height={600}
-                            indent={24}
-                            rowHeight={32}
-                            overscanCount={5}
-                            paddingTop={10}
-                            paddingBottom={10}
-                            padding={25}
-                        >
-                            {NodeRenderer}
-                        </Tree>
-                    </div>
-                </div>
-            )
+                <FileTreeView
+                    data={results}
+                    viewMode={viewMode}
+                    onToggleView={setViewMode}
+                    onDownload={handleDownloadFile}
+                />
+            );
         }
 
-        // --- Table View (Existing Logic) ---
         // Filter columns
         const allColumns = Object.keys(results[0]);
         const columns = allColumns.filter(col => !hiddenCols.includes(col));
@@ -304,7 +247,29 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         return (
             <div className="flex flex-col h-full">
-                {renderViewToggle()}
+                {isFileScan && (
+                    <div className="flex items-center space-x-2 mb-4">
+                        <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'table' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                <AlignLeft size={14} className="mr-2" />
+                                Table
+                            </button>
+                            <button
+                                onClick={() => setViewMode('tree')}
+                                className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'tree' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                <FileIcon size={14} className="mr-2" />
+                                Tree
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex-1 overflow-auto bg-[#13111c]/95 backdrop-blur-sm rounded-xl border border-white/5 relative shadow-inner">
                     <table className="w-full text-left border-collapse table-fixed">
                         <thead className="bg-[#13111c] sticky top-0 z-10">
@@ -384,77 +349,62 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     return (
         <div className={`flex flex-col h-full ${isFullScreen ? 'fixed inset-0 z-50 bg-[#0b0a12]' : ''}`}>
             {/* Header */}
-            <div className={`flex items-center justify-between mb-6 ${isFullScreen ? 'px-6 py-4 border-b border-white/5 bg-[#13111c]' : ''}`}>
-                <div className="flex items-center gap-4">
-                    {!isFullScreen && (
+            {!isFullScreen && (
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={onBack}
                             className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </button>
-                    )}
-                    <div>
-                        <h1 className="text-xl font-bold text-white">Scan Results</h1>
-                        <div className="flex items-center gap-2 text-sm text-slate-500">
-                            <span>{caseId}</span>
-                            <span>•</span>
-                            <span className="text-primary font-medium">{activeModule || 'Select Module'}</span>
+                        <div>
+                            <h1 className="text-xl font-bold text-white">Scan Results</h1>
+                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <span>{caseId}</span>
+                                <span>•</span>
+                                <span className="text-primary font-medium">{activeModule || 'Select Module'}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsFullScreen(!isFullScreen)}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
-                        title={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
-                    >
-                        {isFullScreen ? <X size={20} /> : <Maximize2 size={20} />}
-                    </button>
-                    <button
-                        onClick={handleDownload}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary-hover rounded-lg font-medium transition-colors text-sm text-white"
-                    >
-                        <Download size={16} />
-                        Export
-                    </button>
-                </div>
-            </div>
+            )}
 
-            <div className={`flex flex-1 gap-6 min-h-0 ${isFullScreen ? 'p-6' : ''}`}>
+            <div className={`flex flex-1 gap-6 min-h-0 ${isFullScreen ? 'p-0' : ''}`}>
                 {/* Module Sidebar */}
-                <div className="w-64 flex flex-col bg-[#13111c]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
-                    <div className="p-5 border-b border-white/5 bg-white/5">
-                        <div className="relative group">
-                            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500 group-focus-within:text-primary transition-colors" />
-                            <input
-                                className="w-full bg-[#0b0a12]/50 border border-transparent rounded-lg pl-10 pr-3 py-2 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary focus:border-primary/50 transition-all outline-none"
-                                type="text"
-                                placeholder="Filter modules..."
-                            // Logic for filtering sidebar modules could be added here if needed
-                            />
+                {!isFullScreen && (
+                    <div className="w-64 flex flex-col bg-[#13111c]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+                        <div className="p-5 border-b border-white/5 bg-white/5">
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500 group-focus-within:text-primary transition-colors" />
+                                <input
+                                    className="w-full bg-[#0b0a12]/50 border border-transparent rounded-lg pl-10 pr-3 py-2 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary focus:border-primary/50 transition-all outline-none"
+                                    type="text"
+                                    placeholder="Filter modules..."
+                                />
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+                            <p className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Available Modules</p>
+                            {modules.map((mod) => (
+                                <button
+                                    key={mod}
+                                    onClick={() => setActiveModule(mod)}
+                                    className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg overflow-hidden group ${activeModule === mod
+                                        ? 'bg-primary/20 text-white shadow-lg shadow-purple-900/20'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    <FileIcon className={`w-4 h-4 mr-3 flex-shrink-0 ${activeModule === mod ? 'text-primary' : 'opacity-50'}`} />
+                                    <span className="truncate">{mod}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-                        <p className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Available Modules</p>
-                        {modules.map((mod) => (
-                            <button
-                                key={mod}
-                                onClick={() => setActiveModule(mod)}
-                                className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg overflow-hidden group ${activeModule === mod
-                                    ? 'bg-primary/20 text-white shadow-lg shadow-purple-900/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                <FileIcon className={`w-4 h-4 mr-3 flex-shrink-0 ${activeModule === mod ? 'text-primary' : 'opacity-50'}`} />
-                                <span className="truncate">{mod}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                )}
 
                 {/* Main Content */}
-                <div className="flex-1 flex flex-col min-w-0 bg-[#0b0a12]/30 rounded-2xl border border-white/5 overflow-hidden shadow-xl">
+                <div className={`flex-1 flex flex-col min-w-0 bg-[#0b0a12]/30 rounded-2xl border border-white/5 overflow-hidden shadow-xl ${isFullScreen ? 'rounded-none border-0' : ''}`}>
                     {/* Toolbar */}
                     <div className="px-8 py-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02] gap-4">
                         <div className="min-w-0 flex-1 relative max-w-md">
@@ -506,6 +456,24 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                     ))}
                                 </div>
                             </div>
+
+                            <div className="h-6 w-px bg-white/10 mx-1" />
+
+                            <button
+                                onClick={handleDownload}
+                                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+                                title="Export Results"
+                            >
+                                <Download size={18} />
+                            </button>
+
+                            <button
+                                onClick={() => setIsFullScreen(!isFullScreen)}
+                                className={`p-2 rounded-lg transition-colors ${isFullScreen ? 'bg-primary/20 text-primary' : 'hover:bg-white/10 text-slate-400 hover:text-white'}`}
+                                title={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
+                            >
+                                {isFullScreen ? <X size={18} /> : <Maximize2 size={18} />}
+                            </button>
                         </div>
 
                         <div className="h-8 w-px bg-white/10 mx-2" />

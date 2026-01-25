@@ -103,9 +103,12 @@ def runner(arguments):
                 ) for cmd in commands]
             )
         else:
-            # Always run Info module first for Volatility3 if using default symbols path
-            if arguments.symbols_path == os.path.join(os.getcwd(), "volatility3_symbols"):
-                volatility3_instance.execute_command_volatility3("windows.info.Info", 
+
+            # Enforce priority execution for Info module to ensure symbols are downloaded/cached
+            info_module = "windows.info.Info"
+            if info_module in commands:
+                commands.remove(info_module)
+                volatility3_instance.execute_command_volatility3(info_module, 
                                                                 os.path.basename(arguments.dump), 
                                                                 os.path.abspath(arguments.dump), 
                                                                 arguments.symbols_path, 

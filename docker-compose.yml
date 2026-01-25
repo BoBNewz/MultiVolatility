@@ -12,6 +12,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
       - ./CLI/scans.db:/app/scans.db # Persist DB
+      - ./outputs:/app/outputs
       - ./storage/data:/storage
 
   # React Frontend

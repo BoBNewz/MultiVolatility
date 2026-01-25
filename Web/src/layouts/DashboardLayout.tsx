@@ -153,7 +153,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                 </header>
 
                 {/* Content */}
-                <main className="flex-1 rounded-2xl">
+                <main className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl border border-white/5 bg-[#0b0a12]/30 shadow-inner">
                     {children}
                 </main>
             </div>

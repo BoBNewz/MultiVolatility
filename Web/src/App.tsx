@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { Dashboard } from './pages/Dashboard';
 import { NewScan } from './pages/NewScan';
@@ -8,6 +8,7 @@ import { Evidences } from './pages/Evidences';
 import { Login } from './pages/Login';
 import { api } from './services/api';
 import type { Scan } from './types';
+import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'dashboard');
@@ -20,6 +21,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cases, setCases] = useState<Scan[]>([]);
   const [healthStatus, setHealthStatus] = useState(false);
+  const seenModulesRef = useRef<Record<string, Set<string>>>({});
 
   // ...
 
@@ -41,6 +43,39 @@ function App() {
       if (isHealthy) {
         const data = await api.getScans();
         setCases(data);
+
+        // Check for new modules in running scans
+        const runningScans = data.filter(c => c.status === 'running');
+        for (const scan of runningScans) {
+          try {
+            const currentModules = await api.getScanModules(scan.id);
+
+            // Initialize if first time seeing this scan in this session
+            if (!seenModulesRef.current[scan.id]) {
+              seenModulesRef.current[scan.id] = new Set(currentModules);
+              continue;
+            }
+
+            const seenSet = seenModulesRef.current[scan.id];
+            const newModules = currentModules.filter(m => !seenSet.has(m));
+
+            newModules.forEach(m => {
+              toast.success(`Module ${m} ready for case ${scan.name}`, {
+                duration: 5000,
+                position: 'bottom-right',
+                style: {
+                  background: '#1e1e2d',
+                  color: '#fff',
+                  border: '1px solid rgba(16, 185, 129, 0.2)'
+                },
+                icon: '✅'
+              });
+              seenSet.add(m);
+            });
+          } catch (e) {
+            console.error("Failed to check modules for scan", scan.id, e);
+          }
+        }
       }
     };
 
@@ -85,7 +120,7 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard onCaseClick={handleCaseClick} cases={cases} />;
+        return <Dashboard onCaseClick={handleCaseClick} cases={cases} onNavigate={setActiveTab} />;
       case 'cases':
         return <Cases
           onCaseClick={handleCaseClick}
@@ -117,6 +152,13 @@ function App() {
 
   return (
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} apiStatus={healthStatus}>
+      <Toaster position="bottom-right" toastOptions={{
+        style: {
+          background: '#1e1e2d',
+          color: '#fff',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }
+      }} />
       {renderContent()}
     </DashboardLayout>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HardDrive, Activity, Briefcase, Box as BoxIcon, ChevronRight, Loader2 } from 'lucide-react';
+import { HardDrive, Activity, Briefcase, Box as BoxIcon, ChevronRight, Loader2, Monitor, Terminal, Command } from 'lucide-react';
 import type { Scan } from '../types';
 import { api } from '../services/api';
 
@@ -11,7 +11,7 @@ const INITIAL_STATS = { // Initial state
 };
 
 // ... StatisticsCard component (unchanged) ...
-const StatisticsCard: React.FC<{ title: string; value: number | string; Icon: React.ElementType; color: string; gradient: string }> = ({ title, value, Icon, gradient }) => (
+const StatisticsCard: React.FC<{ title: string; value: number | string; Icon: React.ElementType; color: string; gradient: string; onClick?: () => void }> = ({ title, value, Icon, gradient, onClick }) => (
     <div className="group relative bg-[#13111c]/60 backdrop-blur-md rounded-2xl p-[1px] shadow-lg hover:shadow-[0_0_25px_-5px_rgba(168,85,247,0.3)] transition-all duration-300 overflow-hidden">
         {/* Gradient Border */}
         <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-30 group-hover:opacity-100 transition-opacity duration-300`}></div>
@@ -30,7 +30,10 @@ const StatisticsCard: React.FC<{ title: string; value: number | string; Icon: Re
                 </div>
             </div>
 
-            <div className="mt-4 flex items-center text-xs font-medium text-slate-500 group-hover:text-primary transition-colors cursor-pointer">
+            <div
+                className={`mt-4 flex items-center text-xs font-medium text-slate-500 transition-colors cursor-pointer ${onClick ? 'group-hover:text-primary' : ''}`}
+                onClick={onClick}
+            >
                 <span>View Details</span>
                 <ChevronRight className="w-3 h-3 ml-1" />
             </div>
@@ -39,7 +42,7 @@ const StatisticsCard: React.FC<{ title: string; value: number | string; Icon: Re
 );
 
 
-export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Scan[] }> = ({ onCaseClick, cases }) => {
+export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Scan[], onNavigate?: (tab: string) => void }> = ({ onCaseClick, cases, onNavigate }) => {
     const [stats, setStats] = useState(INITIAL_STATS);
 
     useEffect(() => {
@@ -64,6 +67,7 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                     Icon={HardDrive}
                     color="text-red-400"
                     gradient="from-pink-500 to-rose-500"
+                    onClick={() => onNavigate?.('evidences')}
                 />
                 <StatisticsCard
                     title="Processing"
@@ -71,6 +75,7 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                     Icon={Activity}
                     color="text-amber-400"
                     gradient="from-amber-400 to-orange-500"
+                    onClick={() => onNavigate?.('cases')}
                 />
                 <StatisticsCard
                     title="Cases"
@@ -78,6 +83,7 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                     Icon={Briefcase}
                     color="text-blue-400"
                     gradient="from-blue-400 to-cyan-400"
+                    onClick={() => onNavigate?.('cases')}
                 />
                 <StatisticsCard
                     title="Symbols"
@@ -85,6 +91,7 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                     Icon={BoxIcon}
                     color="text-purple-400"
                     gradient="from-purple-500 to-fuchsia-500"
+                    onClick={() => onNavigate?.('cases')}
                 />
             </div>
 
@@ -105,8 +112,14 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                     {cases.slice(0, 3).map((c) => (
                         <div key={c.id} onClick={() => onCaseClick?.(c.id)} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/30 hover:bg-white/10 transition-all cursor-pointer group">
                             <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-purple-500/20">
-                                    #{c.id.substring(0, 4)}
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold shadow-lg transition-transform hover:scale-110 
+                                    ${c.os === 'windows' ? 'bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/20' :
+                                        c.os === 'linux' ? 'bg-gradient-to-br from-orange-500 to-amber-600 shadow-orange-500/20' :
+                                            'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-purple-500/20'}`}>
+                                    {c.os === 'windows' ? <Monitor className="w-5 h-5" /> :
+                                        c.os === 'linux' ? <Terminal className="w-5 h-5" /> :
+                                            c.os === 'mac' ? <Command className="w-5 h-5" /> :
+                                                <span className="text-xs">#{c.id.substring(0, 4)}</span>}
                                 </div>
                                 <div className="ml-4">
                                     <h5 className="text-white font-medium group-hover:text-primary transition-colors">{c.name}</h5>

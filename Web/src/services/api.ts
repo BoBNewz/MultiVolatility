@@ -14,14 +14,39 @@ export const api = {
                 id: item.uuid,
                 name: item.name || `Scan ${item.uuid.substring(0, 8)}`, // Use name from DB or fallback
                 status: item.status,
-                created_at: new Date(item.created_at * 1000).toLocaleString(),
+                created_at: item.created_at,
                 dump_path: item.dump_path,
+                image: item.image,
+                os: item.os,
                 modules: item.modules || 0,
                 findings: 0 // Backend doesn't return findings count yet
             }));
         } catch (error) {
             console.error(error);
             return [];
+        }
+    },
+
+    getScan: async (uuid: string): Promise<Scan | null> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/status/${uuid}`);
+            if (!response.ok) return null;
+            const item = await response.json();
+            return {
+                id: item.uuid,
+                uuid: item.uuid,
+                name: item.name || `Scan ${item.uuid.substring(0, 8)}`,
+                status: item.status,
+                created_at: item.created_at, // unix timestamp
+                dump_path: item.dump_path,
+                output_dir: item.output_dir,
+                mode: item.mode,
+                os: item.os,
+                image: item.image,
+            } as Scan;
+        } catch (e) {
+            console.error(e);
+            return null;
         }
     },
 
@@ -156,5 +181,28 @@ export const api = {
     downloadScanResults: (uuid: string) => {
         // Trigger browser download by opening window or creating anchor
         window.open(`${API_BASE_URL}/scans/${uuid}/download`, '_blank');
+    },
+
+    startDumpTask: async (scanId: string, virtAddr: string, image: string): Promise<{ task_id: string, status: string }> => {
+        const response = await fetch(`${API_BASE_URL}/scan/${scanId}/dump-file`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ virt_addr: virtAddr, image: image })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to start dump task');
+        }
+        return response.json();
+    },
+
+    getDumpTaskStatus: async (taskId: string): Promise<any> => {
+        const response = await fetch(`${API_BASE_URL}/dump-task/${taskId}`);
+        if (!response.ok) throw new Error('Failed to get task status');
+        return response.json();
+    },
+
+    getDumpDownloadUrl: (taskId: string): string => {
+        return `${API_BASE_URL}/dump-task/${taskId}/download`;
     }
 };

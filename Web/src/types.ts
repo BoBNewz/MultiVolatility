@@ -8,6 +8,8 @@ export interface Scan {
     output_dir: string;
     mode: 'vol2' | 'vol3';
     error?: string;
+    image?: string;
+    os?: string;
     // Frontend augmented props (optional or computed in api.ts)
     modules?: number;
     findings?: number;
