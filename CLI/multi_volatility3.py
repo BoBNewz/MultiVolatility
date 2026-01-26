@@ -26,43 +26,7 @@ class multi_volatility3:
                 return os.path.join(host_path, rel_path)
         return path
 
-
-    def generate_command_volatility3_json(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
-        # Generates the Docker command to run a Volatility3 module with JSON output
-        return [
-            "docker", "run", "--rm", 
-            "-v", f"{dump_dir}:/dumps/{dump}", 
-            "-v", f"{cache_dir}:/home/root/.cache",
-            "-v", f"{symbols_path}:/tmp", 
-            "-v", f"{plugin_dir}:/root/plugins_dir",
-            "-ti", docker_image,
-            "vol",
-            "-q",
-            "-f", f"/dumps/{dump}",
-            "-s", "/tmp",
-            "-p", "/root/plugins_dir",
-            "-r", "json",
-            command
-        ]
-    
-    def generate_command_volatility3_text(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir):
-        # Generates the Docker command to run a Volatility3 module with text output
-        return [
-            "docker", "run", "--rm", 
-            "-v", f"{dump_dir}:/dumps/{dump}", 
-            "-v", f"{cache_dir}:/home/root/.cache",
-            "-v", f"{symbols_path}:/tmp", 
-            "-v", f"{plugin_dir}:/root/plugins_dir",
-            "-ti", docker_image,
-            "vol",
-            "-q",
-            "-f", f"/dumps/{dump}",
-            "-s", "/tmp",
-            "-p", "/root/plugins_dir",
-            command
-        ]
-
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None):
+    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False):
         # Executes a Volatility3 command in Docker and handles output
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
@@ -97,6 +61,9 @@ class multi_volatility3:
         # So dump file is at /dump_dir/basename(dump)
         dump_filename = os.path.basename(dump)
         base_args = f"vol -q -f /dump_dir/{dump_filename} -s /symbols -p /plugins"
+
+        if fetch_symbols:
+            base_args = f"{base_args} --remote-isf-url https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"
 
         if format == "json":
             self.output_file = os.path.join(output_dir, f"{command}_output.json")
@@ -224,6 +191,7 @@ class multi_volatility3:
                 ]
         elif opsys == "windows.light":
             return ["windows.cmdline.CmdLine",
+                    "windows.info.Info",
                     "windows.filescan.FileScan",
                     "windows.netscan.NetScan",
                     "windows.netstat.NetStat",
