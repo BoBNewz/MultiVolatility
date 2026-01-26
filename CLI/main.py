@@ -8,8 +8,6 @@ from multi_volatility2 import multi_volatility2
 from multi_volatility3 import multi_volatility3
 
 
-
-
 # Wrapper for Volatility 3 to use with imap
 def vol3_wrapper(packed_args):
     instance, args = packed_args
@@ -109,8 +107,11 @@ def runner(arguments):
         else:
 
             # Enforce priority execution for Info module to ensure symbols are downloaded/cached
-            info_module = "windows.info.Info"
-            if info_module in commands:
+            if arguments.windows:
+                info_module = "windows.info.Info"
+            else:
+                info_module = "linux.bash.Bash"
+            if arguments.windows or (arguments.linux and arguments.fetch_symbol):
                 commands.remove(info_module)
                 volatility3_instance.execute_command_volatility3(info_module, 
                                                                 os.path.basename(arguments.dump), 
@@ -123,7 +124,8 @@ def runner(arguments):
                                                                 arguments.format,
                                                                 False, # quiet
                                                                 lock,  # lock
-                                                                arguments.host_path
+                                                                arguments.host_path,
+                                                                True if arguments.fetch_symbol else False
                                                             )
 
             
@@ -140,7 +142,8 @@ def runner(arguments):
                 arguments.format,
                 False, # quiet=False so we see the output as it happens
                 lock, # lock
-                arguments.host_path
+                arguments.host_path,
+                True if arguments.fetch_symbol else False
                 )) for cmd in commands]
             
             # Progress counters
@@ -214,6 +217,7 @@ if __name__ == "__main__":
     vol3_os_group.add_argument("--linux", action="store_true", help="It's a Linux memory dump")
     vol3_os_group.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
+    vol3_parser.add_argument("--fetch-symbol", action="store_true", help="Fetch automatically symbol from github.com/Abyss-W4tcher/volatility3-symbols", required=False)
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol3_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
     vol3_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes")
@@ -238,7 +242,9 @@ if __name__ == "__main__":
         print("[-] --linux not available with --full or --light")
         sys.exit(1)
 
-
+    if args.fetch_symbol and not args.linux:
+        print("[-] --fetch-symbol only available with --linux")
+        sys.exit(1)
 
     # Validate output format
     if (args.format != "json") and (args.format != "text"):
