@@ -17,7 +17,15 @@ function App() {
     localStorage.setItem('activeTab', activeTab);
   }, [activeTab]);
 
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(() => localStorage.getItem('selectedCaseId'));
+
+  useEffect(() => {
+    if (selectedCaseId) {
+      localStorage.setItem('selectedCaseId', selectedCaseId);
+    } else {
+      localStorage.removeItem('selectedCaseId');
+    }
+  }, [selectedCaseId]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cases, setCases] = useState<Scan[]>([]);
   const [healthStatus, setHealthStatus] = useState(false);

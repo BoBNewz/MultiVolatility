@@ -10,10 +10,12 @@ import {
     X,
     AlignLeft,
     EyeOff,
-    Columns
+    Columns,
+    Network
 } from 'lucide-react';
 import { api } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
+import { ProcessTreeView } from '../components/ProcessTreeView';
 
 export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> = ({ onBack, caseId: propCaseId }) => {
     const { caseId: paramCaseId } = useParams();
@@ -34,6 +36,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     // Column resizing state
     const [colWidths, setColWidths] = React.useState<Record<string, number>>({});
     const resizingRef = React.useRef<{ col: string; startX: number; startWidth: number } | null>(null);
+    const [rowsLimit, setRowsLimit] = React.useState(50);
 
     React.useEffect(() => {
         if (caseId) {
@@ -58,6 +61,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         setHiddenCols([]);
         setSearchTerm('');
         setColWidths({});
+        setRowsLimit(50);
     }, [activeModule]);
 
     const loadModules = async () => {
@@ -221,6 +225,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         }
 
         const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft');
+        const isProcessTree = activeModule?.toLowerCase().includes('pstree');
 
         if (viewMode === 'tree' && isFileScan) {
             // New dedicated component handling its own hooks correctly
@@ -230,6 +235,16 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                     viewMode={viewMode}
                     onToggleView={setViewMode}
                     onDownload={handleDownloadFile}
+                />
+            );
+        }
+
+        if (viewMode === 'tree' && isProcessTree) {
+            return (
+                <ProcessTreeView
+                    data={results}
+                    viewMode={viewMode}
+                    onToggleView={setViewMode}
                 />
             );
         }
@@ -245,9 +260,11 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             )
         );
 
+
+
         return (
             <div className="flex flex-col h-full">
-                {isFileScan && (
+                {(isFileScan || isProcessTree) && (
                     <div className="flex items-center space-x-2 mb-4">
                         <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
                             <button
@@ -263,7 +280,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'tree' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
                                     }`}
                             >
-                                <FileIcon size={14} className="mr-2" />
+                                {isProcessTree ? <Network size={14} className="mr-2" /> : <FileIcon size={14} className="mr-2" />}
                                 Tree
                             </button>
                         </div>
@@ -300,7 +317,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {filteredResults.map((row, i) => (
+                            {filteredResults.slice(0, rowsLimit).map((row, i) => (
                                 <tr
                                     key={i}
                                     className="hover:bg-white/5 transition-colors cursor-pointer group/row"
@@ -342,6 +359,17 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                         </div>
                     )}
                 </div>
+                {/* Pagination / Expand Footer */}
+                {filteredResults.length > rowsLimit && (
+                    <div className="p-4 border-t border-white/5 bg-[#13111c] flex justify-center">
+                        <button
+                            onClick={() => setRowsLimit(filteredResults.length)}
+                            className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/50 text-sm font-medium py-2 px-6 rounded-lg transition-all flex items-center"
+                        >
+                            Show all {filteredResults.length} rows
+                        </button>
+                    </div>
+                )}
             </div>
         );
     };

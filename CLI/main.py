@@ -71,7 +71,11 @@ def runner(arguments):
     # Default to len(commands) (unlimited) if processes arg is not set or None
     max_procs = getattr(arguments, 'processes', None)
     if max_procs is None:
-        max_processes = len(commands)
+        # Default to CPU count to avoid system thrashing with too many Docker containers
+        try:
+            max_processes = os.cpu_count() or 4
+        except:
+            max_processes = 4
     else:
         max_processes = min(max_procs, len(commands))
     start_time = time.time()
