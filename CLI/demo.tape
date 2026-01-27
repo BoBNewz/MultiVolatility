@@ -57,13 +57,22 @@
 
 Output demo.gif
 
-Require echo
-
 Set Shell "bash"
-Set FontSize 28
+Set FontSize 24
 Set Width 1600
-Set Height 600
+Set Height 800
+Set CursorBlink false
+Set Padding 20
+Set Margin 20
+Set MarginFill "#282a36"
+Set BorderRadius 10
+Set WindowBar Colorful
+Set Theme "Dracula"
+#Set TypingSpeed 10000ms
 
-Type "python3 main.py vol3 --dump /Users/max/Desktop/Tools/MultiVolatility/memdump.raw --image volatility3:latest --windows --light" Sleep 500ms  Enter
+Type "# Running MultiVolatility Analysis..." 
+Sleep 1s 
+Enter
+Type "multivol vol3 --dump /Users/max/Desktop/Tools/MultiVolatility/memdump.raw --image volatility3:latest --windows --light" Sleep 500ms Enter
 
-Sleep 3m
+Sleep 10s

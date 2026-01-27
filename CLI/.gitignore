@@ -8,3 +8,7 @@ memdump.elf
 memory.dump
 config.yml
 Win7SP1x86.dmp
+multivol.egg-info
+build
+dist
+*.pyc

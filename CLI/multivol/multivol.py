@@ -1,12 +1,17 @@
-# main.py
+# multivol.py
 # Entry point for MultiVolatility: orchestrates running Volatility2 and Volatility3 memory analysis in parallel using multiprocessing.
 import multiprocessing, time, os, argparse, sys
 from rich.console import Console
 from rich.theme import Theme
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
-from multi_volatility2 import multi_volatility2
-from multi_volatility3 import multi_volatility3
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
 
+try:
+    from .multi_volatility2 import multi_volatility2
+    from .multi_volatility3 import multi_volatility3
+except ImportError:
+    from multi_volatility2 import multi_volatility2
+    from multi_volatility3 import multi_volatility3
 
 # Wrapper for Volatility 3 to use with imap
 def vol3_wrapper(packed_args):
@@ -105,7 +110,6 @@ def runner(arguments):
                 ) for cmd in commands]
             )
         else:
-
             # Enforce priority execution for Info module to ensure symbols are downloaded/cached
             if arguments.windows:
                 info_module = "windows.info.Info"
@@ -181,8 +185,7 @@ def runner(arguments):
     console.print(f"\n[bold yellow]⏱️  Time : {last_time - start_time:.2f} seconds for {len(commands)} modules.[/bold yellow]")
 
 
-
-if __name__ == "__main__":
+def main():
     # Argument parsing for CLI usage
     parser = argparse.ArgumentParser("MultiVolatility")
     parser.add_argument("--api", action="store_true", help="Start API server")
@@ -224,7 +227,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.api:
-        from api import run_api
+        try:
+            from .api import run_api
+        except ImportError:
+            from api import run_api
         run_api(runner, debug_mode=args.dev)
         sys.exit(0)
 
@@ -253,3 +259,6 @@ if __name__ == "__main__":
     
     # Start the runner with parsed arguments
     runner(args)
+
+if __name__ == "__main__":
+    main()
