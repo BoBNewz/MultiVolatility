@@ -4,8 +4,7 @@
 
 MultiVolatility (`multivol`) is a powerful CLI wrapper that orchestrates memory forensics using Docker. It parallizes execution across multiple CPU cores, dramatically reducing the time required to run full scan suites on `windows` or `linux` memory dumps.
 
-![Demo](demo.gif)
-
+![Demo](https://raw.githubusercontent.com/BoBNewz/MultiVolatility/00d7b95cba1e35c9a4810f3e145bddc324e24628/CLI/demo.gif)
 ## Features
 
 - **Parallel Execution**: runs multiple Volatility plugins simultaneously using your machine's full CPU power.

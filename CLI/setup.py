@@ -13,7 +13,7 @@ if os.path.exists("README.md"):
 
 setup(
     name="multivol",
-    version="0.1.0",
+    version="0.1.3",
     description="MultiVolatility: Analyze memory dumps faster than ever with Volatility2 and Volatility3 in parallel using Docker",
     long_description=long_description,
     long_description_content_type="text/markdown",
