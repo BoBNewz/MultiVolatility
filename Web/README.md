@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# MultiVol Web Interface
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Dashboard](screen.png)
 
-Currently, two official plugins are available:
+The modern frontend for the MultiVolatility analysis tool. Built with **React 19**, **Vite**, and **TailwindCSS**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+- **Dashboard**: Overview of recent cases and system status.
+- **Evidence Locker**: Manage memory dumps and organize them into cases.
+- **Scan Configuration**: Launch new scans with Volatility 2 or 3, selecting profiles and plugins.
+- **Results Viewer**:
+    - **Data Tables**: Searchable and filterable results for plugins like `pslist`, `netscan`, etc.
+    - **Process Tree**: Interactive hierarchical view of process parent-child relationships (`pstree`).
+    - **File Browser**: Explore the file system structure recovered by `filescan`.
+- **Real-time Updates**: Live notifications when modules complete.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Prerequisites
 
-## Expanding the ESLint configuration
+- **Node.js** (v18 or higher)
+- **npm** (included with Node.js)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📦 Installation & Setup
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1.  **Install dependencies:**
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+    ```bash
+    cd Web
+    npm install
+    ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2.  **Start Development Server:**
+
+    ```bash
+    npm run dev
+    ```
+
+    The app will be available at `http://localhost:5173`.
+
+## 🏗️ Production Build
+
+To build the project for production:
+
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This generates static assets in the `dist` directory.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🐳 Docker Support
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+You can run the web interface as a Docker container (recommended for production):
+
+```bash
+docker build -t multivol-web .
+docker run -p 80:80 multivol-web
 ```
+
+> **Note:** The web interface expects the MultiVol API to be running on `http://localhost:5001` (default).
