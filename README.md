@@ -31,7 +31,7 @@ The easiest way to run the full stack (API + Web UI) is using Docker Compose.
 2.  **Launch the platform:**
 
     ```bash
-    docker-compose up --build -d
+    docker compose up --build -d
     ```
 
 3.  **Access the UI:**
