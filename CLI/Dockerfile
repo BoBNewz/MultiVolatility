@@ -21,4 +21,4 @@ COPY . .
 # Create cache/symbol directories to ensure they exist
 RUN mkdir -p volatility2_profiles volatility3_symbols volatility3_plugins volatility3_cache
 
-ENTRYPOINT ["python", "main.py", "--api"]
+ENTRYPOINT ["python", "multivol/multivol.py", "--api"]

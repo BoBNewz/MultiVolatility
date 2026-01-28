@@ -59,6 +59,7 @@ class multi_volatility2:
         
         # Construct the command string to run inside the container
         cmd_args = f"--plugins=/home/vol/profiles -f /dumps/{dump} --profile={profile} --output={format} {command}"
+        print(f"[DEBUG] Volatility 2 Command: vol.py {cmd_args}")
 
         if format == "json":
             self.output_file = os.path.join(output_dir, f"{command}_output.json")

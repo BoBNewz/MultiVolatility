@@ -38,7 +38,13 @@ def restrict_to_localhost():
 
     # Allow 127.0.0.1 and ::1 (IPv6 localhost)
     allowed_ips = ["127.0.0.1", "::1"]
+    
+    # Always allow OPTIONS for CORS preflight
+    if request.method == 'OPTIONS':
+        return
+        
     if request.remote_addr not in allowed_ips:
+        print(f"[WARNING] Access blocked from: {request.remote_addr}")
         abort(403, description="Access forbidden: Only localhost connections allowed, please set DISABLE_LOCALHOST_ONLY=1 to disable this check.")
 
 def init_db():

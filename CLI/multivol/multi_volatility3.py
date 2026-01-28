@@ -71,6 +71,8 @@ class multi_volatility3:
         else:
             self.output_file = os.path.join(output_dir, f"{command}_output.txt")
             cmd_args = f"{base_args} {command}"
+            
+        print(f"[DEBUG] Volatility 3 Command: {cmd_args}")
 
         try:
             container = client.containers.run(
