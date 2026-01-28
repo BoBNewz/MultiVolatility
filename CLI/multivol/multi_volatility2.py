@@ -39,7 +39,7 @@ class multi_volatility2:
             f"{command}"
         ]
 
-    def execute_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, output_dir, format, quiet=False, lock=None, host_path=None):
+    def execute_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, output_dir, format, quiet=False, lock=None, host_path=None, show_commands=False):
         # Executes a Volatility2 command in Docker and handles output
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
@@ -59,7 +59,8 @@ class multi_volatility2:
         
         # Construct the command string to run inside the container
         cmd_args = f"--plugins=/home/vol/profiles -f /dumps/{dump} --profile={profile} --output={format} {command}"
-        print(f"[DEBUG] Volatility 2 Command: vol.py {cmd_args}")
+        if show_commands:
+            print(f"[DEBUG] Volatility 2 Command: vol.py {cmd_args}", flush=True)
 
         if format == "json":
             self.output_file = os.path.join(output_dir, f"{command}_output.json")

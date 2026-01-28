@@ -106,7 +106,8 @@ def runner(arguments):
                 arguments.format,
                 False, # quiet
                 lock,  # lock
-                arguments.host_path
+                arguments.host_path,
+                getattr(arguments, "show_commands", False)
                 ) for cmd in commands]
             )
         else:
@@ -115,22 +116,24 @@ def runner(arguments):
                 info_module = "windows.info.Info"
             else:
                 info_module = "linux.bash.Bash"
-            if arguments.windows or (arguments.linux and arguments.fetch_symbol):
-                commands.remove(info_module)
-                volatility3_instance.execute_command_volatility3(info_module, 
-                                                                os.path.basename(arguments.dump), 
-                                                                os.path.abspath(arguments.dump), 
-                                                                arguments.symbols_path, 
-                                                                arguments.image,
-                                                                os.path.abspath(arguments.cache_path),
-                                                                os.path.abspath(arguments.plugins_dir),
-                                                                output_dir,
-                                                                arguments.format,
-                                                                False, # quiet
-                                                                lock,  # lock
-                                                                arguments.host_path,
-                                                                True if arguments.fetch_symbol else False
-                                                            )
+            if arguments.windows or arguments.linux:
+                if info_module in commands:
+                    commands.remove(info_module)
+                    volatility3_instance.execute_command_volatility3(info_module, 
+                                                                    os.path.basename(arguments.dump), 
+                                                                    os.path.abspath(arguments.dump), 
+                                                                    arguments.symbols_path, 
+                                                                    arguments.image,
+                                                                    os.path.abspath(arguments.cache_path),
+                                                                    os.path.abspath(arguments.plugins_dir),
+                                                                    output_dir,
+                                                                    arguments.format,
+                                                                    False, # quiet
+                                                                    lock,  # lock
+                                                                    arguments.host_path,
+                                                                    True if getattr(arguments, "fetch_symbol", False) else False,
+                                                                    getattr(arguments, "show_commands", False)
+                                                                )
 
             
             # Prepare arguments for imap
@@ -147,7 +150,8 @@ def runner(arguments):
                 False, # quiet=False so we see the output as it happens
                 lock, # lock
                 arguments.host_path,
-                True if arguments.fetch_symbol else False
+                True if getattr(arguments, "fetch_symbol", False) else False,
+                getattr(arguments, "show_commands", False)
                 )) for cmd in commands]
             
             # Progress counters
@@ -248,7 +252,7 @@ def main():
         print("[-] --linux not available with --full or --light")
         sys.exit(1)
 
-    if args.fetch_symbol and not args.linux:
+    if getattr(args, "fetch_symbol", False) and not args.linux:
         print("[-] --fetch-symbol only available with --linux")
         sys.exit(1)
 

@@ -26,7 +26,7 @@ class multi_volatility3:
                 return os.path.join(host_path, rel_path)
         return path
 
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False):
+    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False):
         # Executes a Volatility3 command in Docker and handles output
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
@@ -72,7 +72,8 @@ class multi_volatility3:
             self.output_file = os.path.join(output_dir, f"{command}_output.txt")
             cmd_args = f"{base_args} {command}"
             
-        print(f"[DEBUG] Volatility 3 Command: {cmd_args}")
+        if show_commands:
+            print(f"[DEBUG] Volatility 3 Command: {cmd_args}", flush=True)
 
         try:
             container = client.containers.run(

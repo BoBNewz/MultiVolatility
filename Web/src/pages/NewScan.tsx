@@ -11,7 +11,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [engine, setEngine] = useState('vol3');
     const [scanType, setScanType] = useState('quick');
-    const [osType, setOsType] = useState('auto');
+    const [osType, setOsType] = useState('windows');
     const [dockerImage, setDockerImage] = useState('');
     const [availableImages, setAvailableImages] = useState<string[]>([]);
     const [imageError, setImageError] = useState(false);
@@ -86,7 +86,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                     mode: mode,
                     profile: profile || undefined,
                     linux: osType === 'linux',
-                    windows: osType === 'windows' || osType === 'auto', // Default to windows if auto
+                    windows: osType === 'windows',
                     full: scanType === 'full',
                     light: scanType === 'quick'
                 };
@@ -259,7 +259,6 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                                 onChange={(e) => setOsType(e.target.value)}
                                                 value={osType}
                                             >
-                                                <option value="auto">Automatic Detection</option>
                                                 <option value="windows">Windows</option>
                                                 <option value="linux">Linux</option>
                                             </select>
@@ -353,7 +352,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                     <div className="flex justify-between items-center border-b border-white/5 pb-6">
                                         <span className="text-slate-500">Parameters</span>
                                         <div className="text-right">
-                                            <div className="text-white text-base">{osType === 'auto' ? 'Auto-Detect OS' : osType}</div>
+                                            <div className="text-white text-base">{osType}</div>
                                             <div className="text-xs text-slate-500 mt-1">{dockerImage}</div>
                                         </div>
                                     </div>
@@ -382,14 +381,25 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                         )}
 
                         <div className="mt-10 pt-8 border-t border-white/5 flex justify-end">
-                            <button
-                                type="submit"
-                                disabled={(activeStep === 1 && !selectedFile) || uploading || (activeStep === 2 && imageError)}
-                                className={`px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all flex items-center hover:scale-105 hover:shadow-purple-500/50
-                                ${((activeStep === 1 && !selectedFile) || (activeStep === 2 && imageError)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
-                            >
-                                {activeStep === 3 ? 'START ANALYSIS' : (activeStep === 1 ? 'UPLOAD & CONTINUE' : 'CONTINUE')} <ArrowRight className="w-5 h-5 ml-2" />
-                            </button>
+                            <div className="flex gap-4">
+                                {activeStep > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveStep(activeStep - 1)}
+                                        className="px-6 py-3 bg-white/5 text-white rounded-xl font-bold hover:bg-white/10 transition-colors border border-white/10"
+                                    >
+                                        Back
+                                    </button>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={(activeStep === 1 && !selectedFile) || uploading || (activeStep === 2 && imageError)}
+                                    className={`px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all flex items-center hover:scale-105 hover:shadow-purple-500/50
+                                    ${((activeStep === 1 && !selectedFile) || (activeStep === 2 && imageError)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                                >
+                                    {activeStep === 3 ? 'START ANALYSIS' : (activeStep === 1 ? 'UPLOAD & CONTINUE' : 'CONTINUE')} <ArrowRight className="w-5 h-5 ml-2" />
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>

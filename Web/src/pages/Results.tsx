@@ -249,12 +249,32 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             );
         }
 
+        // Helper to flatten nested data (Vol3 __children) for Table View
+        const flattenData = (items: any[]): any[] => {
+            let flat: any[] = [];
+            items.forEach(item => {
+                // Create a copy without __children to avoid circular JSON issues in table rendering
+                const { __children, ...rest } = item;
+                flat.push(rest);
+                if (__children && Array.isArray(__children)) {
+                    flat = flat.concat(flattenData(__children));
+                }
+            });
+            return flat;
+        };
+
+        // Determine if we need to flatten (heuristic: check first item for __children)
+        // Only flatten for Table View if it looks like a tree
+        const tableData = (results.length > 0 && results[0]['__children'])
+            ? flattenData(results)
+            : results;
+
         // Filter columns
-        const allColumns = Object.keys(results[0]);
+        const allColumns = tableData.length > 0 ? Object.keys(tableData[0]) : [];
         const columns = allColumns.filter(col => !hiddenCols.includes(col));
 
         // Simple client-side search
-        const filteredResults = results.filter(row =>
+        const filteredResults = tableData.filter(row =>
             Object.values(row).some(val =>
                 String(val).toLowerCase().includes(searchTerm.toLowerCase())
             )

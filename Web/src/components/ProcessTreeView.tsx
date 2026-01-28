@@ -34,7 +34,7 @@ const buildProcessTree = (data: any[]): ProcessNode[] => {
 
         return {
             id: `pid-${item['PID']}-${Math.random()}`, // Unique ID for arborist
-            name: item['ImageFileName'] || 'Unknown',
+            name: item['ImageFileName'] || item['COMM'] || 'Unknown',
             pid: item['PID'],
             ppid: item['PPID'],
             data: item,

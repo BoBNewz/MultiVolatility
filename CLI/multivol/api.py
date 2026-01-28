@@ -287,7 +287,9 @@ def scan():
         "mode": None,
         "profile": None,
         "processes": None,
-        "host_path": os.environ.get("HOST_PATH") # Added for DooD support via Env
+        "host_path": os.environ.get("HOST_PATH"), # Added for DooD support via Env
+        "show_commands": True, # Enable command logging for API
+        "fetch_symbol": False
     }
     
     args_dict = default_args.copy()
@@ -303,6 +305,10 @@ def scan():
     
     if is_linux == is_windows:
         return jsonify({"error": "You must specify either 'linux': true or 'windows': true, but not both or neither."}), 400
+
+    # Default fetch_symbol to True for Linux if not explicitly provided
+    if is_linux and "fetch_symbol" not in data:
+        args_dict["fetch_symbol"] = True
 
     args_obj = argparse.Namespace(**args_dict)
     
