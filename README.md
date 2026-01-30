@@ -1,5 +1,7 @@
 <div align="center">
 
+![Logo](Web/public/favicon.ico)
+
 # MultiVolatility (MultiVol)
 
 **A high-performance, containerized memory forensics platform.**
