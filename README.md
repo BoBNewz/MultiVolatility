@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Web/public/favicon.ico" alt="Logo" height="128">
+<img src="Web/public/favicon.ico" alt="Logo" height="160">
 
 # MultiVolatility (MultiVol)
 
