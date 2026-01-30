@@ -1,0 +1,22 @@
+info:
+  name: List  commands for an image
+  type: http
+  seq: 11
+
+http:
+  method: GET
+  url: http://localhost:5001/volatility3/plugins?image=volatility3
+  params:
+    - name: image
+      value: volatility3
+      type: query
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

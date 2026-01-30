@@ -13,7 +13,9 @@ from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify, abort, send_from_directory, send_file
 from flask_cors import CORS
 import zipfile
+import zipfile
 import io
+import textwrap
 
 app = Flask(__name__)
 # Increase max upload size to 16GB (or appropriate limit for dumps)
@@ -24,7 +26,11 @@ STORAGE_DIR = os.environ.get("STORAGE_DIR", os.path.join(os.getcwd(), "storage")
 if not os.path.exists(STORAGE_DIR):
     os.makedirs(STORAGE_DIR)
 
+
 DB_PATH = os.path.join(STORAGE_DIR, "scans.db")
+SYMBOLS_DIR = os.path.join(os.getcwd(), "volatility3_symbols")
+if not os.path.exists(SYMBOLS_DIR):
+    os.makedirs(SYMBOLS_DIR)
 
 runner_func = None
 
@@ -48,6 +54,13 @@ def restrict_to_localhost():
     if request.remote_addr not in allowed_ips:
         print(f"[WARNING] Access blocked from: {request.remote_addr}")
         abort(403, description="Access forbidden: Only localhost connections allowed, please set DISABLE_LOCALHOST_ONLY=1 to disable this check.")
+
+def resolve_host_path(path):
+    """Resolves a container path to a host path for DooD."""
+    host_path = os.environ.get("HOST_PATH")
+    if host_path and path.startswith(os.getcwd()):
+        return os.path.join(host_path, os.path.relpath(path, os.getcwd()))
+    return path
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -269,7 +282,53 @@ def upload_file():
         except Exception as e:
             print(f"[ERROR] Failed to save file: {e}")
             return jsonify({"error": str(e)}), 500
+            return jsonify({"error": str(e)}), 500
 
+@app.route('/symbols', methods=['GET'])
+def list_symbols():
+    try:
+        symbols_files = []
+        for root, dirs, files in os.walk(SYMBOLS_DIR):
+            for file in files:
+                # We want relative path from symbols root
+                abs_path = os.path.join(root, file)
+                rel_path = os.path.relpath(abs_path, SYMBOLS_DIR)
+                symbols_files.append({
+                    "name": rel_path,
+                    "size": os.path.getsize(abs_path),
+                    "modified": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(abs_path)))
+                })
+        return jsonify({"symbols": symbols_files})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/symbols', methods=['POST'])
+def upload_symbol():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No chosen file"}), 400
+    
+    if file:
+        filename = secure_filename(file.filename)
+        save_path = os.path.join(SYMBOLS_DIR, filename)
+        
+        try:
+            print(f"[DEBUG] Saving symbol file to {save_path}")
+            file.save(save_path)
+            
+            # If zip, unzip?
+            if filename.endswith(".zip"):
+                 # Optional: Unzip if user uploads a full pack
+                 # For now, let's just save it. User usually uploads .json or .zip for profiles.
+                 # Actually, Vol3 can use zip files directly if placed correctly, or we might want to unzip.
+                 # Let's verify what the user likely wants. Usually it's a JSON/ISF.
+                 pass
+
+            return jsonify({"status": "success", "path": save_path})
+        except Exception as e:
+             return jsonify({"error": str(e)}), 500
 @app.route('/scan', methods=['POST'])
 def scan():
     data = request.json
@@ -290,8 +349,9 @@ def scan():
         "profile": None,
         "processes": None,
         "host_path": os.environ.get("HOST_PATH"), # Added for DooD support via Env
-        "show_commands": True, # Enable command logging for API
-        "fetch_symbol": False
+        "debug": True, # Enable command logging for API
+        "fetch_symbol": False,
+        "custom_symbol": None
     }
     
     args_dict = default_args.copy()
@@ -407,6 +467,84 @@ def list_images():
                         volatility_images.append(tag)
         return jsonify({"images": list(set(volatility_images))})
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/volatility3/plugins', methods=['GET'])
+def list_volatility_plugins():
+    image = request.args.get('image')
+    if not image:
+         return jsonify({"error": "Missing 'image' query parameter"}), 400
+         
+    try:
+        script_content = """
+            from volatility3 import framework
+            import volatility3.plugins
+            import json
+            import sys
+
+            try:
+                failures = framework.import_files(volatility3.plugins, ignore_errors=True)
+                plugins = framework.list_plugins()  # dict: {"windows.pslist.PsList": <class ...>, ...}
+                
+                output = {
+                    "count": len(plugins),
+                    "plugins": sorted(list(plugins.keys())),
+                    "failures": sorted([str(f) for f in failures]) if failures else []
+                }
+                print(json.dumps(output))
+            except Exception as e:
+                print(json.dumps({"error": str(e)}))
+        """
+        script_content = textwrap.dedent(script_content)
+        
+        # Write script to outputs dir so we can mount it
+        output_dir = os.path.join(os.getcwd(), "outputs")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+        script_path = os.path.join(output_dir, "list_plugins_script.py")
+        with open(script_path, "w") as f:
+            f.write(script_content)
+            
+        # Resolve host path for Docker volume
+        host_script_path = resolve_host_path(script_path)
+        
+        client = docker.from_env()
+        
+        # Run container
+        print(f"[DEBUG] running list_plugins on image {image}")
+        container = client.containers.run(
+            image=image,
+            command="python3 /list_plugins.py",
+            volumes={
+                host_script_path: {'bind': '/list_plugins.py', 'mode': 'ro'}
+            },
+            stderr=True,
+            remove=True
+        )
+        
+        # Parse output
+        raw_output = container.decode('utf-8')
+        try:
+            # Output should be mainly JSON
+            lines = raw_output.splitlines()
+            # It might have stderr logs, so look for JSON
+            json_line = None
+            for line in reversed(lines):
+                if line.strip().startswith('{'):
+                    json_line = line
+                    break
+            
+            if json_line:
+                data = json.loads(json_line)
+                return jsonify(data)
+            else:
+                 return jsonify({"error": "No JSON output found", "raw": raw_output}), 500
+        except:
+             return jsonify({"error": "Failed to parse script output", "raw": raw_output}), 500
+
+    except Exception as e:
+        print(f"[ERROR] List plugins failed: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/results/<uuid>/modules', methods=['GET'])
@@ -551,6 +689,75 @@ def list_scans():
     conn.close()
     return jsonify(scans_list)
 
+@app.route('/scans/<uuid>/execute', methods=['POST'])
+def execute_plugin(uuid):
+    data = request.json
+    module = data.get('module')
+    if not module:
+        return jsonify({"error": "Missing 'module' parameter"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM scans WHERE uuid = ?", (uuid,))
+    scan = c.fetchone()
+    conn.close()
+
+    if not scan:
+        return jsonify({"error": "Scan not found"}), 404
+
+    # Reconstruct arguments for runner
+    # We use default paths as they are standard in the container
+    default_args = {
+        "profiles_path": os.path.join(os.getcwd(), "volatility2_profiles"),
+        "symbols_path": os.path.join(os.getcwd(), "volatility3_symbols"),
+        "cache_path": os.path.join(os.getcwd(), "volatility3_cache"),
+        "plugins_dir": os.path.join(os.getcwd(), "volatility3_plugins"),
+        "format": "json",
+        "commands": module, # Execute only this module
+        "light": False,
+        "full": False,
+        "linux": False,
+        "windows": False,
+        "mode": scan['volatility_version'], # vol2 or vol3
+        "profile": None, # TODO: Store profile in DB for vol2?
+        "processes": 1, 
+        "host_path": os.environ.get("HOST_PATH"),
+        "debug": True,
+        "fetch_symbol": False,
+        "custom_symbol": None, # TODO: Store custom symbol in DB?
+        "dump": scan['dump_path'],
+        "image": scan['image'],
+        "output_dir": scan['output_dir']
+    }
+
+    # Set OS flags based on DB
+    if scan['os'] == 'linux':
+        default_args['linux'] = True
+        default_args['fetch_symbol'] = True # Default for Linux
+    elif scan['os'] == 'windows':
+        default_args['windows'] = True
+    
+    args_obj = argparse.Namespace(**default_args)
+
+    def background_single_run(s_id, args):
+        try:
+             # Just run it
+             if runner_func:
+                 print(f"[DEBUG] Executing manual plugin {args.commands} on {s_id}")
+                 runner_func(args)
+                 
+             # Ingest
+             ingest_results_to_db(s_id, args.output_dir)
+        except Exception as e:
+            print(f"[ERROR] Manual plugin execution failed: {e}")
+
+    thread = threading.Thread(target=background_single_run, args=(uuid, args_obj))
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({"status": "started", "module": module})
+
 @app.route('/stats', methods=['GET'])
 def get_stats():
     conn = sqlite3.connect(DB_PATH)
@@ -593,6 +800,9 @@ def list_evidences():
 
     try:
         items = os.listdir(STORAGE_DIR)
+        # Robustly filter system files immediately
+        items = [i for i in items if not (i.startswith("scans.db") or i.endswith(".sha256"))]
+
         print(f"[DEBUG] list_evidences found {len(items)} items in {STORAGE_DIR}")
         print(f"[DEBUG] Items: {items}")
     except FileNotFoundError:
@@ -605,7 +815,7 @@ def list_evidences():
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
-        c.execute("SELECT name, dump_path FROM scans")
+        c.execute("SELECT name, dump_path FROM scans ORDER BY created_at ASC")
         rows = c.fetchall()
         for r in rows:
             if r['name'] and r['dump_path']:
@@ -623,6 +833,10 @@ def list_evidences():
 
     
     for item in items:
+        # Filter out system files
+        if item.startswith("scans.db") or item.endswith(".sha256"):
+            continue
+
         path = os.path.join(STORAGE_DIR, item)
         if os.path.isdir(path) and item.endswith("_extracted"):
              # This is an extracted folder
@@ -701,7 +915,7 @@ def list_evidences():
                 continue
 
             # Resolve Display Name (Case Name)
-            display_name = case_map.get(item, item)
+            display_name = case_map.get(item, "Unassigned Evidence")
             
             # WRAP IN GROUP to ensure Folder Style
             child_file = {
@@ -759,6 +973,10 @@ def get_file_hash(filepath):
 
 @app.route('/evidence/<filename>', methods=['DELETE'])
 def delete_evidence(filename):
+    # Strip virtual group prefix if present
+    if filename.startswith("group_"):
+        filename = filename[6:]
+        
     filename = secure_filename(filename)
     path = os.path.join(STORAGE_DIR, filename)
     if os.path.exists(path):
@@ -770,7 +988,7 @@ def delete_evidence(filename):
                 os.remove(path)
                 # Remove sidecar hash if exists
                 if os.path.exists(path + ".sha256"):
-                     os.remove(path + ".sha256")
+                    os.remove(path + ".sha256")
                 
                 # Also remove extracted directory (if this was a dump file)
                 # Checks for standard <filename>_extracted pattern

@@ -26,7 +26,7 @@ class multi_volatility3:
                 return os.path.join(host_path, rel_path)
         return path
 
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False):
+    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None):
         # Executes a Volatility3 command in Docker and handles output
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
@@ -62,6 +62,10 @@ class multi_volatility3:
         dump_filename = os.path.basename(dump)
         base_args = f"vol -q -f /dump_dir/{dump_filename} -s /symbols -p /plugins"
 
+        if custom_symbol:
+            if show_commands:
+                print(f"[DEBUG] Custom Symbol Selected: {custom_symbol}", flush=True)
+
         if fetch_symbols:
             base_args = f"{base_args} --remote-isf-url https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"
 
@@ -74,6 +78,7 @@ class multi_volatility3:
             
         if show_commands:
             print(f"[DEBUG] Volatility 3 Command: {cmd_args}", flush=True)
+            print(f"[DEBUG] Docker Volumes: {json.dumps(volumes, indent=2)}", flush=True)
 
         try:
             container = client.containers.run(

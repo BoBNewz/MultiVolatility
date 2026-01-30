@@ -204,5 +204,49 @@ export const api = {
 
     getDumpDownloadUrl: (taskId: string): string => {
         return `${API_BASE_URL}/dump-task/${taskId}/download`;
+    },
+
+    getSymbols: async (): Promise<any[]> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/symbols`);
+            if (!response.ok) return [];
+            const data = await response.json();
+            return data.symbols || [];
+        } catch (e) {
+            console.error("Failed to fetch symbols", e);
+            return [];
+        }
+    },
+
+    uploadSymbol: async (file: File): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_BASE_URL}/symbols`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to upload symbol');
+        }
+        return response.json();
+    },
+
+    listPlugins: async (image: string): Promise<any> => {
+        const response = await fetch(`${API_BASE_URL}/volatility3/plugins?image=${image}`);
+        if (!response.ok) throw new Error('Failed to list plugins');
+        return response.json();
+    },
+
+    executePlugin: async (uuid: string, module: string): Promise<any> => {
+        const response = await fetch(`${API_BASE_URL}/scans/${uuid}/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ module })
+        });
+        if (!response.ok) throw new Error('Failed to execute plugin');
+        return response.json();
     }
 };

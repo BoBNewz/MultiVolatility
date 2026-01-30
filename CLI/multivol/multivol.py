@@ -107,7 +107,7 @@ def runner(arguments):
                 False, # quiet
                 lock,  # lock
                 arguments.host_path,
-                getattr(arguments, "show_commands", False)
+                getattr(arguments, "debug", False)
                 ) for cmd in commands]
             )
         else:
@@ -132,7 +132,8 @@ def runner(arguments):
                                                                     lock,  # lock
                                                                     arguments.host_path,
                                                                     True if getattr(arguments, "fetch_symbol", False) else False,
-                                                                    getattr(arguments, "show_commands", False)
+                                                                    getattr(arguments, "debug", False),
+                                                                    getattr(arguments, "custom_symbol", None)
                                                                 )
 
             
@@ -151,7 +152,8 @@ def runner(arguments):
                 lock, # lock
                 arguments.host_path,
                 True if getattr(arguments, "fetch_symbol", False) else False,
-                getattr(arguments, "show_commands", False)
+                getattr(arguments, "debug", False),
+                getattr(arguments, "custom_symbol", None)
                 )) for cmd in commands]
             
             # Progress counters
@@ -228,6 +230,10 @@ def main():
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol3_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
     vol3_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes")
+    
+    # Global arguments
+    parser.add_argument("--debug", action="store_true", help="Show executed Docker commands")
+
     args = parser.parse_args()
 
     if args.api:

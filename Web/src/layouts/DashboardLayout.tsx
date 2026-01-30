@@ -5,7 +5,8 @@ import {
     LayoutDashboard,
     Briefcase,
     FileText,
-    LogOut
+    LogOut,
+    Database
 } from 'lucide-react';
 
 interface SidebarItemProps {
@@ -101,6 +102,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                         onClick={() => onTabChange('evidences')}
                         open={open}
                     />
+                    <SidebarItem
+                        icon={Database}
+                        label="Symbols"
+                        active={activeTab === 'symbols'}
+                        onClick={() => onTabChange('symbols')}
+                        open={open}
+                    />
                 </nav>
 
                 <div className="pb-2 border-t border-white/5 pt-2 space-y-2">
@@ -134,7 +142,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
 
             {/* Main Content Area */}
             <div
-                className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-out
+                className={`flex-1 flex flex-col min-h-screen min-w-0 w-full transition-all duration-300 ease-out
             ${open ? 'ml-[290px]' : 'ml-[110px]'}
             pr-4 py-4
         `}
@@ -153,7 +161,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                 </header>
 
                 {/* Content */}
-                <main className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl border border-white/5 bg-[#0b0a12]/30 shadow-inner">
+                <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden rounded-2xl border border-white/5 bg-[#0b0a12]/30 shadow-inner">
                     {children}
                 </main>
             </div>

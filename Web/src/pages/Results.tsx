@@ -11,11 +11,15 @@ import {
     AlignLeft,
     EyeOff,
     Columns,
-    Network
+    Network,
+    Play,
+    Terminal,
+    Loader2
 } from 'lucide-react';
 import { api } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
 import { ProcessTreeView } from '../components/ProcessTreeView';
+import { NetworkGraphView } from '../components/NetworkGraphView';
 
 export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> = ({ onBack, caseId: propCaseId }) => {
     const { caseId: paramCaseId } = useParams();
@@ -23,6 +27,8 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
     const [modules, setModules] = React.useState<string[]>([]);
     const [activeModule, setActiveModule] = React.useState<string | null>(null);
+    const [showRunModal, setShowRunModal] = React.useState(false);
+    const [runPluginName, setRunPluginName] = React.useState('');
     const [results, setResults] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
@@ -30,7 +36,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [isFullScreen, setIsFullScreen] = React.useState(false);
     const [wrapText, setWrapText] = React.useState(false);
     const [hiddenCols, setHiddenCols] = React.useState<string[]>([]);
-    const [viewMode, setViewMode] = React.useState<'table' | 'tree'>('table');
+    const [viewMode, setViewMode] = React.useState<'table' | 'tree' | 'graph'>('table');
     const [caseDetails, setCaseDetails] = React.useState<any | null>(null);
 
     // Column resizing state
@@ -209,7 +215,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         if (loading) {
             return (
                 <div className="flex-1 flex items-center justify-center flex-col text-slate-500">
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
                     <p>Loading results...</p>
                 </div>
             );
@@ -226,6 +232,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft');
         const isProcessTree = activeModule?.toLowerCase().includes('pstree');
+        const isNetScan = activeModule?.toLowerCase().includes('netscan');
 
         if (viewMode === 'tree' && isFileScan) {
             // New dedicated component handling its own hooks correctly
@@ -246,6 +253,12 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                     viewMode={viewMode}
                     onToggleView={setViewMode}
                 />
+            );
+        }
+
+        if (viewMode === 'graph' && isNetScan) {
+            return (
+                <NetworkGraphView data={results} />
             );
         }
 
@@ -284,7 +297,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         return (
             <div className="flex flex-col h-full">
-                {(isFileScan || isProcessTree) && (
+                {(isFileScan || isProcessTree || isNetScan) && (
                     <div className="flex items-center space-x-2 mb-4">
                         <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
                             <button
@@ -295,26 +308,38 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 <AlignLeft size={14} className="mr-2" />
                                 Table
                             </button>
-                            <button
-                                onClick={() => setViewMode('tree')}
-                                className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'tree' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                {isProcessTree ? <Network size={14} className="mr-2" /> : <FileIcon size={14} className="mr-2" />}
-                                Tree
-                            </button>
+                            {(isFileScan || isProcessTree) && (
+                                <button
+                                    onClick={() => setViewMode('tree')}
+                                    className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'tree' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    {isProcessTree ? <Network size={14} className="mr-2" /> : <FileIcon size={14} className="mr-2" />}
+                                    Tree
+                                </button>
+                            )}
+                            {isNetScan && (
+                                <button
+                                    onClick={() => setViewMode('graph')}
+                                    className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'graph' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    <Network size={14} className="mr-2" />
+                                    Graph
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
 
                 <div className="flex-1 overflow-auto bg-[#13111c]/95 backdrop-blur-sm rounded-xl border border-white/5 relative shadow-inner">
-                    <table className="w-full text-left border-collapse table-fixed">
+                    <table className="min-w-full text-left border-collapse">
                         <thead className="bg-[#13111c] sticky top-0 z-10">
                             <tr>
                                 {columns.map((key) => (
                                     <th
                                         key={key}
-                                        className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-white/5 select-none relative group bg-[#13111c]"
+                                        className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-white/5 select-none relative group bg-[#13111c] whitespace-nowrap"
                                         style={{ width: colWidths[key] || 'auto', minWidth: 50 }}
                                     >
                                         <div className="flex items-center justify-between">
@@ -394,11 +419,66 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         );
     };
 
+    // --- Plugin Execution Logic ---
+    const [availablePlugins, setAvailablePlugins] = React.useState<string[]>([]);
+    const [loadingPlugins, setLoadingPlugins] = React.useState(false);
+    const [executingPlugin, setExecutingPlugin] = React.useState(false);
+    const [isPluginDropdownOpen, setIsPluginDropdownOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        if (showRunModal && availablePlugins.length === 0 && caseDetails?.image) {
+            fetchPlugins();
+        }
+    }, [showRunModal, caseDetails]);
+
+    const fetchPlugins = async () => {
+        if (!caseDetails?.image) return;
+        setLoadingPlugins(true);
+        try {
+            const data = await api.listPlugins(caseDetails.image);
+            if (data.plugins && Array.isArray(data.plugins)) {
+                let filtered = data.plugins;
+                const os = caseDetails.os?.toLowerCase();
+
+                if (os === 'windows') {
+                    filtered = filtered.filter((p: string) => !p.toLowerCase().startsWith('linux.') && !p.toLowerCase().startsWith('mac.'));
+                } else if (os === 'linux') {
+                    filtered = filtered.filter((p: string) => !p.toLowerCase().startsWith('windows.') && !p.toLowerCase().startsWith('mac.'));
+                } else if (os === 'mac' || os === 'macos') {
+                    filtered = filtered.filter((p: string) => !p.toLowerCase().startsWith('windows.') && !p.toLowerCase().startsWith('linux.'));
+                }
+
+                setAvailablePlugins(filtered);
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to load plugin list from Docker image.");
+        } finally {
+            setLoadingPlugins(false);
+        }
+    };
+
+    const handleExecutePlugin = async () => {
+        if (!caseId || !runPluginName) return;
+        setExecutingPlugin(true);
+        try {
+            await api.executePlugin(caseId, runPluginName);
+            toast.success(`Started ${runPluginName}`);
+            setShowRunModal(false);
+            // Optional: Start polling for result or just refresh modules list after a delay
+            setTimeout(loadModules, 2000);
+        } catch (e: any) {
+            toast.error(e.message || "Failed to execute plugin");
+        } finally {
+            setExecutingPlugin(false);
+        }
+    };
+
     return (
-        <div className={`flex flex-col h-full ${isFullScreen ? 'fixed inset-0 z-50 bg-[#0b0a12]' : ''}`}>
+        <div className={`flex flex-col h-full w-full overflow-hidden ${isFullScreen ? 'fixed inset-0 z-50 bg-[#0b0a12] p-0' : 'p-6'}`}>
             {/* Header */}
             {!isFullScreen && (
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-shrink-0">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={onBack}
@@ -415,10 +495,17 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             </div>
                         </div>
                     </div>
+                    <button
+                        onClick={() => setShowRunModal(true)}
+                        className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg shadow-purple-900/20 transition-all hover:scale-105 active:scale-95 border border-white/10"
+                    >
+                        <Play className="w-4 h-4 mr-2" />
+                        Run Plugin
+                    </button>
                 </div>
             )}
 
-            <div className={`flex flex-1 gap-6 min-h-0 ${isFullScreen ? 'p-0' : ''}`}>
+            <div className={`flex flex-1 gap-6 min-h-0 min-w-0 ${isFullScreen ? 'p-0' : ''}`}>
                 {/* Module Sidebar */}
                 {!isFullScreen && (
                     <div className="w-64 flex flex-col bg-[#13111c]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
@@ -572,6 +659,131 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-sm font-medium transition-colors"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Run Plugin Modal */}
+            {showRunModal && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    {/* Backdrop to close dropdown if open (simple click outside) */}
+                    {isPluginDropdownOpen && (
+                        <div
+                            className="fixed inset-0 z-[71]"
+                            onClick={() => setIsPluginDropdownOpen(false)}
+                        />
+                    )}
+                    <div className="bg-[#1e1e2d] border border-white/10 rounded-xl shadow-2xl w-full max-w-lg ring-1 ring-white/10 animate-fadeIn relative z-[72]">
+                        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#13111c] rounded-t-xl">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                    <Terminal size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Execute Plugin</h3>
+                                    <p className="text-xs text-slate-500">Run a specific Volatility module</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowRunModal(false)}
+                                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-300">Plugin Name</label>
+                                {/* Searchable Combobox */}
+                                <div className="relative">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                                        <input
+                                            type="text"
+                                            className="w-full bg-[#0b0a12] border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none placeholder-slate-600"
+                                            placeholder={loadingPlugins ? "Loading plugins..." : "Search and select plugin..."}
+                                            value={runPluginName}
+                                            onChange={(e) => {
+                                                setRunPluginName(e.target.value);
+                                                setIsPluginDropdownOpen(true);
+                                            }}
+                                            onFocus={() => setIsPluginDropdownOpen(true)}
+                                            disabled={loadingPlugins}
+                                        />
+                                        {runPluginName && (
+                                            <button
+                                                onClick={() => {
+                                                    setRunPluginName('');
+                                                    setIsPluginDropdownOpen(true);
+                                                }}
+                                                className="absolute right-3 top-2.5 text-slate-500 hover:text-white"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Dropdown Results */}
+                                    {isPluginDropdownOpen && !loadingPlugins && (
+                                        <div className="absolute z-50 left-0 right-0 top-full mt-2 bg-[#1e1e2d] border border-white/10 rounded-lg shadow-xl max-h-60 overflow-y-auto ring-1 ring-black/50">
+                                            {availablePlugins.filter(p => p.toLowerCase().includes(runPluginName.toLowerCase())).length === 0 ? (
+                                                <div className="p-3 text-sm text-slate-500 text-center">No plugins found</div>
+                                            ) : (
+                                                availablePlugins
+                                                    .filter(p => p.toLowerCase().includes(runPluginName.toLowerCase()))
+                                                    .map(p => (
+                                                        <button
+                                                            key={p}
+                                                            onClick={() => {
+                                                                setRunPluginName(p);
+                                                                setIsPluginDropdownOpen(false);
+                                                            }}
+                                                            className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-primary/20 hover:text-white transition-colors flex items-center"
+                                                        >
+                                                            <Terminal className="w-3.5 h-3.5 mr-2 opacity-50" />
+                                                            {p}
+                                                        </button>
+                                                    ))
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Loading State */}
+                                    {loadingPlugins && (
+                                        <div className="absolute right-3 top-3 pointer-events-none">
+                                            <Loader2 className="w-4 h-4 text-slate-500 animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-xs text-slate-500">
+                                    Select the specific plugin you wish to run against this specific memory dump.
+                                </p>
+                            </div>
+
+                            <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg flex items-start gap-3">
+                                <div className="mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                                <p className="text-xs text-amber-500/80 leading-relaxed">
+                                    Running a new plugin will start a background task. The result will appear in the module list once completed.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-5 border-t border-white/5 bg-[#13111c] flex justify-end gap-3 rounded-b-xl">
+                            <button
+                                onClick={() => setShowRunModal(false)}
+                                className="px-4 py-2 hover:bg-white/5 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                disabled={!runPluginName || executingPlugin}
+                                onClick={handleExecutePlugin}
+                                className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-900/20 transition-all flex items-center"
+                            >
+                                {executingPlugin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                                Execute
                             </button>
                         </div>
                     </div>

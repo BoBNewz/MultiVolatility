@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HardDrive, Activity, Briefcase, Box as BoxIcon, ChevronRight, Loader2, Monitor, Terminal, Command } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, RadialBarChart, RadialBar, Legend, Tooltip } from 'recharts';
 import type { Scan } from '../types';
 import { api } from '../services/api';
 
@@ -91,17 +92,103 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                     Icon={BoxIcon}
                     color="text-purple-400"
                     gradient="from-purple-500 to-fuchsia-500"
-                    onClick={() => onNavigate?.('cases')}
+                    onClick={() => onNavigate?.('symbols')}
                 />
             </div>
 
-            {/* Empty state for charts - or just removed as requested */}
-            {cases.length === 0 && (
-                <div className="p-10 text-center text-slate-500 bg-[#13111c]/40 backdrop-blur-md border border-white/5 rounded-2xl">
-                    <p>No active cases. Start a new scan to see data.</p>
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Evidence Breakdown (OS Distribution) */}
+                <div className="bg-[#13111c]/60 backdrop-blur-md border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col min-h-[350px]">
+                    <h3 className="text-white font-bold text-lg mb-2">Evidence Breakdown</h3>
+                    <p className="text-slate-500 text-sm mb-6">Distribution by Operating System</p>
+
+                    <div className="flex-1 min-h-[250px] relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={[
+                                        { name: 'Windows', value: cases.filter(c => c.os === 'windows').length },
+                                        { name: 'Linux', value: cases.filter(c => c.os === 'linux').length },
+                                        { name: 'Mac', value: cases.filter(c => c.os === 'mac').length },
+                                        { name: 'Unknown', value: cases.filter(c => c.os !== 'windows' && c.os !== 'linux' && c.os !== 'mac').length }
+                                    ].filter(d => d.value > 0)}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {[
+                                        { name: 'Windows', color: '#0ea5e9' }, // Sky 500
+                                        { name: 'Linux', color: '#f97316' },   // Orange 500
+                                        { name: 'Mac', color: '#8b5cf6' },     // Violet 500
+                                        { name: 'Unknown', color: '#64748b' }  // Slate 500
+                                    ].map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fff' }}
+                                    itemStyle={{ color: '#fff' }}
+                                />
+                                <Legend verticalAlign="bottom" height={36} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        {cases.length === 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-sm bg-black/20 backdrop-blur-sm rounded-xl">
+                                No data available
+                            </div>
+                        )}
+                    </div>
                 </div>
-            )}
-            {/* If we had real charts, they would go here. For now, removing mock charts. */}
+
+                {/* Pipeline Health (Status) */}
+                <div className="bg-[#13111c]/60 backdrop-blur-md border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col min-h-[350px]">
+                    <h3 className="text-white font-bold text-lg mb-2">Pipeline Health</h3>
+                    <p className="text-slate-500 text-sm mb-6">Current Scan Status Distribution</p>
+
+                    <div className="flex-1 min-h-[250px] relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadialBarChart
+                                cx="50%"
+                                cy="50%"
+                                innerRadius="30%"
+                                outerRadius="100%"
+                                barSize={20}
+                                data={[
+                                    { name: 'Completed', count: cases.filter(c => c.status === 'completed').length, fill: '#10b981' }, // Emerald 500
+                                    { name: 'Processing', count: cases.filter(c => c.status === 'running' || c.status === 'pending').length, fill: '#f59e0b' }, // Amber 500
+                                    { name: 'Failed', count: cases.filter(c => c.status === 'failed').length, fill: '#ef4444' } // Red 500
+                                ]}
+                            >
+                                <RadialBar
+                                    background={{ fill: '#27272a' }}
+                                    dataKey="count"
+                                    cornerRadius={10}
+                                    label={{ position: 'insideStart', fill: '#fff', fontSize: '10px', fontWeight: 'bold' }}
+                                />
+                                <Legend
+                                    iconSize={10}
+                                    layout="vertical"
+                                    verticalAlign="middle"
+                                    wrapperStyle={{ right: 0, top: '50%', transform: 'translate(0, -50%)', lineHeight: '24px' }}
+                                />
+                                <Tooltip
+                                    cursor={{ fill: 'transparent' }}
+                                    contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fff' }}
+                                />
+                            </RadialBarChart>
+                        </ResponsiveContainer>
+                        {cases.length === 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-sm bg-black/20 backdrop-blur-sm rounded-xl">
+                                No data available
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             <div className="bg-[#13111c]/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 shadow-xl flex-1">
                 <div className="flex justify-between items-center mb-6">

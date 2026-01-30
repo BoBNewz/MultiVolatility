@@ -16,19 +16,22 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
     const [availableImages, setAvailableImages] = useState<string[]>([]);
     const [imageError, setImageError] = useState(false);
     const [caseName, setCaseName] = useState('');
+    const [symbolMode, setSymbolMode] = useState<'remote' | 'custom'>('remote');
 
     useEffect(() => {
         const fetchImages = async () => {
-            const images = await api.getDockerImages();
-            if (images && images.length > 0) {
-                setAvailableImages(images);
-                setDockerImage(images[0]);
-                setImageError(false);
-            } else {
-                setAvailableImages([]);
-                setDockerImage('');
-                setImageError(true);
-            }
+            try {
+                const images = await api.getDockerImages();
+                if (images && images.length > 0) {
+                    setAvailableImages(images);
+                    setDockerImage(images[0]);
+                    setImageError(false);
+                } else {
+                    setAvailableImages([]);
+                    setDockerImage('');
+                    setImageError(true);
+                }
+            } catch (e) { console.error(e); setImageError(true); }
         };
         fetchImages();
     }, []);
@@ -88,7 +91,8 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                     linux: osType === 'linux',
                     windows: osType === 'windows',
                     full: scanType === 'full',
-                    light: scanType === 'quick'
+                    light: scanType === 'quick',
+                    fetch_symbol: symbolMode === 'remote'
                 };
 
                 await api.createScan(payload);
@@ -323,6 +327,43 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                                     <option value="Win7SP1x64">Windows 7 SP1 x64</option>
                                                 </select>
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {engine === 'vol3' && osType === 'linux' && (
+                                        <div className="space-y-4 animate-fadeIn">
+                                            <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block ml-1">Symbol Table Source</label>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <label className="cursor-pointer group">
+                                                    <input
+                                                        type="radio"
+                                                        name="symbolMode"
+                                                        checked={symbolMode === 'remote'}
+                                                        onChange={() => setSymbolMode('remote')}
+                                                        className="hidden peer"
+                                                    />
+                                                    <div className="p-4 rounded-xl border border-white/10 bg-black/20 peer-checked:border-primary peer-checked:bg-primary/10 transition-all hover:border-white/30">
+                                                        <div className="font-bold text-white text-sm mb-1">Remote ISF</div>
+                                                        <div className="text-xs text-slate-500">Auto-download from GitHub</div>
+                                                    </div>
+                                                </label>
+                                                <label className="cursor-pointer group">
+                                                    <input
+                                                        type="radio"
+                                                        name="symbolMode"
+                                                        checked={symbolMode === 'custom'}
+                                                        onChange={() => setSymbolMode('custom')}
+                                                        className="hidden peer"
+                                                    />
+                                                    <div className="p-4 rounded-xl border border-white/10 bg-black/20 peer-checked:border-primary peer-checked:bg-primary/10 transition-all hover:border-white/30">
+                                                        <div className="font-bold text-white text-sm mb-1">Custom Symbol</div>
+                                                        <div className="text-xs text-slate-500">Use uploaded JSON/Zip</div>
+                                                    </div>
+                                                </label>
+                                            </div>
+
+
                                         </div>
                                     )}
                                 </div>

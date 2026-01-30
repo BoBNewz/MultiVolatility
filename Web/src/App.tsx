@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { Dashboard } from './pages/Dashboard';
 import { NewScan } from './pages/NewScan';
@@ -6,16 +7,14 @@ import { Results } from './pages/Results';
 import { Cases } from './pages/Cases';
 import { Evidences } from './pages/Evidences';
 import { Login } from './pages/Login';
+import { Symbols } from './pages/Symbols';
 import { api } from './services/api';
 import type { Scan } from './types';
 import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'dashboard');
-
-  useEffect(() => {
-    localStorage.setItem('activeTab', activeTab);
-  }, [activeTab]);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(() => localStorage.getItem('selectedCaseId'));
 
@@ -97,6 +96,7 @@ function App() {
     if (password === envPassword) {
       setIsLoggedIn(true);
       localStorage.setItem('isLoggedIn', 'true');
+      navigate('/dashboard');
       return true;
     }
     return false;
@@ -104,13 +104,12 @@ function App() {
 
   const handleCaseClick = (caseId: string) => {
     setSelectedCaseId(caseId);
-    setActiveTab('results');
+    navigate(`/results/${caseId}`);
   };
 
   const handleAddCase = (newCase: Scan) => {
-    // Optimistic update, but polling will catch up
     setCases([newCase, ...cases]);
-    setActiveTab('cases');
+    navigate('/cases');
   };
 
   const handleRenameCase = (id: string, newName: string) => {
@@ -125,41 +124,37 @@ function App() {
     setCases(cases.filter(c => !ids.includes(c.id)));
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard onCaseClick={handleCaseClick} cases={cases} onNavigate={setActiveTab} />;
-      case 'cases':
-        return <Cases
-          onCaseClick={handleCaseClick}
-          onNewCaseClick={() => setActiveTab('new scan')}
-          cases={cases}
-          onRenameCase={handleRenameCase}
-          onDeleteCase={handleDeleteCase}
-          onDeleteMultiple={handleDeleteMultipleCases}
-        />;
-      case 'evidences':
-        return <Evidences />;
-      case 'new scan':
-        return <NewScan onStartScan={handleAddCase} />;
-      case 'results':
-        return <Results caseId={selectedCaseId} onBack={() => setActiveTab('cases')} />;
-      default:
-        return <Dashboard cases={cases} />;
-    }
-  };
-
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('isLoggedIn');
+    navigate('/login');
   };
 
-  if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
-  }
+  // Determine active tab from location
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.startsWith('/dashboard')) return 'dashboard';
+    if (path.startsWith('/cases')) return 'cases';
+    if (path.startsWith('/evidences')) return 'evidences';
+    if (path.startsWith('/symbols')) return 'symbols';
+    if (path.startsWith('/scan/new')) return 'new scan';
+    if (path.startsWith('/results')) return 'results';
+    return 'dashboard';
+  };
+
+  const handleTabChange = (tab: string) => {
+    switch (tab) {
+      case 'dashboard': navigate('/dashboard'); break;
+      case 'cases': navigate('/cases'); break;
+      case 'evidences': navigate('/evidences'); break;
+      case 'symbols': navigate('/symbols'); break;
+      case 'new scan': navigate('/scan/new'); break;
+      default: navigate('/dashboard');
+    }
+  };
 
   return (
-    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} apiStatus={healthStatus}>
+    <>
       <Toaster position="bottom-right" toastOptions={{
         style: {
           background: '#1e1e2d',
@@ -167,8 +162,48 @@ function App() {
           border: '1px solid rgba(255,255,255,0.1)'
         }
       }} />
-      {renderContent()}
-    </DashboardLayout>
+
+      <Routes>
+        <Route path="/login" element={
+          isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
+        } />
+
+        {/* Protected Routes */}
+        <Route path="/" element={
+          isLoggedIn ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+        } />
+
+        <Route path="/*" element={
+          !isLoggedIn ? <Navigate to="/login" replace /> : (
+            <DashboardLayout
+              activeTab={getActiveTab()}
+              onTabChange={handleTabChange}
+              onLogout={handleLogout}
+              apiStatus={healthStatus}
+            >
+              <Routes>
+                <Route path="dashboard" element={<Dashboard onCaseClick={handleCaseClick} cases={cases} onNavigate={handleTabChange} />} />
+                <Route path="cases" element={
+                  <Cases
+                    onCaseClick={handleCaseClick}
+                    onNewCaseClick={() => navigate('/scan/new')}
+                    cases={cases}
+                    onRenameCase={handleRenameCase}
+                    onDeleteCase={handleDeleteCase}
+                    onDeleteMultiple={handleDeleteMultipleCases}
+                  />
+                } />
+                <Route path="evidences" element={<Evidences />} />
+                <Route path="symbols" element={<Symbols />} />
+                <Route path="scan/new" element={<NewScan onStartScan={handleAddCase} />} />
+                <Route path="results/:caseId" element={<Results onBack={() => navigate('/cases')} />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </DashboardLayout>
+          )
+        } />
+      </Routes>
+    </>
   );
 }
 

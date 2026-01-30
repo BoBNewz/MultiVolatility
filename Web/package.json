@@ -11,13 +11,16 @@
   },
   "dependencies": {
     "@aws-sdk/lib-storage": "^3.974.0",
+    "@types/react-router-dom": "^5.3.3",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-arborist": "^3.4.3",
     "react-dom": "^19.2.0",
+    "react-force-graph-2d": "^1.29.0",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.0",
+    "recharts": "^3.7.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
