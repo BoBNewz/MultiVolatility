@@ -1,19 +1,64 @@
-# MultiVolatility
+# MultiVolatility (MultiVol)
 
-MultiVolatility uses multi-processing to run volatility2 and volatility3 docker containers.
-The tool comes with the possibility to send JSON outputs to a web application.
+**A high-performance, containerized memory forensics platform.**
 
-## Build docker images
+MultiVol orchestrates **Volatility 2** and **Volatility 3** analysis in parallel using Docker. It features a powerful CLI for automation and a modern Web Interface for visualization.
 
-```shell
-git clone https://github.com/BoBNewz/MultiVolatility.git
-cd MultiVolatility
-docker build Dockerfiles/volatility2/ -t volatility2
-docker build Dockerfiles/volatility3/ -t volatility3
+![Demo](CLI/demo.gif)
+![Web Dashboard](Web/screen.png)
+
+## 📂 Project Structure
+
+- **[CLI/](CLI/)**: The core engine. Python-based CLI that manages Docker containers, processes memory dumps, and exposes a REST API.
+    - [Read CLI Documentation](CLI/README.md)
+- **[Web/](Web/)**: The frontend interface. React-based Dashboard for managing cases, launching scans, and exploring results (Process Trees, File Browsers).
+    - [Read Web Documentation](Web/README.md)
+
+## Quick Start (Docker Compose)
+
+The easiest way to run the full stack (API + Web UI) is using Docker Compose.
+
+1.  **Build the base images:**
+    
+    Before starting, you must build the Volatility worker images:
+    ```bash
+    cd CLI
+    docker build Dockerfiles/volatility2/ -t volatility2:latest
+    docker build Dockerfiles/volatility3/ -t volatility3:latest
+    cd ..
+    ```
+
+2.  **Launch the platform:**
+
+    ```bash
+    docker compose up --build -d
+    ```
+
+3.  **Access the UI:**
+    Open your browser and navigate to `http://localhost`.
+
+## CLI Usage
+
+If you prefer to use the tool purely from the command line:
+
+```bash
+pip install multivol
+multivol --help
 ```
 
-## Send outputs to the web application
+Or install from source:
 
-Modify the URL and the API password in the config.yml.
+```bash
+cd CLI
+pip install .
+multivol --help
+```
 
-![MultiVolatility](https://github.com/user-attachments/assets/f77c636d-b647-4218-9617-20268616689c)
+Example:
+```bash
+multivol vol3 --dump memdump.raw --image volatility3:latest --windows --light
+```
+
+## License
+
+This project is licensed under the GNU General Public License v3.0.

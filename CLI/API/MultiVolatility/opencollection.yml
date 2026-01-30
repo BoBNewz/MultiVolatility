@@ -1,0 +1,11 @@
+opencollection: 1.0.0
+
+info:
+  name: MultiVolatility
+
+request: {}
+bundled: false
+extensions:
+  ignore:
+    - node_modules
+    - .git

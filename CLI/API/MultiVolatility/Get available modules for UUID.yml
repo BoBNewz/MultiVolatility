@@ -1,0 +1,15 @@
+info:
+  name: Get available modules for UUID
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://localhost:5001/results/5be624c1-6388-4ca1-97cb-27ca6e649565/modules
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

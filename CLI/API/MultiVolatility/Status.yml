@@ -1,0 +1,15 @@
+info:
+  name: Status
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://localhost:5001/status/37698f62-6674-459b-8a34-071d5615c744
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
