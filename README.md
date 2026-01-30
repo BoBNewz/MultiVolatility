@@ -1,6 +1,15 @@
+<div align="center">
+
 # MultiVolatility (MultiVol)
 
 **A high-performance, containerized memory forensics platform.**
+
+[![PyPI Version](https://img.shields.io/pypi/v/multivol?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/multivol/)
+<br>
+[![BoBNewz](https://img.shields.io/badge/BoBNewz-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/BoBNewz)
+[![Sp00kySkelet0n](https://img.shields.io/badge/Sp00kySkelet0n-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/Sp00kySkelet0n)
+
+</div>
 
 MultiVol orchestrates **Volatility 2** and **Volatility 3** analysis in parallel using Docker. It features a powerful CLI for automation and a modern Web Interface for visualization.
 
