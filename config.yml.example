@@ -1,4 +1,0 @@
-config:
-  backend_address: IP OR URL HERE (include http:// or https://)
-  backend_port: 443 
-  backend_password: RANDOM PASSWORD MUST BE THE SAME IN BACKEND
