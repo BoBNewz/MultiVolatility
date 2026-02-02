@@ -228,7 +228,7 @@ def main():
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol2_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
     vol2_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes.")
-    vol2_parser.add_argument("--output", required=False, default="OUTPUT", help="Directory where outputs will be written.")
+    vol2_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
 
     # Volatility3 argument group
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
