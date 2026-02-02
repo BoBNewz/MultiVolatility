@@ -18,5 +18,3 @@ RUN git clone https://github.com/volatilityfoundation/volatility3.git && \
     pip install --break-system-packages -e ".[full]"
 
 WORKDIR /volatility3
-
-ENTRYPOINT [ "python3", "vol.py" ]

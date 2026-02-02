@@ -4,6 +4,7 @@ import os
 import docker
 import threading
 import uuid
+import re
 import time
 import sqlite3
 import json
@@ -340,6 +341,12 @@ def upload_symbol():
 def scan():
     data = request.json
     
+    # Determine default image based on mode from request
+    req_mode = data.get('mode', 'vol3') # Default to vol3 if not specified (though validation requires it)
+    default_image = "sp00kyskelet0n/volatility3"
+    if req_mode == "vol2":
+        default_image = "sp00kyskelet0n/volatility2"
+
     # Define default arguments matching CLI defaults and requirements
     default_args = {
         "profiles_path": os.path.join(os.getcwd(), "volatility2_profiles"),
@@ -358,15 +365,17 @@ def scan():
         "host_path": os.environ.get("HOST_PATH"), # Added for DooD support via Env
         "debug": True, # Enable command logging for API
         "fetch_symbol": False,
-        "custom_symbol": None
+        "custom_symbol": None,
+        "image": default_image
     }
     
     args_dict = default_args.copy()
     args_dict.update(data)
     
     # Basic Validation
-    if "dump" not in data or "image" not in data or "mode" not in data:
-         return jsonify({"error": "Missing required fields: dump, image, mode"}), 400
+    # Basic Validation
+    if "dump" not in data or "mode" not in data:
+         return jsonify({"error": "Missing required fields: dump, mode"}), 400
 
     # Ensure mutual exclusion for OS flags
     is_linux = bool(data.get("linux"))
@@ -1165,10 +1174,17 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
         print(f"[{task_id}] Launching Docker container: {image_tag}")
         print(f"[{task_id}] Volumes config: {volumes}")
         
+        # Consistent naming for debug
+        # Format: vol3_dump_<short_scan_uuid>_<task_id>
+        # Scan UUID is text, sanitize just in case
+        safe_scan_id = re.sub(r'[^a-zA-Z0-9]', '', scan['uuid'])[:8]
+        container_name = f"vol3_dump_{safe_scan_id}_{task_id}"
+
         try:
             client = docker.from_env()
             container = client.containers.run(
                 image=image_tag,
+                name=container_name,
                 command=cmd,
                 volumes=volumes,
                 remove=True,
@@ -1183,6 +1199,7 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
              client.images.pull(image_tag)
              container = client.containers.run(
                 image=image_tag,
+                name=container_name,
                 command=cmd,
                 volumes=volumes,
                 remove=True,
@@ -1257,8 +1274,14 @@ def dump_file_from_memory(scan_id):
         return jsonify({'error': 'Scan not found'}), 404
 
     data = request.json
+    
+    # Determine default image fallback based on Volatility version
+    default_image = "sp00kyskelet0n/volatility3"
+    if scan['volatility_version'] == "2":
+        default_image = "sp00kyskelet0n/volatility2"
+
     virt_addr = data.get('virt_addr')
-    image = data.get('image')
+    image = data.get('image') or scan['image'] or default_image
     file_path = data.get('file_path')
     
     if not virt_addr and not file_path:
