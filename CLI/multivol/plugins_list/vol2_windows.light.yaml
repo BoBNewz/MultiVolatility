@@ -1,0 +1,13 @@
+modules:
+  - cmdline
+  - cmdscan
+  - connscan
+  - consoles
+  - dlllist
+  - filescan
+  - hashdump
+  - malfind
+  - psscan
+  - pslist
+  - pstree
+  - psxview

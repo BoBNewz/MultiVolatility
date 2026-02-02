@@ -1,0 +1,10 @@
+modules:
+  - banners.Banners
+  - linux.bash.Bash
+  - linux.envars.Envars
+  - linux.malfind.Malfind
+  - linux.psaux.PsAux
+  - linux.psscan.PsScan
+  - linux.pstree.PsTree
+  - linux.ip.Addr
+  - linux.pagecache.Files

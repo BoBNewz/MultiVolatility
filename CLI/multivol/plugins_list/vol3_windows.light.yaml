@@ -1,0 +1,11 @@
+modules:
+  - windows.cmdline.CmdLine
+  - windows.info.Info
+  - windows.filescan.FileScan
+  - windows.netscan.NetScan
+  - windows.netstat.NetStat
+  - windows.pslist.PsList
+  - windows.psscan.PsScan
+  - windows.pstree.PsTree
+  - windows.dlllist.DllList
+  - windows.hashdump.Hashdump

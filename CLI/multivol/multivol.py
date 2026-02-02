@@ -70,7 +70,10 @@ def runner(arguments):
             else:
                 commands = volatility3_instance.getCommands("windows.full")
         elif arguments.linux:
-            commands = volatility3_instance.getCommands("linux")
+            if arguments.light:
+                commands = volatility3_instance.getCommands("linux.light")
+            else:
+                commands = volatility3_instance.getCommands("linux.full")
 
     # Limit the number of parallel processes
     # Default to len(commands) (unlimited) if processes arg is not set or None
@@ -177,7 +180,7 @@ def runner(arguments):
                     if arguments.format == "json":
                          console.print(f"[red][!] Failed to validate JSON for {command_name}[/red]")
 
-            console.print("\n[bold green]Starting strings...")
+            console.print("\n[*] Starting strings...")
 
             get_strings(
                 os.path.basename(arguments.dump),
@@ -188,7 +191,7 @@ def runner(arguments):
                 arguments.host_path
             )
 
-            console.print("\n[bold green]Strings complete !")
+            console.print("\n[*] Strings complete !")
             
             console.print(f"\n[bold green]Scan Complete![/bold green] Success: {success_count}, Failed: {failed_count}")
             
@@ -268,13 +271,12 @@ def main():
         print("[-] --linux or --windows required.")
         sys.exit(1)
 
-    # Prevent unsupported combinations for Volatility3 Linux
-    if (args.mode == "vol3" and args.linux and args.light) or (args.mode == "vol3" and args.linux and args.full):
-        print("[-] --linux not available with --full or --light")
-        sys.exit(1)
-
     if getattr(args, "fetch_symbol", False) and not args.linux:
         print("[-] --fetch-symbol only available with --linux")
+        sys.exit(1)
+
+    if args.mode == "vol2" and getattr(args, "fetch_symbol", False):
+        print("[-] --fetch-symbol only available with vol3")
         sys.exit(1)
 
     # Validate output format

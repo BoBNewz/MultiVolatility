@@ -3,6 +3,7 @@
 import time
 import os
 import json
+import yaml
 from rich import print as rprint
 import docker
 
@@ -165,77 +166,10 @@ class multi_volatility3:
             rprint(message)
 
     def getCommands(self, opsys):
-        # Returns a list of Volatility3 commands for the specified OS and mode
-        if opsys == "windows.full":
-            return ["windows.cmdline.CmdLine", 
-                    "windows.cachedump.Cachedump", 
-                    "windows.dlllist.DllList", 
-                    "windows.driverirp.DriverIrp", 
-                    "windows.drivermodule.DriverModule", 
-                    "windows.driverscan.DriverScan", 
-                    "windows.envars.Envars", 
-                    "windows.filescan.FileScan", 
-                    "windows.getservicesids.GetServiceSIDs", 
-                    "windows.getsids.GetSIDs", 
-                    "windows.handles.Handles", 
-                    "windows.hashdump.Hashdump", 
-                    "windows.lsadump.Lsadump", 
-                    "windows.info.Info", 
-                    "windows.malfind.Malfind", 
-                    "windows.mftscan.MFTScan", 
-                    "windows.modules.Modules", 
-                    "windows.netscan.NetScan", 
-                    "windows.netstat.NetStat", 
-                    "windows.privileges.Privs", 
-                    "windows.pslist.PsList", 
-                    "windows.psscan.PsScan", 
-                    "windows.pstree.PsTree", 
-                    "windows.registry.hivelist.HiveList", 
-                    "windows.registry.certificates.Certificates", 
-                    "windows.registry.hivescan.HiveScan", 
-                    "windows.registry.userassist.UserAssist", 
-                    "windows.sessions.Sessions"
-                ]
-        elif opsys == "windows.light":
-            return ["windows.cmdline.CmdLine",
-                    "windows.info.Info",
-                    "windows.filescan.FileScan",
-                    "windows.netscan.NetScan",
-                    "windows.netstat.NetStat",
-                    "windows.pslist.PsList",
-                    "windows.psscan.PsScan",
-                    "windows.pstree.PsTree",
-                    "windows.dlllist.DllList",
-                    "windows.hashdump.Hashdump"
-                ]
-        elif opsys == "linux":
-            return ["linux.bash.Bash", 
-                    "linux.capabilities.Capabilities", 
-                    "linux.check_syscall.Check_syscall", 
-                    "linux.elfs.Elfs", 
-                    "linux.envars.Envars", 
-                    "linux.library_list.LibraryList", 
-                    "linux.lsmod.Lsmod", 
-                    "linux.lsof.Lsof", 
-                    "linux.malfind.Malfind", 
-                    "linux.mountinfo.MountInfo", 
-                    "linux.psaux.PsAux", 
-                    "linux.pslist.PsList", 
-                    "linux.psscan.PsScan", 
-                    "linux.pstree.PsTree", 
-                    "linux.sockstat.Sockstat",
-                    "linux.boottime.Boottime",
-                    "linux.check_creds.Check_creds",
-                    "linux.hidden_modules.Hidden_modules",
-                    "linux.ip.Addr",
-                    "linux.ip.Link",
-                    "linux.keyboard_notifiers.Keyboard_notifiers",
-                    "linux.modxview.Modxview",
-                    "linux.netfilter.Netfilter",
-                    "linux.pagecache.Files",
-                    "linux.pidhashtable.PIDHashTable",
-                    "linux.tracing.ftrace.CheckFtrace",
-                    "linux.tracing.perf_events.PerfEvents",
-                    "linux.tracing.tracepoints.CheckTracepoints",
-                    "linux.tty_check.tty_check"
-                ]
+
+        with open(f"plugins_list/vol3_{opsys}.yaml", "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+            modules_list = data["modules"]
+
+            return modules_list
