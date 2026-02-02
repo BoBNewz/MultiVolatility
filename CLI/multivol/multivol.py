@@ -9,9 +9,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 try:
     from .multi_volatility2 import multi_volatility2
     from .multi_volatility3 import multi_volatility3
+    from .strings import get_strings
 except ImportError:
     from multi_volatility2 import multi_volatility2
     from multi_volatility3 import multi_volatility3
+    from strings import get_strings
 
 # Wrapper for Volatility 3 to use with imap
 def vol3_wrapper(packed_args):
@@ -174,6 +176,19 @@ def runner(arguments):
                     failed_modules.append(command_name)
                     if arguments.format == "json":
                          console.print(f"[red][!] Failed to validate JSON for {command_name}[/red]")
+
+            console.print("\n[bold green]Starting strings...")
+
+            get_strings(
+                os.path.basename(arguments.dump),
+                os.path.abspath(arguments.dump),
+                output_dir,
+                arguments.image,
+                lock,
+                arguments.host_path
+            )
+
+            console.print("\n[bold green]Strings complete !")
             
             console.print(f"\n[bold green]Scan Complete![/bold green] Success: {success_count}, Failed: {failed_count}")
             

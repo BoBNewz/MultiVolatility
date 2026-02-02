@@ -6,7 +6,6 @@ import json
 from rich import print as rprint
 import docker
 
-
 class multi_volatility3:
     def __init__(self):
         # Constructor for multi_volatility3 class

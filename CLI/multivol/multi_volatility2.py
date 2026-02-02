@@ -25,19 +25,6 @@ class multi_volatility2:
                 rel_path = os.path.relpath(path, os.getcwd())
                 return os.path.join(host_path, rel_path)
         return path
-    
-    def generate_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, format):
-        # Generates the Docker command to run a Volatility2 module
-        return [
-            "docker", "run", "--rm", 
-            "-v", f"{dump_dir}:/dumps/{dump}", 
-            "-v", f"{profiles_path}:/home/vol/profiles",  
-            "-t", docker_image, "--plugins=/home/vol/profiles",
-            "-f", f"/dumps/{dump}",
-            f"--profile={profile}",
-            f"--output={format}",
-            f"{command}"
-        ]
 
     def execute_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, output_dir, format, quiet=False, lock=None, host_path=None, show_commands=False):
         # Executes a Volatility2 command in Docker and handles output
