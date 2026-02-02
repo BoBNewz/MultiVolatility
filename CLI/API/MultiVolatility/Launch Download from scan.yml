@@ -1,0 +1,22 @@
+info:
+  name: Launch Download from scan
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://localhost:5001/scan/794398fa-ccdc-4161-89f3-edf954bdf741/dump-file
+  body:
+    type: json
+    data: |-
+      {
+        "virt_addr": "0x246292576370464",
+        "image": "volatility3:latest"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
