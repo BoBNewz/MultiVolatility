@@ -100,7 +100,13 @@ class multi_volatility2:
 
     def getCommands(self, opsys):
 
-        with open(f"plugins_list/vol2_{opsys}.yaml", "r", encoding="utf-8") as f:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        yaml_path = os.path.join(base_dir, "plugins_list", f"vol2_{opsys}.yaml")
+        if not os.path.exists(yaml_path):
+            raise FileNotFoundError(f"File not found : {yaml_path}")
+
+        with open(yaml_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
             modules_list = data["modules"]
