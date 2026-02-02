@@ -183,11 +183,11 @@ export const api = {
         window.open(`${API_BASE_URL}/scans/${uuid}/download`, '_blank');
     },
 
-    startDumpTask: async (scanId: string, virtAddr: string, image: string): Promise<{ task_id: string, status: string }> => {
+    startDumpTask: async (scanId: string, virtAddr: string, image: string, filePath?: string): Promise<{ task_id: string, status: string }> => {
         const response = await fetch(`${API_BASE_URL}/scan/${scanId}/dump-file`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ virt_addr: virtAddr, image: image })
+            body: JSON.stringify({ virt_addr: virtAddr, image: image, file_path: filePath })
         });
         if (!response.ok) {
             const err = await response.json();

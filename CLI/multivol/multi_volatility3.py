@@ -3,8 +3,10 @@
 import time
 import os
 import json
-import yaml
+import re
+import uuid
 from rich import print as rprint
+import yaml
 import docker
 
 class multi_volatility3:
@@ -81,8 +83,15 @@ class multi_volatility3:
             print(f"[DEBUG] Docker Volumes: {json.dumps(volumes, indent=2)}", flush=True)
 
         try:
+            # Sanitize command name for Docker container name (alphanumeric, dot, underscore, dash)
+            # User request: "module name so its not a random name"
+            # We append a short UUID to ensuring uniqueness for parallel runs
+            sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', command)
+            container_name = f"vol3_{sanitized_name}_{str(uuid.uuid4())[:8]}"
+
             container = client.containers.run(
                 image=docker_image,
+                name=container_name, # Name the container
                 command=cmd_args,
                 volumes=volumes,
                 tty=True, 
@@ -94,11 +103,13 @@ class multi_volatility3:
                 for chunk in container.logs(stream=True):
                     file.write(chunk)
             
-            container.wait()
+            wait_result = container.wait()
+            exit_code = wait_result.get('StatusCode', 0)
             container.remove()
 
         except Exception as e:
              self.safe_print(f"[!] Error running {command}: {e}", lock)
+             return (command, False)
         
         time.sleep(0.5)
         if format == "json":
@@ -129,32 +140,40 @@ class multi_volatility3:
             
         # Validation
         success = False
-        try:
-            with open(self.output_file, "r") as f:
-                content = f.read()
-            
-            # Check for known error string regardless of format
-            if "Volatility experienced" in content:
-                success = False
-            elif format == "json":
-                # Simple validation check matching API logic
-                start_index = content.find('[')
-                if start_index == -1:
-                    start_index = content.find('{')
-                
-                if start_index != -1:
-                    json.loads(content[start_index:])
-                    success = True
-                else:
-                    # Fallback check
-                     lines = content.splitlines()
-                     if len(lines) > 1:
-                         json.loads('\n'.join(lines[1:]))
-                         success = True
-            else:
-                success = True # Assume text output is successful if no crash and no error string
-        except:
+        
+        # Check Exit Code first
+        if exit_code != 0:
             success = False
+        else:
+            try:
+                with open(self.output_file, "r") as f:
+                    content = f.read()
+                
+                # Check for known error strings
+                # "Volatility experienced": General runtime error
+                # "vol.py: error:": Command line argument error
+                # "usage: vol": Often printed on argument error
+                if "Volatility experienced" in content or "vol.py: error:" in content or "vol: error:" in content:
+                    success = False
+                elif format == "json":
+                    # Simple validation check matching API logic
+                    start_index = content.find('[')
+                    if start_index == -1:
+                        start_index = content.find('{')
+                    
+                    if start_index != -1:
+                        json.loads(content[start_index:])
+                        success = True
+                    else:
+                        # Fallback check
+                         lines = content.splitlines()
+                         if len(lines) > 1:
+                             json.loads('\n'.join(lines[1:]))
+                             success = True
+                else:
+                    success = True # Assume text output is successful if no crash and no error string
+            except:
+                success = False
 
         return (command, success)
 

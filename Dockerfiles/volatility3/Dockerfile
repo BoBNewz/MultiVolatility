@@ -1,15 +1,20 @@
-# This Dockerfile is not optimized with a ton of RUN statements. This is for easier debugging
-FROM accenturecifr/volatility3
+FROM debian:trixie-slim
 
-RUN apk add git curl gcc musl-dev linux-headers python3-dev
+RUN apt update && apt install -y \
+    git \
+    python3 \
+    python3-pip \
+    make \
+    gcc \
+    python3-dev \
+    libusb-dev \
+    libusb-1.0-0-dev \
+    libusb-1.0-0 pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/spitfirerxf/vol3-plugins.git && \
-    git clone https://github.com/kudelskisecurity/volatility-gpg.git && \
-    git clone https://github.com/fox-it/OpenSSH-Session-Key-Recovery.git 
+RUN git clone https://github.com/volatilityfoundation/volatility3.git && \
+    cd volatility3 && \
+    pip install --break-system-packages pyarrow && \
+    pip install --break-system-packages -e ".[full]"
 
-ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.1
-RUN python3 -m pip install --use-pep517 cryptography stream_sqlite --break-system-packages
-RUN cd OpenSSH-Session-Key-Recovery && cd pip-package && python3 setup.py install
-RUN cp vol3-plugins/* /opt/volatility3/volatility3/framework/plugins/windows
-RUN cp volatility-gpg/linux/* /opt/volatility3/volatility3/framework/plugins/linux
-RUN curl https://raw.githubusercontent.com/fox-it/OpenSSH-Session-Key-Recovery/main/volatility3/openssh_sessionkeys.py --output /opt/volatility3/volatility3/framework/plugins/linux/openssh_sessionkeys.py
+WORKDIR /volatility3

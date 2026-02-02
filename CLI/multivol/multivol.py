@@ -1,6 +1,7 @@
 # multivol.py
 # Entry point for MultiVolatility: orchestrates running Volatility2 and Volatility3 memory analysis in parallel using multiprocessing.
 import multiprocessing, time, os, argparse, sys
+import docker
 from datetime import datetime
 from rich.console import Console
 from rich.theme import Theme
@@ -87,6 +88,38 @@ def runner(arguments):
     
     custom_theme = Theme({"info": "dim cyan", "warning": "magenta", "danger": "bold red"})
     console = Console(theme=custom_theme)
+
+    # Docker Image Check & Pull
+    try:
+        client = docker.from_env()
+        image_name = arguments.image
+        # Check if --image was passed in args. rudimentary check.
+        user_provided_image = "--image" in sys.argv
+        
+        try:
+            client.images.get(image_name)
+            if not user_provided_image:
+                 console.print(f"[dim cyan][*] No --image provided, using default image: {image_name}[/dim cyan]")
+        except docker.errors.ImageNotFound:
+            msg = f"[*] No --image provided, pulling default image: {image_name}" if not user_provided_image else f"[*] Pulling image: {image_name}"
+            
+            # Use Progress with custom columns to put spinner at the end
+            with Progress(
+                TextColumn("{task.description}"),
+                SpinnerColumn("dots"),
+                transient=True,
+                console=console
+            ) as progress:
+                progress.add_task(f"[bold green]{msg}[/bold green]", total=None)
+                client.images.pull(image_name)
+            
+            # Re-print the message so it persists in the log
+            console.print(f"[bold green]{msg}[/bold green]")
+            console.print(f"[bold green][*] Image {image_name} ready.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]Warning: Docker check failed: {e}[/bold red]")
+        # We don't exit here, we let the individual/pool commands fail if they must, or maybe user has local setup issues.
+
     console.print("\n[bold green][+] Launching all commands...[/bold green]\n")
 
     # Use multiprocessing Manager for Lock
@@ -219,7 +252,7 @@ def main():
     vol2_parser.add_argument("--profiles-path", help="Path to the directory with the profiles.", default=os.path.join(os.getcwd(), "volatility2_profiles"))
     vol2_parser.add_argument("--profile", help="Profile to use.", required=True)
     vol2_parser.add_argument("--dump", help="Dump to parse.", required=True)
-    vol2_parser.add_argument("--image", help="Docker image to use.", required=True)
+    vol2_parser.add_argument("--image", help="Docker image to use.", required=False, default="sp00kyskelet0n/volatility2")
     vol2_parser.add_argument("--commands", help="Commands to run : command1,command2,command3", required=False)
     vol2_os_group = vol2_parser.add_mutually_exclusive_group(required=True)
     vol2_os_group.add_argument("--linux", action="store_true", help="For a Linux memory dump")
@@ -233,7 +266,7 @@ def main():
     # Volatility3 argument group
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
     vol3_parser.add_argument("--dump", help="Dump to parse.", required=True)
-    vol3_parser.add_argument("--image", help="Docker image to use.", required=True)
+    vol3_parser.add_argument("--image", help="Docker image to use.", required=False, default="sp00kyskelet0n/volatility3")
     vol3_parser.add_argument("--symbols-path", help="Path to the directory with the symbols.", required=False, default=os.path.join(os.getcwd(), "volatility3_symbols"))
     vol3_parser.add_argument("--cache-path", help="Path to directory with the cache for volatility3.", required=False, default=os.path.join(os.getcwd(), "volatility3_cache"))
     vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default=os.path.join(os.getcwd(), "volatility3_plugins"))
