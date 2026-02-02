@@ -1151,7 +1151,7 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
            os.makedirs(task_out_dir)
 
         # Retrieve Docker Image
-        # If image_tag is provided, use it. Else use default 'sk4la/volatility3'
+        # If image_tag is provided, use it. Else use default
         # Check if local build?
         # The frontend sends 'image' from caseDetails.
         
