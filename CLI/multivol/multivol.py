@@ -2,6 +2,7 @@
 # Entry point for MultiVolatility: orchestrates running Volatility2 and Volatility3 memory analysis in parallel using multiprocessing.
 import multiprocessing, time, os, argparse, sys
 import docker
+from datetime import datetime
 from rich.console import Console
 from rich.theme import Theme
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
@@ -10,9 +11,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 try:
     from .multi_volatility2 import multi_volatility2
     from .multi_volatility3 import multi_volatility3
+    from .strings import get_strings
 except ImportError:
     from multi_volatility2 import multi_volatility2
     from multi_volatility3 import multi_volatility3
+    from strings import get_strings
 
 # Wrapper for Volatility 3 to use with imap
 def vol3_wrapper(packed_args):
@@ -30,14 +33,15 @@ def runner(arguments):
     if not arguments.light and not arguments.full:
         arguments.light = True
 
+    if hasattr(arguments, "output") and arguments.output:
+        output_dir = arguments.output
+    else:
+        output_dir = f"output_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}"
+    os.makedirs(output_dir, exist_ok=True)
+
     # Handle Volatility2 mode
     if arguments.mode == "vol2":
         volatility2_instance = multi_volatility2()
-        if hasattr(arguments, "output_dir") and arguments.output_dir:
-            output_dir = arguments.output_dir
-        else:
-            output_dir = f"volatility2_{os.path.basename(arguments.dump)}__output"
-        os.makedirs(output_dir, exist_ok=True)
         # Determine commands to run based on arguments
         if arguments.commands:
             commands = arguments.commands.split(",")
@@ -55,11 +59,6 @@ def runner(arguments):
     # Handle Volatility3 mode
     elif arguments.mode == "vol3":
         volatility3_instance = multi_volatility3()
-        if hasattr(arguments, "output_dir") and arguments.output_dir:
-            output_dir = arguments.output_dir
-        else:
-            output_dir = f"volatility3_{os.path.basename(arguments.dump)}__output"
-        os.makedirs(output_dir, exist_ok=True)
         # Determine commands to run based on arguments
         if arguments.commands:
             commands = arguments.commands.split(",")
@@ -69,7 +68,10 @@ def runner(arguments):
             else:
                 commands = volatility3_instance.getCommands("windows.full")
         elif arguments.linux:
-            commands = volatility3_instance.getCommands("linux")
+            if arguments.light:
+                commands = volatility3_instance.getCommands("linux.light")
+            else:
+                commands = volatility3_instance.getCommands("linux.full")
 
     # Limit the number of parallel processes
     # Default to len(commands) (unlimited) if processes arg is not set or None
@@ -207,6 +209,19 @@ def runner(arguments):
                     failed_modules.append(command_name)
                     if arguments.format == "json":
                          console.print(f"[red][!] Failed to validate JSON for {command_name}[/red]")
+
+            console.print("\n[+] Starting strings...")
+
+            get_strings(
+                os.path.basename(arguments.dump),
+                os.path.abspath(arguments.dump),
+                output_dir,
+                arguments.image,
+                lock,
+                arguments.host_path
+            )
+
+            console.print("\n[+] Strings complete !")
             
             console.print(f"\n[bold green]Scan Complete![/bold green] Success: {success_count}, Failed: {failed_count}")
             
@@ -226,7 +241,7 @@ def runner(arguments):
 
 def main():
     # Argument parsing for CLI usage
-    parser = argparse.ArgumentParser("MultiVolatility")
+    parser = argparse.ArgumentParser("multivol")
     parser.add_argument("--api", action="store_true", help="Start API server")
     parser.add_argument("--dev", action="store_true", help="Enable developer mode (hot reload)")
     parser.add_argument("--host-path", type=str, required=False, default=None, help="Root path of the project on the Host machine (required for Docker-in-Docker)")
@@ -245,7 +260,8 @@ def main():
     vol2_parser.add_argument("--light", action="store_true", help="Use the main modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol2_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
-    vol2_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes")
+    vol2_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes.")
+    vol2_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
 
     # Volatility3 argument group
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
@@ -256,13 +272,14 @@ def main():
     vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default=os.path.join(os.getcwd(), "volatility3_plugins"))
     vol3_parser.add_argument("--commands", help="Commands to run : command1,command2,command3", required=False)
     vol3_os_group = vol3_parser.add_mutually_exclusive_group(required=True)
-    vol3_os_group.add_argument("--linux", action="store_true", help="It's a Linux memory dump")
-    vol3_os_group.add_argument("--windows", action="store_true", help="It's a Windows memory dump")
+    vol3_os_group.add_argument("--linux", action="store_true", help="It's a Linux memory dump.")
+    vol3_os_group.add_argument("--windows", action="store_true", help="It's a Windows memory dump.")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol3_parser.add_argument("--fetch-symbol", action="store_true", help="Fetch automatically symbol from github.com/Abyss-W4tcher/volatility3-symbols", required=False)
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol3_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
     vol3_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes")
+    vol3_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
     
     # Global arguments
     parser.add_argument("--debug", action="store_true", help="Show executed Docker commands")
@@ -286,13 +303,12 @@ def main():
         print("[-] --linux or --windows required.")
         sys.exit(1)
 
-    # Prevent unsupported combinations for Volatility3 Linux
-    if (args.mode == "vol3" and args.linux and args.light) or (args.mode == "vol3" and args.linux and args.full):
-        print("[-] --linux not available with --full or --light")
-        sys.exit(1)
-
     if getattr(args, "fetch_symbol", False) and not args.linux:
         print("[-] --fetch-symbol only available with --linux")
+        sys.exit(1)
+
+    if args.mode == "vol2" and getattr(args, "fetch_symbol", False):
+        print("[-] --fetch-symbol only available with vol3")
         sys.exit(1)
 
     # Validate output format

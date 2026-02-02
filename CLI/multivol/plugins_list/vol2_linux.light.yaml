@@ -1,0 +1,12 @@
+modules:
+  - linux_bash
+  - linux_ifconfig
+  - linux_malfind
+  - linux_netscan
+  - linux_enumerate_files
+  - linux_netstat
+  - linux_psaux
+  - linux_pslist
+  - linux_psscan
+  - linux_pstree
+  - linux_psxview
