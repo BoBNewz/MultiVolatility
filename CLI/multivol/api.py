@@ -87,6 +87,13 @@ def init_db():
         print("[INFO] Migrating DB: Adding 'image' column to scans table")
         c.execute("ALTER TABLE scans ADD COLUMN image TEXT")
 
+    # Migration: Check if 'config_json' column exists (For storing scan options like fetch_symbol)
+    try:
+        c.execute("SELECT config_json FROM scans LIMIT 1")
+    except sqlite3.OperationalError:
+        print("[INFO] Migrating DB: Adding 'config_json' column to scans table")
+        c.execute("ALTER TABLE scans ADD COLUMN config_json TEXT")
+
     # Table for async dump tasks
     c.execute('''CREATE TABLE IF NOT EXISTS dump_tasks
                  (task_id TEXT PRIMARY KEY, scan_id TEXT, status TEXT, output_path TEXT, error TEXT, created_at REAL)''')
@@ -406,8 +413,8 @@ def scan():
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at, image, name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version, args_obj.dump, final_output_dir, time.time(), args_obj.image, case_name))
+    c.execute("INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at, image, name, config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version, args_obj.dump, final_output_dir, time.time(), args_obj.image, case_name, json.dumps(data)))
     conn.commit()
     conn.close()
 
@@ -1029,148 +1036,234 @@ def cleanup_timeouts():
     except Exception as e:
         print(f"Error cleaning up timeouts: {e}")
 
-def background_dump_task(task_id, scan_id, virt_addr, docker_image):
-    """Background worker for extracting files from memory dump."""
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.row_factory = sqlite3.Row
+
+# In-memory dictionary to store dump task statuses
+# NOTE: This is a temporary solution for the provided diff.
+# A more robust solution would persist this in the database.
+dump_tasks = {}
+
+def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
+    """
+    Executes a Volatility3 dump command.
+    Windows: uses windows.dumpfiles.DumpFiles --virtaddr
+    Linux: uses linux.pagecache.Files --find <path> --dump
+    """
+    print(f"[{task_id}] DEBUG: Starting background dump task for scan: {scan['uuid']}")
+    dump_tasks[task_id] = {'status': 'running'}
     
     try:
-        c.execute("UPDATE dump_tasks SET status = 'running' WHERE task_id = ?", (task_id,))
-        conn.commit()
+        # We need the memory dump file name on host
+        # The 'scan' row has 'filepath'. 
+        # But wait, that filepath is the UPLOADED path (e.g. /app/storage/uploads/...)
+        # We need the filename to point to /dump_dir inside container.
+        uploaded_path = scan['dump_path'] # Changed from 'filepath' to 'dump_path' to match original scan structure
         
-        # 1. Get Scan Details
-        c.execute("SELECT * FROM scans WHERE uuid = ?", (scan_id,))
-        scan = c.fetchone()
-        
-        if not scan:
-             raise Exception("Scan not found")
-             
-        dump_path = scan['dump_path']
-        if not os.path.isabs(dump_path) and not dump_path.startswith('/'):
-            dump_path = os.path.join(STORAGE_DIR, dump_path)
+        print(f"[{task_id}] DEBUG: Raw uploaded_path: {uploaded_path}")
+        if not os.path.isabs(uploaded_path) and not uploaded_path.startswith('/'):
+            uploaded_path = os.path.join(STORAGE_DIR, uploaded_path)
             
-        # 2. Setup Output Paths
-        scan_output_dir = scan['output_dir']
-        # Ensure scan output dir exists
-        if not scan_output_dir or not os.path.exists(scan_output_dir):
-             scan_output_dir = os.path.join(os.getcwd(), "outputs", f"volatility3_{scan_id}")
-             os.makedirs(scan_output_dir, exist_ok=True)
+        print(f"[{task_id}] DEBUG: Resolved uploaded_path: {uploaded_path}")
+        dump_filename = os.path.basename(uploaded_path)
+
+        # Construct basic command
+        cmd = ["vol", "-q", "-f", f"/dump_dir/{dump_filename}", "-o", "/output"]
+
+        # Parse Config
+        config = {}
+        # scan is sqlite3.Row, supports key access
+        if 'config_json' in scan.keys() and scan['config_json']:
+             try:
+                 config = json.loads(scan['config_json'])
+             except:
+                 print(f"[{task_id}] WARN: Failed to parse config_json")
+
+        # ISF Handling (Must be generally available or before plugin)
+        # multi_volatility3.py puts it before command.
+        if scan['os'] == 'linux' and config.get('fetch_symbol'):
+             print(f"[{task_id}] DEBUG: Enabling remote ISF URL based on scan config")
+             cmd.extend(["--remote-isf-url", "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"])
              
-        target_output_dir = os.path.join(scan_output_dir, "downloads", task_id)
-        os.makedirs(target_output_dir, exist_ok=True)
+        # Explicitly set symbols path if not using ISF? 
+        # Actually vol defaults to checking standard paths, and we mount /symbols.
+        # But we should probably add -s /symbols for clarity/correctness if not using ISF?
+        # Actually, multi_volatility3 DOES add -s /symbols ALWAYS.
+        cmd.extend(["-s", "/symbols"])
+
+
+        # Determine plugin based on OS
+        print(f"[{task_id}] DEBUG: Scan OS: {scan['os']}")
+        if scan['os'] == 'linux':
+             # Linux dump logic: vol -f ... linux.pagecache.Files --find {path_name} --dump
+             if not file_path:
+                 raise Exception("File Path is required for Linux dumps")
+             
+             print(f"[{task_id}] DEBUG: Linux Dump - FilePath: {file_path}")
+             cmd.append("linux.pagecache.Files")
+             cmd.append("--find")
+             cmd.append(file_path)
+             cmd.append("--dump")
+             
+             # Symbols / ISF Handling
+             # We assume if it's Linux we might need the ISF URL if local symbols aren't enough.
+             # Per user request: "use the /symbols folder ... OR the ISF link".
+             # The docker container has /symbols
+
+        else:
+            # Windows dump logic (default)
+            cmd.append("windows.dumpfiles.DumpFiles")
+            cmd.append("--virtaddr")
+            cmd.append(str(virt_addr))
+
+        print(f"[{task_id}] Running dump command inside container: {cmd}")
+
+        # Run Docker
+        # We must mount:
+        #   STORAGE_DIR/uploads -> /dump_dir
+        #   STORAGE_DIR/<ScanID>_extracted (or temp) -> /output
+        #   STORAGE_DIR/symbols -> /symbols
+        #   STORAGE_DIR/cache -> /root/.cache/volatility3
         
-        # 3. Resolve Paths & Volumes
-        host_path = os.environ.get("HOST_PATH")
-        def resolve(p):
-            if host_path:
-                if p.startswith(os.getcwd()):
-                    rel = os.path.relpath(p, os.getcwd())
-                    return os.path.join(host_path, rel)
-                if p.startswith("/storage"):
-                     return os.path.join(host_path, "storage", "data", os.path.relpath(p, "/storage"))
-            return p
+        # Output dir:
+        # We'll create a specific folder for this extraction or just use the common one.
+        # Let's use a temp dir for the dump, then move the file.
+        case_name = scan['name'] # Changed from 'case_name' to 'name' to match original scan structure
+        case_extract_dir = os.path.join(STORAGE_DIR, f"{case_name}_extracted")
+        if not os.path.exists(case_extract_dir):
+            os.makedirs(case_extract_dir)
 
-        abs_dump_path = os.path.abspath(dump_path)
-        abs_dump_dir = os.path.dirname(abs_dump_path)
-        dump_filename = os.path.basename(abs_dump_path)
+        # We'll map the HOST path to /output. 
+        # Actually, simpler to map case_extract_dir to /output.
+        # BUT, volatility output filenames usually include virtaddr or pid.
+        # We want to identify the file we just dumped.
+        
+        # Let's use a temporary directory for THIS task
+        task_out_dir = os.path.join(STORAGE_DIR, f"task_{task_id}")
+        if not os.path.exists(task_out_dir):
+           os.makedirs(task_out_dir)
 
-        symbols_path = os.path.join(os.getcwd(), "volatility3_symbols")
-        cache_path = os.path.join(os.getcwd(), "volatility3_cache")
-        plugins_path = os.path.join(os.getcwd(), "volatility3_plugins")
+        # Retrieve Docker Image
+        # If image_tag is provided, use it. Else use default 'sk4la/volatility3'
+        # Check if local build?
+        # The frontend sends 'image' from caseDetails.
+        
+        # Prepare Volumes using STORAGE_DIR
+        symbols_path = os.path.join(STORAGE_DIR, 'symbols')
+        cache_path = os.path.join(STORAGE_DIR, 'cache')
+        
+        # Ensure directories exist
+        os.makedirs(symbols_path, exist_ok=True)
+        os.makedirs(cache_path, exist_ok=True)
 
+        # Docker Volumes Mapping
         volumes = {
-            resolve(abs_dump_dir): {'bind': '/dump_dir', 'mode': 'ro'},
-            resolve(target_output_dir): {'bind': '/output', 'mode': 'rw'},
-            resolve(symbols_path): {'bind': '/symbols', 'mode': 'rw'},
-            resolve(cache_path): {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
-            resolve(plugins_path): {'bind': '/plugins', 'mode': 'ro'}
+            os.path.dirname(uploaded_path): {'bind': '/dump_dir', 'mode': 'ro'},
+            task_out_dir: {'bind': '/output', 'mode': 'rw'},
+            symbols_path: {'bind': '/symbols', 'mode': 'ro'},
+            cache_path: {'bind': '/root/.cache/volatility3', 'mode': 'rw'}
         }
 
-        # 4. Run Docker Command
-        client = docker.from_env()
-        cmd = [
-            "vol", "-q", 
-            "-f", f"/dump_dir/{dump_filename}", 
-            "-o", "/output", 
-            "windows.dumpfiles.DumpFiles", 
-            "--virtaddr", str(virt_addr)
-        ]
+        print(f"[{task_id}] Launching Docker container: {image_tag}")
+        print(f"[{task_id}] Volumes config: {volumes}")
         
-        print(f"[DEBUG] [Task {task_id}] Running: {cmd}")
+        try:
+            client = docker.from_env()
+            container = client.containers.run(
+                image=image_tag,
+                command=cmd,
+                volumes=volumes,
+                remove=True,
+                detach=False, # Wait for completion
+                stderr=True,
+                stdout=True
+            )
+            print(f"[{task_id}] Docker finished. Output bytes: {len(container) if container else 0}")
+            # print(f"[{task_id}] Container output (first 200 chars): {container[:200] if container else ''}")
+        except docker.errors.ImageNotFound:
+             print(f"[{task_id}] Pulling image {image_tag}...")
+             client.images.pull(image_tag)
+             container = client.containers.run(
+                image=image_tag,
+                command=cmd,
+                volumes=volumes,
+                remove=True,
+                detach=False
+            )
+        except Exception as e:
+            print(f"[{task_id}] CRITICAL DOCKER ERROR: {e}")
+            raise Exception(f"Docker execution failed: {e}")
+
+        # After run, check files in task_out_dir
+        files = os.listdir(task_out_dir)
+        print(f"[{task_id}] Files in output dir: {files}")
+        if not files:
+            raise Exception("No file extracted by Volatility plugin.")
         
-        client.containers.run(
-            image=docker_image,
-            command=cmd,
-            volumes=volumes,
-            remove=True,
-            stderr=True,
-            stdout=True
-        ) # This blocks until completion
-
-        # 5. Identify Result File
-        files = os.listdir(target_output_dir)
-        target_file = None
-
+        # Move files to final destination (case_extract_dir)
+        # And maybe rename?
+        created_files = []
         for f in files:
-            if not f.endswith(".json") and f != "." and f != "..":
-                target_file = f
-                break
-        
-        if not target_file:
-             raise Exception("No file extracted (DumpFiles returned no candidate)")
+            src = os.path.join(task_out_dir, f)
+            dst = os.path.join(case_extract_dir, f)
+            shutil.move(src, dst)
+            created_files.append(f)
+            
+        # Cleanup
+        os.rmdir(task_out_dir)
 
-        # Organize downloads in STORAGE_DIR / <CaseName_or_DumpName>_extracted / <target_file>
-        # Use Case Name if available, otherwise dump filename
-        case_name = scan['name']
-        if case_name:
-             # Sanitize case name for folder usage
-             safe_case_name = secure_filename(case_name)
-             extracted_dir_name = f"{safe_case_name}_extracted"
-        else:
-             extracted_dir_name = f"{dump_filename}_extracted"
-             
-        storage_extracted_dir = os.path.join(STORAGE_DIR, extracted_dir_name)
-        os.makedirs(storage_extracted_dir, exist_ok=True)
-        
-        final_path = os.path.join(storage_extracted_dir, target_file)
-        
-        # Move from temp output to final storage
-        import shutil
-        shutil.move(os.path.join(target_output_dir, target_file), final_path)
-        
-        # 6. Mark Completed
-        c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?", (final_path, task_id))
-        conn.commit()
-        print(f"[DEBUG] [Task {task_id}] Completed. Moved to: {final_path}")
+        # Update DB/Task status
+        # Since we use simple dict for now:
+        dump_tasks[task_id]['status'] = 'completed'
+        dump_tasks[task_id]['output_path'] = f"/evidence/{created_files[0]}/download" # Basic assumption
+        print(f"[{task_id}] Task completed successfully. Output: {dump_tasks[task_id]['output_path']}")
 
+        # Ideally, update DB if we were using it for dump_tasks (we only insert PENDING, but never update status in DB in this code?)
+        # Ah, the previous code had DB update logic but I removed it/it's not in this snippet.
+        # Let's add basic DB update so status persists if backend restarts?
+        # For now, memory dict is what endpoint checks.
+        
     except Exception as e:
-        print(f"[ERROR] [Task {task_id}] Failed: {e}")
-        c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?", (str(e), task_id))
-        conn.commit()
+        print(f"[{task_id}] TASK FAILED: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        dump_tasks[task_id]['status'] = 'failed'
+        dump_tasks[task_id]['error'] = str(e)
     finally:
+        # The original code updated the database, but the provided diff removes this.
+        # Keeping the database update for consistency with other functions.
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        if dump_tasks[task_id]['status'] == 'completed':
+            output_path = os.path.join(case_extract_dir, created_files[0]) if created_files else None
+            c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?", (output_path, task_id))
+        else:
+            error_msg = dump_tasks[task_id].get('error', 'Unknown error')
+            c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?", (error_msg, task_id))
+        conn.commit()
         conn.close()
+
 
 @app.route('/scan/<scan_id>/dump-file', methods=['POST'])
 def dump_file_from_memory(scan_id):
-    data = request.json
-    virt_addr = data.get('virt_addr')
-    docker_image = data.get('image')
-    
-    if not virt_addr:
-        return jsonify({"error": "Missing 'virt_addr'"}), 400
-    if not docker_image:
-        return jsonify({"error": "Missing 'image'"}), 400
-
+    # Use standard connection method
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("SELECT * FROM scans WHERE uuid = ?", (scan_id,))
-    scan = c.fetchone()
     
+    c.execute('SELECT * FROM scans WHERE uuid = ?', (scan_id,))
+    scan = c.fetchone()
+
     if not scan:
         conn.close()
-        return jsonify({"error": "Scan not found"}), 404
+        return jsonify({'error': 'Scan not found'}), 404
+
+    data = request.json
+    virt_addr = data.get('virt_addr')
+    image = data.get('image')
+    file_path = data.get('file_path')
+    
+    if not virt_addr and not file_path:
+        conn.close()
+        return jsonify({'error': 'Virtual address or File Path required'}), 400
 
     # Create Task
     task_id = str(uuid.uuid4())
@@ -1179,8 +1272,12 @@ def dump_file_from_memory(scan_id):
     conn.commit()
     conn.close()
     
+    # Convert scan row to dict to pass to thread safely
+    scan_dict = dict(scan)
+
     # Start Background Thread
-    thread = threading.Thread(target=background_dump_task, args=(task_id, scan_id, virt_addr, docker_image))
+    # Signature: background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None)
+    thread = threading.Thread(target=background_dump_task, args=(task_id, scan_dict, virt_addr, image, file_path))
     thread.daemon = True
     thread.start()
     

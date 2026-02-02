@@ -129,10 +129,10 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         }
 
         // Try to identify virtual address
-        const virtAddr = nodeData['Virtual'] || nodeData['VirtualAddress'] || nodeData['Offset'] || nodeData['Base'] || nodeData['Address'];
+        const virtAddr = nodeData['Virtual'] || nodeData['VirtualAddress'] || nodeData['Offset'] || nodeData['Base'] || nodeData['Address'] || nodeData['InodeAddr'];
 
-        if (!virtAddr) {
-            toast.error("Could not determine Virtual Address for this item. Cannot download.");
+        if (!virtAddr && !nodeData['FilePath'] && !nodeData['Path']) {
+            toast.error("Could not determine Virtual Address or File Path. Cannot download.");
             return;
         }
 
@@ -150,7 +150,8 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         try {
             // Start Task
-            const { task_id } = await api.startDumpTask(caseId, String(virtAddr), image);
+            const filePath = nodeData['FilePath'] || nodeData['Path'];
+            const { task_id } = await api.startDumpTask(caseId, String(virtAddr), image, filePath);
 
             // Poll
             const pollInterval = setInterval(async () => {
@@ -230,7 +231,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             );
         }
 
-        const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft');
+        const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft') || activeModule?.toLowerCase().includes('pagecache.files');
         const isProcessTree = activeModule?.toLowerCase().includes('pstree');
         const isNetScan = activeModule?.toLowerCase().includes('netscan');
 

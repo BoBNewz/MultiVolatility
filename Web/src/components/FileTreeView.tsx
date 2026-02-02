@@ -31,7 +31,7 @@ const buildFileTree = (data: any[]): TreeNode[] => {
     const root: TreeNode[] = [];
 
     const getPath = (item: any): string => {
-        return item['Path'] || item['ImageFileName'] || item['Name'] || '';
+        return item['Path'] || item['ImageFileName'] || item['FilePath'] || item['Name'] || '';
     };
 
     data.forEach((item, index) => {
@@ -45,24 +45,47 @@ const buildFileTree = (data: any[]): TreeNode[] => {
         let currentPath = '';
 
         pathParts.forEach((part, i) => {
-            const isFile = i === pathParts.length - 1;
+            const isLastPart = i === pathParts.length - 1;
+
+            // Determine if this part represents a folder
+            // 1. It is NOT the last part (it's a parent directory)
+            // 2. It IS the last part, BUT the item metadata says it's a directory
+            let isFolder = !isLastPart;
+            if (isLastPart) {
+                if (item['FileType'] === 'DIR') isFolder = true;
+                if (item['Attribute'] && item['Attribute'].includes('Directory')) isFolder = true;
+            }
+
             currentPath = currentPath ? `${currentPath}\\${part}` : part;
             const existingNode = currentLevel.find(n => n.name === part);
 
             if (existingNode) {
-                if (!isFile) {
-                    currentLevel = existingNode.children || [];
+                // If we found an existing node, it might have been created as a folder earlier (parent)
+                // or as a file (if we processed this exact path before?? shouldn't happen for unique paths).
+                // However, we might need to update it if we are now processing the "Directory Entry" itself
+                // which has metadata, whereas before it was just an implicit parent.
+
+                if (isLastPart && isFolder) {
+                    // Update existing node data if we found the actual directory entry
+                    existingNode.data = item;
+                    // Ensure it's marked as a folder if not already? (Should be if validation was correct)
+                    existingNode.isFolder = true;
+                }
+
+                if (existingNode.isFolder) {
+                    if (!existingNode.children) existingNode.children = [];
+                    currentLevel = existingNode.children;
                 }
             } else {
                 const newNode: TreeNode = {
                     id: `node-${index}-${i}-${part}-${Math.random()}`,
                     name: part,
-                    isFolder: !isFile,
-                    children: isFile ? undefined : [],
-                    data: isFile ? item : undefined
+                    isFolder: isFolder,
+                    children: isFolder ? [] : undefined,
+                    data: isLastPart ? item : undefined
                 };
                 currentLevel.push(newNode);
-                if (!isFile) {
+                if (isFolder) {
                     currentLevel = newNode.children!;
                 }
             }
