@@ -91,6 +91,12 @@ export const api = {
         return data.modules || [];
     },
 
+    getScanModulesStatus: async (uuid: string): Promise<any[]> => {
+        const response = await fetch(`${API_BASE_URL}/scan/${uuid}/modules`);
+        if (!response.ok) return [];
+        return response.json();
+    },
+
     getScanResults: async (uuid: string, module: string): Promise<any> => {
         const response = await fetch(`${API_BASE_URL}/results/${uuid}?module=${module}`);
         if (!response.ok) return null;

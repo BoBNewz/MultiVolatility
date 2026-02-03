@@ -13,6 +13,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
     const [scanType, setScanType] = useState('quick');
     const [osType, setOsType] = useState('windows');
     const [dockerImage, setDockerImage] = useState('');
+    const [useCustomImage, setUseCustomImage] = useState(false);
     const [availableImages, setAvailableImages] = useState<string[]>([]);
     const [imageError, setImageError] = useState(false);
     const [caseName, setCaseName] = useState('');
@@ -85,7 +86,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                 const payload = {
                     name: caseName || undefined,
                     dump: uploadedPath || selectedFile?.name || '/path/to/dump.mem',
-                    image: dockerImage,
+                    image: useCustomImage ? dockerImage : undefined,
                     mode: mode,
                     profile: profile || undefined,
                     linux: osType === 'linux',
@@ -269,27 +270,70 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                         </div>
                                     </div>
 
-                                    <div className="relative">
-                                        <label className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3 block ml-1">Docker Image</label>
-                                        <div className={`flex items-center bg-black/20 border border-white/10 rounded-xl px-5 py-4 transition-colors group focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/50 ${imageError ? 'border-red-500/50' : 'hover:border-primary/50'}`}>
-                                            <Server className={`w-5 h-5 transition-colors mr-4 ${imageError ? 'text-red-500' : 'text-slate-500 group-hover:text-primary'}`} />
-                                            {imageError ? (
-                                                <div className="flex-1 text-red-400 text-sm flex items-center">
-                                                    <AlertCircle className="w-4 h-4 mr-2" />
-                                                    API Unreachable / No Images Found
+                                    <div className="space-y-4">
+                                        <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block ml-1">Docker Environment</label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <label className="cursor-pointer group">
+                                                <input
+                                                    type="radio"
+                                                    name="dockerMode"
+                                                    className="peer hidden"
+                                                    checked={!useCustomImage}
+                                                    onChange={() => setUseCustomImage(false)}
+                                                />
+                                                <div className="p-4 rounded-xl border border-white/10 bg-black/20 peer-checked:border-primary peer-checked:bg-primary/10 transition-all flex flex-col items-center text-center h-full hover:border-white/30 hover:bg-white/5 relative overflow-hidden">
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                                                    <ShieldCheck className="w-6 h-6 mb-2 text-slate-500 peer-checked:text-primary transition-colors relative z-10" />
+                                                    <span className="font-bold text-white text-sm mb-0.5 relative z-10">Default Image</span>
+                                                    <span className="text-[10px] text-slate-500 relative z-10 uppercase tracking-wider"></span>
                                                 </div>
-                                            ) : (
-                                                <select
-                                                    className="w-full bg-transparent text-white focus:outline-none appearance-none font-medium text-sm [&>option]:bg-[#13111c]"
-                                                    onChange={(e) => setDockerImage(e.target.value)}
-                                                    value={dockerImage}
-                                                >
-                                                    {availableImages.map(img => (
-                                                        <option key={img} value={img}>{img}</option>
-                                                    ))}
-                                                </select>
-                                            )}
+                                            </label>
+                                            <label className="cursor-pointer group">
+                                                <input
+                                                    type="radio"
+                                                    name="dockerMode"
+                                                    className="peer hidden"
+                                                    checked={useCustomImage}
+                                                    onChange={() => setUseCustomImage(true)}
+                                                />
+                                                <div className="p-4 rounded-xl border border-white/10 bg-black/20 peer-checked:border-primary peer-checked:bg-primary/10 transition-all flex flex-col items-center text-center h-full hover:border-white/30 hover:bg-white/5 relative overflow-hidden">
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                                                    <Server className="w-6 h-6 mb-2 text-slate-500 peer-checked:text-primary transition-colors relative z-10" />
+                                                    <span className="font-bold text-white text-sm mb-0.5 relative z-10">Custom Image</span>
+                                                    <span className="text-[10px] text-slate-500 relative z-10 uppercase tracking-wider">Manual</span>
+                                                </div>
+                                            </label>
                                         </div>
+
+                                        {useCustomImage && (
+                                            <div className="animate-fadeIn pt-2">
+                                                <div className={`flex items-center bg-black/20 border border-white/10 rounded-xl px-5 py-4 transition-colors group focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/50 ${imageError ? 'border-red-500/50' : 'hover:border-primary/50'}`}>
+                                                    <Server className={`w-5 h-5 transition-colors mr-4 ${imageError ? 'text-red-500' : 'text-slate-500 group-hover:text-primary'}`} />
+                                                    {imageError ? (
+                                                        <div className="flex-1 text-red-400 text-sm flex items-center">
+                                                            <AlertCircle className="w-4 h-4 mr-2" />
+                                                            API Unreachable / No Images Found
+                                                        </div>
+                                                    ) : (
+                                                        <select
+                                                            className="w-full bg-transparent text-white focus:outline-none appearance-none font-medium text-sm [&>option]:bg-[#13111c]"
+                                                            onChange={(e) => setDockerImage(e.target.value)}
+                                                            value={dockerImage}
+                                                        >
+                                                            {availableImages
+                                                                .filter(img => !img.includes('sp00kyskelet0n/volatility'))
+                                                                .map(img => (
+                                                                    <option key={img} value={img}>{img}</option>
+                                                                ))
+                                                            }
+                                                            {availableImages.filter(img => !img.includes('sp00kyskelet0n/volatility')).length === 0 && (
+                                                                <option disabled value="">No custom images found</option>
+                                                            )}
+                                                        </select>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="relative">
@@ -334,33 +378,21 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                         <div className="space-y-4 animate-fadeIn">
                                             <label className="text-slate-400 text-xs font-bold uppercase tracking-wider block ml-1">Symbol Table Source</label>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <label className="cursor-pointer group">
-                                                    <input
-                                                        type="radio"
-                                                        name="symbolMode"
-                                                        checked={symbolMode === 'remote'}
-                                                        onChange={() => setSymbolMode('remote')}
-                                                        className="hidden peer"
-                                                    />
-                                                    <div className="p-4 rounded-xl border border-white/10 bg-black/20 peer-checked:border-primary peer-checked:bg-primary/10 transition-all hover:border-white/30">
-                                                        <div className="font-bold text-white text-sm mb-1">Remote ISF</div>
-                                                        <div className="text-xs text-slate-500">Auto-download from GitHub</div>
-                                                    </div>
-                                                </label>
-                                                <label className="cursor-pointer group">
-                                                    <input
-                                                        type="radio"
-                                                        name="symbolMode"
-                                                        checked={symbolMode === 'custom'}
-                                                        onChange={() => setSymbolMode('custom')}
-                                                        className="hidden peer"
-                                                    />
-                                                    <div className="p-4 rounded-xl border border-white/10 bg-black/20 peer-checked:border-primary peer-checked:bg-primary/10 transition-all hover:border-white/30">
-                                                        <div className="font-bold text-white text-sm mb-1">Custom Symbol</div>
-                                                        <div className="text-xs text-slate-500">Use uploaded JSON/Zip</div>
-                                                    </div>
-                                                </label>
+                                            <div className="flex bg-black/20 border border-white/10 rounded-xl p-1">
+                                                <button
+                                                    type="button"
+                                                    className={`flex-1 py-3 px-4 rounded-lg flex items-center justify-center transition-all text-sm font-bold ${symbolMode === 'remote' ? 'bg-primary/20 text-primary shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                                                    onClick={() => setSymbolMode('remote')}
+                                                >
+                                                    <Server className="w-4 h-4 mr-2" /> Remote ISF
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`flex-1 py-3 px-4 rounded-lg flex items-center justify-center transition-all text-sm font-bold ${symbolMode === 'custom' ? 'bg-primary/20 text-primary shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                                                    onClick={() => setSymbolMode('custom')}
+                                                >
+                                                    <HardDrive className="w-4 h-4 mr-2" /> Custom Symbol
+                                                </button>
                                             </div>
 
 
@@ -434,9 +466,9 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                 )}
                                 <button
                                     type="submit"
-                                    disabled={(activeStep === 1 && !selectedFile) || uploading || (activeStep === 2 && imageError)}
+                                    disabled={(activeStep === 1 && !selectedFile) || uploading || (activeStep === 2 && useCustomImage && imageError)}
                                     className={`px-8 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all flex items-center hover:scale-105 hover:shadow-purple-500/50
-                                    ${((activeStep === 1 && !selectedFile) || (activeStep === 2 && imageError)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                                    ${((activeStep === 1 && !selectedFile) || (activeStep === 2 && useCustomImage && imageError)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                                 >
                                     {activeStep === 3 ? 'START ANALYSIS' : (activeStep === 1 ? 'UPLOAD & CONTINUE' : 'CONTINUE')} <ArrowRight className="w-5 h-5 ml-2" />
                                 </button>

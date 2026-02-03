@@ -18,6 +18,13 @@ import zipfile
 import io
 import textwrap
 
+try:
+    from .multi_volatility2 import multi_volatility2
+    from .multi_volatility3 import multi_volatility3
+except ImportError:
+    from multi_volatility2 import multi_volatility2
+    from multi_volatility3 import multi_volatility3
+
 app = Flask(__name__)
 # Increase max upload size to 16GB (or appropriate limit for dumps)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 
@@ -98,6 +105,11 @@ def init_db():
     # Table for async dump tasks
     c.execute('''CREATE TABLE IF NOT EXISTS dump_tasks
                  (task_id TEXT PRIMARY KEY, scan_id TEXT, status TEXT, output_path TEXT, error TEXT, created_at REAL)''')
+    
+    # Table for module status (Debug/Progress UI)
+    c.execute('''CREATE TABLE IF NOT EXISTS scan_module_status
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, scan_id TEXT, module TEXT, status TEXT, error_message TEXT, updated_at REAL,
+                 FOREIGN KEY(scan_id) REFERENCES scans(uuid))''')
 
     conn.commit()
     conn.close()
@@ -391,6 +403,7 @@ def scan():
     args_obj = argparse.Namespace(**args_dict)
     
     scan_id = str(uuid.uuid4())
+    args_obj.scan_id = scan_id # Pass scan_id to runner for status updates
     # Construct output directory with UUID
     base_name = f"volatility2_{scan_id}" if args_obj.mode == "vol2" else f"volatility3_{scan_id}"
     # Use absolute path for output_dir to avoid CWD ambiguity and ensure persistence
@@ -417,13 +430,46 @@ def scan():
     if not os.path.exists(args_obj.dump):
         return jsonify({"error": f"Dump file not found at {args_obj.dump}"}), 400
 
-    args_obj.image = data.get("image") # Ensure image is passed
     case_name = data.get("name") # Optional custom case name
+
+    # Determine command list for pre-population
+    try:
+        command_list = []
+        if args_obj.mode == "vol2":
+            vol_instance = multi_volatility2()
+            if args_obj.commands:
+                command_list = args_obj.commands.split(",")
+            elif args_obj.windows:
+                command_list = vol_instance.getCommands("windows.light" if args_obj.light else "windows.full")
+            elif args_obj.linux:
+                command_list = vol_instance.getCommands("linux.light" if args_obj.light else "linux.full")
+        else: # vol3
+            vol_instance = multi_volatility3()
+            if args_obj.commands:
+                 command_list = args_obj.commands.split(",")
+            elif args_obj.windows:
+                command_list = vol_instance.getCommands("windows.light" if args_obj.light else "windows.full")
+            elif args_obj.linux:
+                command_list = vol_instance.getCommands("linux.light" if args_obj.light else "linux.full")
+        
+        # Inject explicit commands into args for CLI
+        if command_list:
+            args_obj.commands = ",".join(command_list)
+            
+    except Exception as e:
+        print(f"[ERROR] Failed to determine commands: {e}")
+        command_list = []
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at, image, name, config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version, args_obj.dump, final_output_dir, time.time(), args_obj.image, case_name, json.dumps(data)))
+    
+    # Pre-populate module status
+    if command_list:
+        for cmd in command_list:
+             c.execute("INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, 'PENDING', ?)", (scan_id, cmd, time.time()))
+
     conn.commit()
     conn.close()
 
@@ -441,6 +487,11 @@ def scan():
             
             # Ingest results to DB
             ingest_results_to_db(s_id, args.output_dir)
+            
+            # Sweep Logic: Mark any still-pending modules as FAILED
+            # This handles cases where containers crashed or produced no output
+            c.execute("UPDATE scan_module_status SET status = 'FAILED', error_message = 'Module failed to produce output', updated_at = ? WHERE scan_id = ? AND status IN ('PENDING', 'RUNNING')", (time.time(), s_id))
+            conn.commit()
             
             c.execute("UPDATE scans SET status = 'completed' WHERE uuid = ?", (s_id,))
             conn.commit()
@@ -563,57 +614,140 @@ def list_volatility_plugins():
         print(f"[ERROR] List plugins failed: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/results/<uuid>/modules', methods=['GET'])
-def get_scan_modules(uuid):
+@app.route('/scan/<uuid>/log', methods=['POST'])
+def log_scan_module_status(uuid):
+    data = request.json
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    module = data.get('module')
+    status = data.get('status')
+    error = data.get('error')
+    
+    if not module or not status:
+        return jsonify({"error": "Missing module or status"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        # Upsert status
+        # Check if exists
+        c.execute("SELECT 1 FROM scan_module_status WHERE scan_id = ? AND module = ?", (uuid, module))
+        exists = c.fetchone()
+        
+        if exists:
+            c.execute("UPDATE scan_module_status SET status = ?, error_message = ?, updated_at = ? WHERE scan_id = ? AND module = ?", 
+                      (status, error, time.time(), uuid, module))
+        else:
+             c.execute("INSERT INTO scan_module_status (scan_id, module, status, error_message, updated_at) VALUES (?, ?, ?, ?, ?)",
+                       (uuid, module, status, error, time.time()))
+        
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"[ERROR] Failed to log status: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/scan/<uuid>/modules', methods=['GET'])
+def get_scan_modules_status(uuid):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
-    # Check if we have results in DB
-    c.execute("SELECT module, content FROM scan_results WHERE scan_id = ?", (uuid,))
-    rows = c.fetchall()
-    
-    if rows:
-        modules = []
-        for row in rows:
-            try:
-                # content is stored as JSON string
-                # We do a quick check to see if it's our known error structure
-                # Parsing huge JSONs just to check error might be slow, but safe
-                data = json.loads(row['content'])
-                if isinstance(data, dict) and data.get("error") == "Invalid JSON output":
-                    continue
-                modules.append(row['module'])
-            except:
-                continue
-        conn.close()
-        return jsonify({"modules": modules})
-    
-    # Fallback to filesystem if DB empty
-    c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
-    scan = c.fetchone()
-    conn.close()
-    
-    if not scan:
-         return jsonify({"error": "Scan not found"}), 404
-    
-    output_dir = scan['output_dir']
-    if output_dir and os.path.exists(output_dir):
-        json_files = glob.glob(os.path.join(output_dir, "*_output.json"))
-        modules = []
-        for f in json_files:
-            filename = os.path.basename(f)
-            if filename.endswith("_output.json"):
-                # Validate content
-                parsed_data = clean_and_parse_json(f)
-                if parsed_data and isinstance(parsed_data, dict) and parsed_data.get("error") == "Invalid JSON output":
-                    continue
-                    
-                module_name = filename[:-12]
-                modules.append(module_name)
-        return jsonify({"modules": modules})
+    try:
+        # Get scan output directory
+        c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
+        scan_row = c.fetchone()
+        output_dir = scan_row['output_dir'] if scan_row else None
         
-    return jsonify({"modules": []})
+        # Try to get status from the status table
+        c.execute("SELECT module, status, error_message FROM scan_module_status WHERE scan_id = ?", (uuid,))
+        rows = c.fetchall()
+        
+        status_list = []
+        docker_client = None
+        
+        if rows:
+            for row in rows:
+                mod_dict = dict(row)
+                module_name = mod_dict['module']
+                
+                # For PENDING/RUNNING modules, check Docker container status
+                if mod_dict['status'] in ['PENDING', 'RUNNING']:
+                    # Predictable container name: vol3_{scan_id[:8]}_{sanitized_module}
+                    # Must match CLI: re.sub(r'[^a-zA-Z0-9_.-]', '', command)
+                    import re as re_module
+                    sanitized_name = re_module.sub(r'[^a-zA-Z0-9_.-]', '', module_name)
+                    container_name = f"vol3_{uuid[:8]}_{sanitized_name}"
+                    print(f"[DEBUG] Looking for container: {container_name}")
+                    
+                    try:
+                        if docker_client is None:
+                            import docker
+                            docker_client = docker.from_env()
+                        
+                        container = docker_client.containers.get(container_name)
+                        container_status = container.status  # 'running', 'exited', 'created', etc.
+                        
+                        if container_status == 'running':
+                            mod_dict['status'] = 'RUNNING'
+                            c.execute("UPDATE scan_module_status SET status = 'RUNNING', updated_at = ? WHERE scan_id = ? AND module = ?",
+                                      (time.time(), uuid, module_name))
+                        elif container_status == 'exited':
+                            # Container finished - file should be ready now
+                            # Read and ingest JSON
+                            if output_dir:
+                                output_file = os.path.join(output_dir, f"{module_name}_output.json")
+                                if os.path.exists(output_file):
+                                    try:
+                                        parsed_data = clean_and_parse_json(output_file)
+                                        content_str = json.dumps(parsed_data) if parsed_data else "{}"
+                                        # Check if result already exists
+                                        c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_name))
+                                        if not c.fetchone():
+                                            c.execute("INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
+                                                      (uuid, module_name, content_str, time.time()))
+                                    except Exception as e:
+                                        print(f"[ERROR] Failed to ingest {module_name}: {e}")
+                            
+                            mod_dict['status'] = 'COMPLETED'
+                            c.execute("UPDATE scan_module_status SET status = 'COMPLETED', updated_at = ? WHERE scan_id = ? AND module = ?",
+                                      (time.time(), uuid, module_name))
+                            
+                            # Clean up container
+                            try:
+                                container.remove()
+                            except Exception as rm_err:
+                                print(f"[WARN] Failed to remove container {container_name}: {rm_err}")
+                                
+                    except Exception as e:
+                        # Container not found or docker error - leave status as-is
+                        pass
+                
+                status_list.append(mod_dict)
+            
+            conn.commit()
+        else:
+            # Fallback: check scan_results table for completed modules
+            c.execute("SELECT module FROM scan_results WHERE scan_id = ?", (uuid,))
+            result_rows = c.fetchall()
+            for r in result_rows:
+                status_list.append({
+                    "module": r['module'], 
+                    "status": "COMPLETED", 
+                    "error_message": None
+                })
+
+        return jsonify(status_list)
+
+    except Exception as e:
+        print(f"[ERROR] Fetching module status: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 
 @app.route('/results/<uuid>', methods=['GET'])
 def get_scan_results(uuid):
@@ -755,6 +889,7 @@ def execute_plugin(uuid):
         default_args['windows'] = True
     
     args_obj = argparse.Namespace(**default_args)
+    args_obj.scan_id = uuid # Add scan_id for tracking
 
     def background_single_run(s_id, args):
         try:

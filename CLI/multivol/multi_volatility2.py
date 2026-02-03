@@ -65,8 +65,17 @@ class multi_volatility2:
             )
             
             with open(self.output_file, "wb") as file:
-                for chunk in container.logs(stream=True):
-                    file.write(chunk)
+                try:
+                    for chunk in container.logs(stream=True):
+                        file.write(chunk)
+                except Exception as log_err:
+                    # Handle Docker log rotation errors
+                    self.safe_print(f"[!] Log streaming interrupted: {log_err}, fetching remaining logs...", lock)
+                    try:
+                        remaining_logs = container.logs(stream=False)
+                        file.write(remaining_logs)
+                    except:
+                        pass
             
             container.wait()
             container.remove()

@@ -28,7 +28,7 @@ class multi_volatility3:
                 return os.path.join(host_path, rel_path)
         return path
 
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None):
+    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None):
         # Executes a Volatility3 command in Docker and handles output
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
@@ -43,6 +43,10 @@ class multi_volatility3:
         
         host_dump_path = self.resolve_path(os.path.abspath(dump_dir), host_path)
         host_dump_dir = os.path.dirname(host_dump_path)
+        
+        # Debug logging for path resolution
+        print(f"[DEBUG] dump={dump}, dump_dir={dump_dir}", flush=True)
+        print(f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}", flush=True)
         
         volumes = {
              host_dump_dir: {'bind': '/dump_dir', 'mode': 'ro'},
@@ -62,6 +66,7 @@ class multi_volatility3:
         # NOTE: -f expects the file path. Volume maps dump_dir to /dump_dir. 
         # So dump file is at /dump_dir/basename(dump)
         dump_filename = os.path.basename(dump)
+        print(f"[DEBUG] dump_filename={dump_filename}, full path in container=/dump_dir/{dump_filename}", flush=True)
         base_args = f"vol -q -f /dump_dir/{dump_filename} -s /symbols -p /plugins"
 
         if custom_symbol:
@@ -77,17 +82,22 @@ class multi_volatility3:
         else:
             self.output_file = os.path.join(output_dir, f"{command}_output.txt")
             cmd_args = f"{base_args} {command}"
-            
+        
+        # Debug: verify output path
+        print(f"[DEBUG] output_dir={output_dir}, output_file={self.output_file}", flush=True)
+        print(f"[DEBUG] output_dir exists: {os.path.exists(output_dir)}", flush=True)
         if show_commands:
             print(f"[DEBUG] Volatility 3 Command: {cmd_args}", flush=True)
             print(f"[DEBUG] Docker Volumes: {json.dumps(volumes, indent=2)}", flush=True)
 
         try:
-            # Sanitize command name for Docker container name (alphanumeric, dot, underscore, dash)
-            # User request: "module name so its not a random name"
-            # We append a short UUID to ensuring uniqueness for parallel runs
+            # Sanitize command name for Docker container name
+            # Use scan_id for predictable naming so API can track container status
             sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', command)
-            container_name = f"vol3_{sanitized_name}_{str(uuid.uuid4())[:8]}"
+            if scan_id:
+                container_name = f"vol3_{scan_id[:8]}_{sanitized_name}"
+            else:
+                container_name = f"vol3_{sanitized_name}_{str(uuid.uuid4())[:8]}"
 
             container = client.containers.run(
                 image=docker_image,
@@ -100,12 +110,23 @@ class multi_volatility3:
             )
             
             with open(self.output_file, "wb") as file:
-                for chunk in container.logs(stream=True):
-                    file.write(chunk)
+                try:
+                    for chunk in container.logs(stream=True):
+                        file.write(chunk)
+                except Exception as log_err:
+                    # Handle Docker log rotation errors (common with long-running modules)
+                    self.safe_print(f"[!] Log streaming interrupted: {log_err}, fetching remaining logs...", lock)
+                    try:
+                        # Fallback: fetch all logs at once instead of streaming
+                        remaining_logs = container.logs(stream=False)
+                        file.write(remaining_logs)
+                    except:
+                        pass  # Best effort - container may have finished
             
             wait_result = container.wait()
             exit_code = wait_result.get('StatusCode', 0)
-            container.remove()
+            # Don't remove container - API will check status and clean up
+            # container.remove()
 
         except Exception as e:
              self.safe_print(f"[!] Error running {command}: {e}", lock)

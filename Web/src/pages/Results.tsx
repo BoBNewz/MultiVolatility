@@ -14,19 +14,28 @@ import {
     Network,
     Play,
     Terminal,
-    Loader2
+    Loader2,
+    XCircle,
+    AlertTriangle
 } from 'lucide-react';
 import { api } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
 import { ProcessTreeView } from '../components/ProcessTreeView';
 import { NetworkGraphView } from '../components/NetworkGraphView';
 
+interface ModuleState {
+    name: string;
+    status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+    error?: string;
+}
+
 export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> = ({ onBack, caseId: propCaseId }) => {
     const { caseId: paramCaseId } = useParams();
     const caseId = propCaseId || paramCaseId;
 
-    const [modules, setModules] = React.useState<string[]>([]);
+    const [modules, setModules] = React.useState<ModuleState[]>([]);
     const [activeModule, setActiveModule] = React.useState<string | null>(null);
+    const [showErrorModal, setShowErrorModal] = React.useState<{ module: string, error: string } | null>(null);
     const [showRunModal, setShowRunModal] = React.useState(false);
     const [runPluginName, setRunPluginName] = React.useState('');
     const [results, setResults] = React.useState<any[]>([]);
@@ -44,11 +53,18 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const resizingRef = React.useRef<{ col: string; startX: number; startWidth: number } | null>(null);
     const [rowsLimit, setRowsLimit] = React.useState(50);
 
+    // Track previous status of active module to detect completion
+    const prevActiveModuleStatusRef = React.useRef<string | null>(null);
+
+
+
+    // Polling effect
     React.useEffect(() => {
-        if (caseId) {
-            loadModules();
-            loadCaseDetails();
-        }
+        if (!caseId) return;
+        loadModules();
+        loadCaseDetails(); // Load case details once when caseId changes
+        const interval = setInterval(loadModules, 3000); // 3 seconds polling
+        return () => clearInterval(interval);
     }, [caseId]);
 
     const loadCaseDetails = async () => {
@@ -73,15 +89,70 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const loadModules = async () => {
         if (!caseId) return;
         try {
-            const data = await api.getScanModules(caseId);
-            setModules(data);
-            if (data.length > 0 && !activeModule) {
-                setActiveModule(data[0]);
+            // Only fetch status from DB (single source of truth)
+            const statusData = await api.getScanModulesStatus(caseId);
+
+            const merged: Record<string, ModuleState> = {};
+
+            if (Array.isArray(statusData)) {
+                statusData.forEach((s: any) => {
+                    const modName = s.module;
+                    if (!modName) return;
+
+                    merged[modName] = {
+                        name: modName,
+                        status: s.status?.toUpperCase() || 'PENDING',
+                        error: s.error_message
+                    };
+                });
             }
+
+            const sorted = Object.values(merged).sort((a: ModuleState, b: ModuleState) => a.name.localeCompare(b.name));
+
+            // Only update modules state if something actually changed
+            // This prevents unnecessary re-renders that can reset scroll position
+            setModules((prevModules: ModuleState[]) => {
+                // Quick check: if lengths differ, definitely update
+                if (prevModules.length !== sorted.length) return sorted;
+
+                // Check if any module status changed
+                const hasChanges = sorted.some((mod: ModuleState, i: number) => {
+                    const prev = prevModules[i];
+                    return !prev || prev.name !== mod.name || prev.status !== mod.status;
+                });
+
+                return hasChanges ? sorted : prevModules;
+            });
+
+            // Auto-select first module ONLY on initial load (when no module is selected yet)
+            // Use functional update to avoid stale closure issues
+            setActiveModule((prev: string | null) => {
+                if (prev === null && sorted.length > 0) {
+                    return sorted[0].name;
+                }
+                return prev;
+            });
         } catch (error) {
             console.error('Failed to load modules:', error);
         }
     };
+
+    // Auto-reload results when active module's status changes to COMPLETED
+    React.useEffect(() => {
+        if (!activeModule || !modules.length) return;
+
+        const currentModule = modules.find((m: ModuleState) => m.name === activeModule);
+        const currentStatus = currentModule?.status || null;
+        const prevStatus = prevActiveModuleStatusRef.current;
+
+        // If status changed to COMPLETED from something else, reload results
+        if (currentStatus === 'COMPLETED' && prevStatus !== null && prevStatus !== 'COMPLETED') {
+            loadResults();
+        }
+
+        // Update the ref
+        prevActiveModuleStatusRef.current = currentStatus;
+    }, [activeModule, modules]);
 
     React.useEffect(() => {
         if (caseId && activeModule) {
@@ -522,19 +593,54 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                         </div>
                         <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
                             <p className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Available Modules</p>
-                            {modules.map((mod) => (
-                                <button
-                                    key={mod}
-                                    onClick={() => setActiveModule(mod)}
-                                    className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg overflow-hidden group ${activeModule === mod
-                                        ? 'bg-primary/20 text-white shadow-lg shadow-purple-900/20'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                        }`}
-                                >
-                                    <FileIcon className={`w-4 h-4 mr-3 flex-shrink-0 ${activeModule === mod ? 'text-primary' : 'opacity-50'}`} />
-                                    <span className="truncate">{mod}</span>
-                                </button>
-                            ))}
+
+                            {modules.length === 0 ? (
+                                <div className="px-4 py-8 flex flex-col items-center justify-center text-center text-slate-500">
+                                    <Loader2 className="w-6 h-6 animate-spin text-primary/50 mb-2" />
+                                    <span className="text-xs">Scan Initializing...</span>
+                                </div>
+                            ) : (
+                                modules.map((mod) => (
+                                    <div key={mod.name} className="relative group">
+                                        <button
+                                            onClick={() => {
+                                                if (mod.status === 'FAILED') {
+                                                    setShowErrorModal({ module: mod.name, error: mod.error || "Unknown error" });
+                                                } else if (mod.status === 'PENDING' || mod.status === 'RUNNING') {
+                                                    toast('Module execution in progress...', { icon: '⏳' });
+                                                } else {
+                                                    setActiveModule(mod.name);
+                                                }
+                                            }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg
+                                                ${activeModule === mod.name ? 'bg-primary/20 text-white shadow-lg shadow-purple-900/20' : ''}
+                                                ${(mod.status === 'PENDING' || mod.status === 'RUNNING')
+                                                    ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                                                    : mod.status === 'FAILED'
+                                                        ? 'text-red-400 hover:bg-red-500/10'
+                                                        : 'text-slate-400 hover:text-white hover:bg-white/5'}
+                                                `}
+                                        >
+                                            {/* Status Icon */}
+                                            <div className="mr-3 flex-shrink-0">
+                                                {(mod.status === 'RUNNING' || mod.status === 'PENDING') && (
+                                                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                                )}
+                                                {mod.status === 'COMPLETED' && <FileIcon className={`w-4 h-4 ${activeModule === mod.name ? 'text-primary' : 'opacity-50'}`} />}
+                                                {mod.status === 'FAILED' && <XCircle className="w-4 h-4 text-red-500" />}
+                                            </div>
+
+                                            <span className={`truncate flex-1 ${mod.status === 'FAILED' ? 'text-red-400' : ''}`}>
+                                                {mod.name}
+                                            </span>
+
+                                            {mod.status === 'FAILED' && (
+                                                <AlertTriangle className="w-3 h-3 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
+                                            )}
+                                        </button>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}
@@ -785,6 +891,44 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             >
                                 {executingPlugin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
                                 Execute
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Error Log Modal */}
+            {showErrorModal && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-[#1e1e2d] border border-red-500/20 rounded-xl shadow-2xl w-full max-w-2xl ring-1 ring-red-500/20 animate-fadeIn">
+                        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#13111c] rounded-t-xl">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
+                                    <AlertTriangle size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Module Failed</h3>
+                                    <p className="text-xs text-red-400">{showErrorModal.module}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowErrorModal(null)}
+                                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-0">
+                            <div className="bg-black/50 p-4 font-mono text-sm text-red-300 overflow-x-auto whitespace-pre-wrap max-h-[60vh]">
+                                {showErrorModal.error || "No error log available."}
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-white/5 bg-[#13111c] flex justify-end rounded-b-xl">
+                            <button
+                                onClick={() => setShowErrorModal(null)}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                Close
                             </button>
                         </div>
                     </div>
