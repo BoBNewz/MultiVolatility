@@ -13,12 +13,15 @@ if os.path.exists("README.md"):
 
 setup(
     name="multivol",
-    version="0.1.4",
+    version="0.1.6",
     description="MultiVolatility: Analyze memory dumps faster than ever with Volatility2 and Volatility3 in parallel using Docker",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/BoBNewz/MultiVolatility", 
     packages=find_packages(),
+    package_data={
+        "multivol": ["plugins_list/*.yaml"],
+    },
     install_requires=required,
     entry_points={
         "console_scripts": [

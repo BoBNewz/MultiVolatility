@@ -17,6 +17,7 @@ import zipfile
 import zipfile
 import io
 import textwrap
+import subprocess
 
 try:
     from .multi_volatility2 import multi_volatility2
@@ -69,6 +70,115 @@ def resolve_host_path(path):
     if host_path and path.startswith(os.getcwd()):
         return os.path.join(host_path, os.path.relpath(path, os.getcwd()))
     return path
+
+def build_file_tree(base_path, relative_root=""):
+    tree = []
+    try:
+        items = sorted(os.listdir(base_path))
+        for item in items:
+            full_path = os.path.join(base_path, item)
+            rel_path = os.path.join(relative_root, item)
+            
+            node = {
+                "name": item,
+                "path": rel_path
+            }
+            
+            if os.path.isdir(full_path):
+                node["type"] = "directory"
+                node["children"] = build_file_tree(full_path, rel_path)
+            else:
+                node["type"] = "file"
+                node["size"] = os.path.getsize(full_path)
+            
+            tree.append(node)
+    except Exception as e:
+        print(f"[ERROR] build_file_tree: {e}")
+    return tree
+
+def process_recover_fs(output_dir):
+    """Checks for a tar file in output_dir (from RecoverFs), extracts it, and generates a JSON tree."""
+    print(f"[DEBUG] process_recover_fs scanning directory: {output_dir}")
+    if not os.path.exists(output_dir):
+        print(f"[ERROR] Output directory does not exist: {output_dir}")
+        return
+
+    # List all files for debugging
+    all_files = os.listdir(output_dir)
+    print(f"[DEBUG] Files in output_dir: {all_files}")
+
+    tar_files = [f for f in glob.glob(os.path.join(output_dir, "*.tar*"))]
+    
+    if not tar_files:
+        print("[DEBUG] No tar files found.")
+        return
+
+    target_tar = tar_files[0]
+    print(f"[DEBUG] Found tarball: {target_tar}")
+    
+    extract_dir = os.path.join(output_dir, "recovered_fs")
+    json_path = os.path.join(output_dir, "linux.pagecache.RecoverFs_output.json")
+    
+    # Check if already processed (idempotency)
+    # If extract_dir exists and JSON is a small file (tree), skip processing
+    if os.path.exists(extract_dir) and os.path.exists(json_path):
+        try:
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+                # Check if it's already a tree (has 'path' and 'type' at root level)
+                if data and isinstance(data, list) and len(data) > 0:
+                    if 'type' in data[0] and data[0].get('type') in ['file', 'directory']:
+                        print("[DEBUG] RecoverFs already processed, skipping.")
+                        return
+        except:
+            pass
+    
+    # Create extraction directory
+    if not os.path.exists(extract_dir):
+        os.makedirs(extract_dir)
+    
+    try:
+        print(f"[DEBUG] Extracting {target_tar} to {extract_dir}...")
+        # Extract tarball
+        result = subprocess.run(
+            ['tar', '-xzf' if target_tar.endswith('.gz') else '-xf', target_tar, '-C', extract_dir],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=300  # 5 minute timeout for large archives
+        )
+        print(f"[DEBUG] Extraction completed successfully")
+        
+        # Verify extraction worked
+        extracted_files = os.listdir(extract_dir)
+        if not extracted_files:
+            print(f"[ERROR] Extraction produced no files")
+            return
+            
+        print(f"[DEBUG] Building file tree from {len(extracted_files)} top-level items...")
+        # Build Tree
+        tree = build_file_tree(extract_dir)
+        
+        if not tree:
+            print(f"[ERROR] build_file_tree returned empty tree")
+            return
+        
+        print(f"[DEBUG] Tree built with {len(tree)} root nodes. Writing to {json_path}...")
+        # Save JSON
+        with open(json_path, 'w') as f:
+            json.dump(tree, f, indent=2)
+        
+        print(f"[DEBUG] RecoverFs processing complete. JSON file size: {os.path.getsize(json_path)} bytes")
+            
+    except subprocess.TimeoutExpired:
+        print(f"[ERROR] Extraction timed out after 300 seconds")
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Extraction failed: {e.stderr.decode() if e.stderr else str(e)}")
+    except Exception as e:
+        print(f"[ERROR] RecoverFs processing failed: {e}")
+        import traceback
+        traceback.print_exc()
+
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -147,6 +257,8 @@ def delete_scan(uuid):
         except Exception as e:
             print(f"Error deleting output dir: {e}")
             
+    # Delete related records first (foreign key constraints)
+    c.execute("DELETE FROM scan_module_status WHERE scan_id = ?", (uuid,))
     c.execute("DELETE FROM scan_results WHERE scan_id = ?", (uuid,))
     c.execute("DELETE FROM scans WHERE uuid = ?", (uuid,))
     conn.commit()
@@ -485,6 +597,9 @@ def scan():
             if runner_func:
                 runner_func(args)
             
+            # Process RecoverFs if present (Extract tarball)
+            process_recover_fs(args.output_dir)
+            
             # Ingest results to DB
             ingest_results_to_db(s_id, args.output_dir)
             
@@ -697,6 +812,15 @@ def get_scan_modules_status(uuid):
                                       (time.time(), uuid, module_name))
                         elif container_status == 'exited':
                             # Container finished - file should be ready now
+                            
+                            # Special handling for RecoverFs: Detect completion and Process/Extract immediatley
+                            if module_name == "linux.pagecache.RecoverFs" and output_dir:
+                                 # We check if the tar exists. If so, process it.
+                                 # This overwrites the .json with the file tree.
+                                 # We use a flag file to prevent re-processing? 
+                                 # process_recover_fs is idempotent if we check for existing tree, but better just run it if we are ingesting.
+                                 process_recover_fs(output_dir)
+
                             # Read and ingest JSON
                             if output_dir:
                                 output_file = os.path.join(output_dir, f"{module_name}_output.json")
@@ -739,6 +863,14 @@ def get_scan_modules_status(uuid):
                     "status": "COMPLETED", 
                     "error_message": None
                 })
+
+        # Check for strings output file and inject into list if present
+        if output_dir:
+            strings_path = os.path.join(output_dir, "strings_output.txt")
+            if os.path.exists(strings_path):
+                # Avoid duplicates
+                if not any(m['module'] == 'strings' for m in status_list):
+                    status_list.append({"module": "strings", "status": "COMPLETED"})
 
         return jsonify(status_list)
 
@@ -1479,6 +1611,120 @@ def download_dump_result(task_id):
         as_attachment=True,
         download_name=os.path.basename(file_path)
     )
+
+@app.route('/results/<uuid>/fs/download', methods=['GET'])
+def download_fs_file(uuid):
+    key_path = request.args.get('path')
+    if not key_path:
+        return jsonify({"error": "Missing path"}), 400
+        
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
+    scan = c.fetchone()
+    conn.close()
+    
+    if not scan:
+        return jsonify({"error": "Scan not found"}), 404
+        
+    output_dir = scan['output_dir']
+    extract_dir = os.path.join(output_dir, "recovered_fs")
+    
+    # Security check: Ensure path is within extract_dir
+    safe_path = os.path.normpath(os.path.join(extract_dir, key_path))
+    if not safe_path.startswith(extract_dir):
+         return jsonify({"error": "Invalid path"}), 403
+         
+    if not os.path.exists(safe_path):
+        return jsonify({"error": "File not found"}), 404
+        
+    return send_file(safe_path, as_attachment=True)
+
+@app.route('/results/<uuid>/strings', methods=['GET'])
+def get_strings_content(uuid):
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 1000, type=int)
+    query = request.args.get('q', '')
+    
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
+    scan = c.fetchone()
+    conn.close()
+    
+    if not scan:
+        return jsonify({"error": "Scan not found"}), 404
+        
+    output_dir = scan['output_dir']
+    strings_file = os.path.join(output_dir, "strings_output.txt")
+    
+    if not os.path.exists(strings_file):
+        return jsonify({"error": "Strings output not found"}), 404
+
+    content = []
+    total_lines = 0
+
+    if query:
+        # Search mode - simple grep (limited to first 1000 matches to avoid overflow)
+        try:
+            # -i for case insensitive, -n for line numbers, -m for max count
+            cmd = ['grep', '-i', '-n', '-m', str(limit), query, strings_file]
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            
+            # Format: "line_num:content"
+            content = result.stdout.splitlines()
+            total_lines = len(content) 
+            
+        except Exception as e:
+            return jsonify({"error": f"Search failed: {str(e)}"}), 500
+    else:
+        # Pagination mode
+        try:
+            # Get total lines using wc -l
+            wc_cmd = ['wc', '-l', strings_file]
+            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True)
+            if wc_res.returncode == 0 and wc_res.stdout:
+                total_lines = int(wc_res.stdout.split()[0])
+            
+            # Use sed to extract range efficiently
+            start_line = (page - 1) * limit + 1
+            end_line = start_line + limit - 1
+            
+            sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', strings_file]
+            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace')
+            content = sed_res.stdout.splitlines()
+            
+        except Exception as e:
+            return jsonify({"error": f"Failed to read file: {str(e)}"}), 500
+
+    return jsonify({
+        "content": content,
+        "total": total_lines,
+        "page": page,
+        "limit": limit
+    })
+
+@app.route('/results/<uuid>/strings/download', methods=['GET'])
+def download_strings(uuid):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
+    scan = c.fetchone()
+    conn.close()
+    
+    if not scan:
+        return jsonify({"error": "Scan not found"}), 404
+        
+    output_dir = scan['output_dir']
+    strings_file = os.path.join(output_dir, "strings_output.txt")
+    
+    if not os.path.exists(strings_file):
+        return jsonify({"error": "Strings output not found"}), 404
+        
+    return send_file(strings_file, as_attachment=True, download_name=f"strings_{uuid}.txt")
 
 def run_api(runner_cb, debug_mode=False):
     global runner_func

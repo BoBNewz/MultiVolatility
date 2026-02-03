@@ -2,7 +2,6 @@ services:
   # Python Backend API
   api:
     build: ./CLI
-    image: multivol-api
     container_name: multivol-api
     ports:
       - "5001:5001"
@@ -21,7 +20,6 @@ services:
   # React Frontend
   web:
     build: ./Web
-    image: multivol-web
     container_name: multivol-web
     ports:
       - "80:80"

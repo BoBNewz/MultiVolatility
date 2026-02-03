@@ -8,3 +8,4 @@ modules:
   - linux.pstree.PsTree
   - linux.ip.Addr
   - linux.pagecache.Files
+  - linux.pagecache.RecoverFs

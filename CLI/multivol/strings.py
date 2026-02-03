@@ -37,33 +37,25 @@ def get_strings(dump, dump_dir, output_dir, docker_image, lock=False, host_path=
     }
 
     dump_filename = os.path.basename(dump)
-    cmd_args = f"strings /dump_dir/{dump_filename}"
+    output_filename = "strings_output.txt"
+    
+    # Redirect output to file inside container (avoids Docker log rotation issues)
+    cmd_with_redirect = f"/bin/sh -c 'strings /dump_dir/{dump_filename} > /output/{output_filename} 2>&1'"
     
     client = docker.from_env()
     
     try:
         container = client.containers.run(
             image=docker_image,
-            command=cmd_args,
+            command=cmd_with_redirect,
             volumes=volumes,
-            tty=True, 
+            tty=False,  # No TTY needed when redirecting to file
             detach=True,
-            remove=False
+            remove=False,
+            log_config={"type": "none"}  # Disable Docker logging - output goes to file
         )
-            
-        with open(output_file, "wb") as file:
-            try:
-                for chunk in container.logs(stream=True):
-                    file.write(chunk)
-            except Exception as log_err:
-                # Handle Docker log rotation errors
-                safe_print(f"[!] Log streaming interrupted: {log_err}, fetching remaining logs...", lock)
-                try:
-                    remaining_logs = container.logs(stream=False)
-                    file.write(remaining_logs)
-                except:
-                    pass
-            
+        
+        # Wait for container to finish (output is written to file, not logs)
         container.wait()
         container.remove()
 

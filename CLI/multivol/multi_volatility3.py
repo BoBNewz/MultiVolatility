@@ -28,7 +28,7 @@ class multi_volatility3:
                 return os.path.join(host_path, rel_path)
         return path
 
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None):
+    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None, extra_args=""):
         # Executes a Volatility3 command in Docker and handles output
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
@@ -45,8 +45,9 @@ class multi_volatility3:
         host_dump_dir = os.path.dirname(host_dump_path)
         
         # Debug logging for path resolution
-        print(f"[DEBUG] dump={dump}, dump_dir={dump_dir}", flush=True)
-        print(f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}", flush=True)
+        if show_commands:
+            print(f"[DEBUG] dump={dump}, dump_dir={dump_dir}", flush=True)
+            print(f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}", flush=True)
         
         volumes = {
              host_dump_dir: {'bind': '/dump_dir', 'mode': 'ro'},
@@ -66,8 +67,9 @@ class multi_volatility3:
         # NOTE: -f expects the file path. Volume maps dump_dir to /dump_dir. 
         # So dump file is at /dump_dir/basename(dump)
         dump_filename = os.path.basename(dump)
-        print(f"[DEBUG] dump_filename={dump_filename}, full path in container=/dump_dir/{dump_filename}", flush=True)
-        base_args = f"vol -q -f /dump_dir/{dump_filename} -s /symbols -p /plugins"
+        if show_commands:
+            print(f"[DEBUG] dump_filename={dump_filename}, full path in container=/dump_dir/{dump_filename}", flush=True)
+        base_args = f"vol -q -f /dump_dir/{dump_filename} -o /output -s /symbols -p /plugins"
 
         if custom_symbol:
             if show_commands:
@@ -78,14 +80,20 @@ class multi_volatility3:
 
         if format == "json":
             self.output_file = os.path.join(output_dir, f"{command}_output.json")
-            cmd_args = f"{base_args} -r json {command}"
+            output_filename = f"{command}_output.json"
+            cmd_args = f"{base_args} -r json {command} {extra_args}"
         else:
             self.output_file = os.path.join(output_dir, f"{command}_output.txt")
-            cmd_args = f"{base_args} {command}"
+            output_filename = f"{command}_output.txt"
+            cmd_args = f"{base_args} {command} {extra_args}"
+        
+        # Redirect output to file inside container (avoids Docker log rotation issues)
+        cmd_with_redirect = f"/bin/sh -c '{cmd_args} > /output/{output_filename} 2>&1'"
         
         # Debug: verify output path
-        print(f"[DEBUG] output_dir={output_dir}, output_file={self.output_file}", flush=True)
-        print(f"[DEBUG] output_dir exists: {os.path.exists(output_dir)}", flush=True)
+        if show_commands:
+            print(f"[DEBUG] output_dir={output_dir}, output_file={self.output_file}", flush=True)
+            print(f"[DEBUG] output_dir exists: {os.path.exists(output_dir)}", flush=True)
         if show_commands:
             print(f"[DEBUG] Volatility 3 Command: {cmd_args}", flush=True)
             print(f"[DEBUG] Docker Volumes: {json.dumps(volumes, indent=2)}", flush=True)
@@ -101,28 +109,16 @@ class multi_volatility3:
 
             container = client.containers.run(
                 image=docker_image,
-                name=container_name, # Name the container
-                command=cmd_args,
+                name=container_name,
+                command=cmd_with_redirect,
                 volumes=volumes,
-                tty=True, 
+                tty=False,  # No TTY needed when redirecting to file
                 detach=True,
-                remove=False
+                remove=False,
+                log_config={"type": "none"}  # Disable Docker logging - output goes to file
             )
             
-            with open(self.output_file, "wb") as file:
-                try:
-                    for chunk in container.logs(stream=True):
-                        file.write(chunk)
-                except Exception as log_err:
-                    # Handle Docker log rotation errors (common with long-running modules)
-                    self.safe_print(f"[!] Log streaming interrupted: {log_err}, fetching remaining logs...", lock)
-                    try:
-                        # Fallback: fetch all logs at once instead of streaming
-                        remaining_logs = container.logs(stream=False)
-                        file.write(remaining_logs)
-                    except:
-                        pass  # Best effort - container may have finished
-            
+            # Wait for container to finish (output is written to file, not logs)
             wait_result = container.wait()
             exit_code = wait_result.get('StatusCode', 0)
             # Don't remove container - API will check status and clean up

@@ -16,7 +16,9 @@ import {
     Terminal,
     Loader2,
     XCircle,
-    AlertTriangle
+    AlertTriangle,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { api } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
@@ -47,6 +49,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [hiddenCols, setHiddenCols] = React.useState<string[]>([]);
     const [viewMode, setViewMode] = React.useState<'table' | 'tree' | 'graph'>('table');
     const [caseDetails, setCaseDetails] = React.useState<any | null>(null);
+    const [error, setError] = React.useState<string | null>(null);
+
+    // Strings View State
+    const [stringsContent, setStringsContent] = React.useState<{ content: string[], total: number, page: number, limit: number } | null>(null);
+    const [stringsQuery, setStringsQuery] = React.useState('');
+    const [stringsPage, setStringsPage] = React.useState(1);
+    const [stringsLoading, setStringsLoading] = React.useState(false);
 
     // Column resizing state
     const [colWidths, setColWidths] = React.useState<Record<string, number>>({});
@@ -163,14 +172,35 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const loadResults = async () => {
         if (!caseId || !activeModule) return;
         setLoading(true);
+        setError(null);
+
         try {
-            const data = await api.getScanResults(caseId, activeModule);
-            if (Array.isArray(data)) {
-                setResults(data);
-            } else if (data) {
-                setResults([data]);
+            if (activeModule === 'strings') {
+                setStringsLoading(true);
+                const queryParams = new URLSearchParams({
+                    page: stringsPage.toString(),
+                    limit: '1000',
+                    q: stringsQuery
+                });
+
+                try {
+                    const response = await fetch(`http://localhost:5001/results/${caseId}/strings?${queryParams}`);
+                    if (!response.ok) throw new Error('Failed to load strings');
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+
+                    setStringsContent(data);
+                    setResults([]); // Clear standard results
+                } catch (err: any) {
+                    setError(err.message || 'Failed to load strings');
+                    setStringsContent(null);
+                } finally {
+                    setStringsLoading(false);
+                }
             } else {
-                setResults([]);
+                const data = await api.getScanResults(caseId, activeModule);
+                setResults(Array.isArray(data) ? data : []);
+                setStringsContent(null);
             }
         } catch (error) {
             console.error('Failed to load results:', error);
@@ -179,6 +209,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             setLoading(false);
         }
     };
+
+    // Reload strings when pagination or query changes
+    React.useEffect(() => {
+        if (activeModule === 'strings') {
+            loadResults();
+        }
+    }, [stringsPage, stringsQuery]);
 
     const handleDownload = () => {
         if (!results || !activeModule || !caseId) return;
@@ -284,6 +321,120 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     };
 
     const renderModuleContent = () => {
+        if (error) {
+            return (
+                <div className="flex-1 flex items-center justify-center flex-col text-red-400">
+                    <AlertTriangle className="w-12 h-12 mb-4 opacity-50" />
+                    <p className="font-medium">{error}</p>
+                </div>
+            );
+        }
+
+        // Special View for Strings Module
+        if (activeModule === 'strings') {
+            return (
+                <div className="flex flex-col h-full bg-[#13111c]/95 backdrop-blur-sm rounded-xl border border-white/5 shadow-inner overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex items-center gap-4 p-4 border-b border-white/5 bg-[#13111c]">
+                        <div className="flex-1 relative">
+                            <input
+                                type="text"
+                                className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 pl-9 text-sm text-slate-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder-slate-600"
+                                placeholder="Grep search (case insensitive)..."
+                                value={stringsQuery}
+                                onChange={(e) => setStringsQuery(e.target.value)}
+                            />
+                            <div className="absolute left-3 top-2.5 text-slate-500">
+                                <Search size={14} />
+                            </div>
+                        </div>
+                        <button
+                            className="flex items-center px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
+                            onClick={() => window.open(`http://localhost:5001/results/${caseId}/strings/download`, '_blank')}
+                        >
+                            <Download size={14} className="mr-2" />
+                            Download .txt
+                        </button>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 overflow-auto p-4 font-mono text-xs text-slate-300 bg-black/20 leading-relaxed">
+                        {stringsLoading ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-3">
+                                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                <p>Reading file...</p>
+                            </div>
+                        ) : stringsContent?.content?.length ? (
+                            <div className="space-y-1">
+                                {stringsContent.content.map((line, i) => (
+                                    <div key={i} className="whitespace-pre-wrap break-all hover:bg-white/5 px-2 py-0.5 rounded transition-colors selection:bg-primary/30 selection:text-white">
+                                        {line}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50">
+                                <p>No content found matching criteria.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Pagination Footer */}
+                    <div className="p-3 border-t border-white/5 bg-[#13111c] flex items-center justify-between text-xs text-slate-500">
+                        <div className="font-medium text-slate-400">
+                            {stringsContent?.total ? (
+                                <span>Found ~{stringsContent.total.toLocaleString()} lines/matches</span>
+                            ) : (
+                                <span>Ready</span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={stringsPage <= 1 || stringsLoading}
+                                onClick={() => setStringsPage(p => Math.max(1, p - 1))}
+                                className="p-1.5 rounded hover:bg-white/5 disabled:opacity-30 text-slate-400 hover:text-white transition-colors"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="min-w-[3ch] text-center font-mono text-slate-300 bg-white/5 px-2 py-0.5 rounded border border-white/5">{stringsPage}</span>
+                            <button
+                                disabled={!stringsContent?.content?.length || stringsLoading}
+                                onClick={() => setStringsPage(p => p + 1)}
+                                className="p-1.5 rounded hover:bg-white/5 disabled:opacity-30 text-slate-400 hover:text-white transition-colors"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Special View for RecoverFs
+        if (activeModule === 'linux.pagecache.RecoverFs') {
+            console.log('DEBUG RecoverFs: results =', results);
+            console.log('DEBUG RecoverFs: results[0] =', results[0]);
+            console.log('DEBUG RecoverFs: results[0]?.name =', results[0]?.name);
+
+            return (
+                <FileTreeView
+                    data={results}
+                    isPrebuilt={true}
+                    viewMode="tree"
+                    onToggleView={() => { }}
+                    onDownload={(nodeData) => {
+                        if (nodeData.type !== 'file') return;
+                        const filePath = nodeData.path;
+                        if (!filePath) {
+                            toast.error("Invalid file path");
+                            return;
+                        }
+                        window.open(`http://localhost:5001/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}`, '_blank');
+                    }}
+                />
+            );
+        }
+
         if (loading) {
             return (
                 <div className="flex-1 flex items-center justify-center flex-col text-slate-500">

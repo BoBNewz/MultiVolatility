@@ -22,6 +22,7 @@ interface FileTreeViewProps {
     onToggleView: (mode: 'table' | 'tree') => void;
     viewMode: 'table' | 'tree';
     onDownload?: (node: any) => void;
+    isPrebuilt?: boolean;
 }
 
 const buildFileTree = (data: any[]): TreeNode[] => {
@@ -95,29 +96,41 @@ const buildFileTree = (data: any[]): TreeNode[] => {
     return root;
 };
 
-// Node renderer needs access to context menu handler passed via tree props or context?
-// React-arborist renders nodes. We can pass props down?
-// Actually simpler to just define NodeRenderer inside the component or pass the handler via a Context.
-// For now, let's just make NodeRenderer accept a custom prop if we can... 
-// But generic NodeRendererProps doesn't have our custom props.
-// We can use a factory or closure? 
-// Yes, define NodeRenderer inside FileTreeView or wrap it?
-// Or just export it ?
-// Let's modify FileTreeView to define the renderer using a useCallback or similar to capture the handler.
+const mapPrebuiltTree = (nodes: any[]): TreeNode[] => {
+    if (!nodes) return [];
 
-// BUT defining component inside component causes remounts.
-// Better: Pass the handlers via data? No.
-// Better: Use a global or context. 
-// However, since I am rewriting the file content, I can just change how it deals with it.
-// Let's move NodeRenderer inside FileTreeView temporarily or pass the handleContextMenu via a Ref accessible to it?
-// Actually, I can pass additional data to the Tree?
-// No, standard arborist pattern.
+    // Debug: log first node to understand structure
+    if (nodes.length > 0) {
+        console.log('mapPrebuiltTree received:', {
+            'nodes.length': nodes.length,
+            'nodes[0]': nodes[0],
+            'nodes[0].name': nodes[0]?.name,
+            'Object.keys(nodes[0])': nodes[0] ? Object.keys(nodes[0]) : 'N/A'
+        });
+    }
 
-// Let's just create a Context for the functionality.
+    return nodes.map((node, index) => {
+        // Robust name resolution
+        const name = node.name || (node.path ? node.path.split('/').pop() : `UNNAMED_${index}`);
+
+        return {
+            id: node.path || `node-${index}-${name}`,
+            name: name,
+            isFolder: node.type === 'directory',
+            children: node.children ? mapPrebuiltTree(node.children) : undefined,
+            data: node
+        };
+    });
+};
+
 const TreeContext = React.createContext<{ onContextMenu: (e: React.MouseEvent, node: any) => void }>({ onContextMenu: () => { } });
 
 const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<TreeNode>) => {
     const { onContextMenu } = React.useContext(TreeContext);
+    const treeNode = node.data;
+
+    // Safety fallback
+    const displayName = treeNode.name || "MISSING_NAME";
 
     return (
         <div
@@ -127,25 +140,32 @@ const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<TreeNode>) 
                 }`}
             onClick={() => node.toggle()}
             onContextMenu={(e) => {
-                if (!node.data.isFolder) {
-                    onContextMenu(e, node.data);
+                if (!treeNode.isFolder) {
+                    onContextMenu(e, treeNode.data);
                 }
             }}
         >
             <div className="mr-2 text-slate-400">
-                {node.data.isFolder ? (
+                {treeNode.isFolder ? (
                     node.isOpen ? <FolderOpen size={16} className="text-primary" /> : <Folder size={16} className="text-primary" />
                 ) : (
                     <FileIcon size={16} className="text-slate-500" />
                 )}
             </div>
-            <span className="truncate text-slate-200 text-sm">{node.data.name}</span>
+            <span className="truncate text-slate-200 text-sm" title={displayName}>
+                {displayName}
+            </span>
         </div>
     );
 };
 
-export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, viewMode, onDownload }) => {
-    const treeData = React.useMemo(() => buildFileTree(data), [data]);
+export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, viewMode, onDownload, isPrebuilt }) => {
+    const treeData = React.useMemo(() => {
+        if (isPrebuilt) {
+            return mapPrebuiltTree(data);
+        }
+        return buildFileTree(data);
+    }, [data, isPrebuilt]);
     const [containerRef, setContainerRef] = React.useState<HTMLDivElement | null>(null);
     const [dims, setDims] = React.useState({ width: 0, height: 0 });
 
@@ -158,12 +178,12 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
         return () => window.removeEventListener('click', handleClick);
     }, []);
 
-    const handleContextMenu = (e: React.MouseEvent, node: any) => {
+    const handleContextMenu = (e: React.MouseEvent, nodeData: any) => {
         e.preventDefault();
         setContextMenu({
             x: e.clientX,
             y: e.clientY,
-            node: node.data // node.data is the item object (with VirtualAddress etc)
+            node: nodeData // nodeData is already the raw API node (with path, type, name)
         });
     };
 
@@ -211,9 +231,9 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
                     ref={setContainerRef}
                     className="flex-1 bg-[#13111c]/95 backdrop-blur-sm rounded-xl border border-white/5 overflow-hidden relative shadow-inner min-h-0"
                 >
-                    {dims.width > 0 && dims.height > 0 && (
+                    {dims.width > 0 && dims.height > 0 && treeData.length > 0 && (
                         <Tree
-                            initialData={treeData}
+                            data={treeData}
                             openByDefault={false}
                             width={dims.width}
                             height={dims.height}
