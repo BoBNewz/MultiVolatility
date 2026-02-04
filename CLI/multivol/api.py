@@ -914,15 +914,19 @@ def get_scan_results(uuid):
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
-    # try DB first
-    c.execute("SELECT content FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_param))
-    row = c.fetchone()
-    if row:
-        conn.close()
-        try:
-            return jsonify(json.loads(row['content']))
-        except:
-            return jsonify({"error": "Failed to parse stored content", "raw": row['content']}), 500
+    # RecoverFs module: ALWAYS read from filesystem (not DB) because the filesystem
+    # has the processed tree structure with name/path/type fields, while DB has raw Volatility output
+    if module_param != 'linux.pagecache.RecoverFs':
+        # try DB first for other modules
+        c.execute("SELECT content FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_param))
+        row = c.fetchone()
+        if row:
+            conn.close()
+            try:
+                return jsonify(json.loads(row['content']))
+            except:
+                return jsonify({"error": "Failed to parse stored content", "raw": row['content']}), 500
+
 
     # Fallback to filesystem
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))

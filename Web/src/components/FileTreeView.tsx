@@ -1,12 +1,15 @@
 import React from 'react';
-import { Tree, type NodeRendererProps } from 'react-arborist';
+import { Tree, type NodeRendererProps, type TreeApi } from 'react-arborist';
 import {
     Folder,
     FolderOpen,
     File as FileIcon,
     Network,
     List,
-    DownloadCloud
+    DownloadCloud,
+    ChevronsDownUp,
+    ChevronsUpDown,
+    Search
 } from 'lucide-react';
 
 interface TreeNode {
@@ -168,6 +171,8 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
     }, [data, isPrebuilt]);
     const [containerRef, setContainerRef] = React.useState<HTMLDivElement | null>(null);
     const [dims, setDims] = React.useState({ width: 0, height: 0 });
+    const treeRef = React.useRef<TreeApi<TreeNode> | null>(null);
+    const [searchTerm, setSearchTerm] = React.useState('');
 
     // Context Menu State
     const [contextMenu, setContextMenu] = React.useState<{ x: number, y: number, node: any } | null>(null);
@@ -207,6 +212,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
         <TreeContext.Provider value={{ onContextMenu: handleContextMenu }}>
             <div className="flex flex-col h-full min-h-0 relative">
                 <div className="flex items-center space-x-2 mb-4">
+                    {/* View Toggles */}
                     <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
                         <button
                             onClick={() => onToggleView('table')}
@@ -225,6 +231,40 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
                             Tree
                         </button>
                     </div>
+
+                    {/* Expand/Collapse All Buttons */}
+                    <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
+                        <button
+                            onClick={() => treeRef.current?.openAll()}
+                            className="flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5"
+                            title="Expand All Folders"
+                        >
+                            <ChevronsUpDown size={14} className="mr-2" />
+                            Expand All
+                        </button>
+                        <button
+                            onClick={() => treeRef.current?.closeAll()}
+                            className="flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5"
+                            title="Collapse All Folders"
+                        >
+                            <ChevronsDownUp size={14} className="mr-2" />
+                            Collapse All
+                        </button>
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="flex-1 max-w-sm relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search size={14} className="text-slate-500" />
+                        </div>
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search files..."
+                            className="block w-full pl-9 pr-3 py-1.5 border border-white/10 rounded-lg leading-5 bg-white/5 text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary focus:border-primary sm:text-xs"
+                        />
+                    </div>
                 </div>
 
                 <div
@@ -233,7 +273,10 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
                 >
                     {dims.width > 0 && dims.height > 0 && treeData.length > 0 && (
                         <Tree
+                            ref={treeRef}
                             data={treeData}
+                            searchTerm={searchTerm}
+                            searchMatch={(node, term) => node.data.name.toLowerCase().includes(term.toLowerCase())}
                             openByDefault={false}
                             width={dims.width}
                             height={dims.height}
@@ -248,6 +291,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
                         </Tree>
                     )}
                 </div>
+
 
                 {/* Context Menu */}
                 {contextMenu && (
