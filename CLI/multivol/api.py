@@ -489,8 +489,24 @@ def upload_symbol():
             return jsonify({"status": "success", "path": save_path})
         except Exception as e:
              return jsonify({"error": str(e)}), 500
+
 @app.route('/scan', methods=['POST'])
 def scan():
+    # Check for existing running/pending scans to prevent concurrency
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT uuid FROM scans WHERE status IN ('pending', 'running')")
+        existing_scan = c.fetchone()
+        conn.close()
+        
+        if existing_scan:
+            return jsonify({"error": "A scan is already in progress. Please wait for it to complete."}), 429
+    except Exception as e:
+        print(f"[ERROR] Failed to check concurrency: {e}")
+        # Fail open or closed? Closed seems safer for stability.
+        return jsonify({"error": f"Database error checking concurrency: {e}"}), 500
+
     data = request.json
     
     # Determine default image based on mode from request
@@ -725,7 +741,8 @@ def list_volatility_plugins():
         print(f"[DEBUG] running list_plugins on image {image}")
         container = client.containers.run(
             image=image,
-            command="python3 /list_plugins.py",
+            entrypoint="python3", 
+            command="/list_plugins.py",
             volumes={
                 host_script_path: {'bind': '/list_plugins.py', 'mode': 'ro'}
             },

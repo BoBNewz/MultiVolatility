@@ -242,7 +242,15 @@ export const api = {
 
     listPlugins: async (image: string): Promise<any> => {
         const response = await fetch(`${API_BASE_URL}/volatility3/plugins?image=${image}`);
-        if (!response.ok) throw new Error('Failed to list plugins');
+        if (!response.ok) {
+            try {
+                const err = await response.json();
+                throw new Error(err.error || 'Failed to list plugins');
+            } catch (e: any) {
+                // If json parse fails or error prop missing, use generic or the parsed error
+                throw new Error(e.message || 'Failed to list plugins');
+            }
+        }
         return response.json();
     },
 
