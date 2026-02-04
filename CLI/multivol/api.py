@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify, abort, send_from_directory, send_file
 from flask_cors import CORS
 import zipfile
+import shutil
 import zipfile
 import io
 import textwrap
@@ -40,6 +41,15 @@ DB_PATH = os.path.join(STORAGE_DIR, "scans.db")
 SYMBOLS_DIR = os.path.join(os.getcwd(), "volatility3_symbols")
 if not os.path.exists(SYMBOLS_DIR):
     os.makedirs(SYMBOLS_DIR)
+
+def get_db_connection(timeout=30.0):
+    """Factory for robust SQLite connections with WAL mode and timeout."""
+    conn = sqlite3.connect(DB_PATH, timeout=timeout)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+    except Exception as e:
+        print(f"[WARN] Failed to enable WAL mode: {e}")
+    return conn
 
 runner_func = None
 
@@ -189,7 +199,7 @@ def process_recover_fs(output_dir):
 
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS scans
                  (uuid TEXT PRIMARY KEY, status TEXT, mode TEXT, os TEXT, volatility_version TEXT, dump_path TEXT, output_dir TEXT, created_at REAL, error TEXT)''')
@@ -241,7 +251,7 @@ def rename_scan(uuid):
     if not new_name:
         return jsonify({"error": "Name is required"}), 400
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("UPDATE scans SET name = ? WHERE uuid = ?", (new_name, uuid))
     conn.commit()
@@ -250,7 +260,7 @@ def rename_scan(uuid):
 
 @app.route('/scans/<uuid>', methods=['DELETE'])
 def delete_scan(uuid):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
@@ -275,7 +285,7 @@ def delete_scan(uuid):
 
 @app.route('/scans/<uuid>/download', methods=['GET'])
 def download_scan_zip(uuid):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT output_dir, name FROM scans WHERE uuid = ?", (uuid,))
@@ -364,7 +374,7 @@ def ingest_results_to_db(scan_id, output_dir):
          print(f"[ERROR] Output dir not found: {output_dir}")
          return
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     
     json_files = glob.glob(os.path.join(output_dir, "*_output.json"))
@@ -580,7 +590,7 @@ def scan():
         print(f"[ERROR] Failed to determine commands: {e}")
         command_list = []
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at, image, name, config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version, args_obj.dump, final_output_dir, time.time(), args_obj.image, case_name, json.dumps(data)))
@@ -594,7 +604,7 @@ def scan():
     conn.close()
 
     def background_scan(s_id, args):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         
         try:
@@ -633,7 +643,7 @@ def scan():
 
 @app.route('/status/<scan_id>', methods=['GET'])
 def get_status(scan_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM scans WHERE uuid = ?", (scan_id,))
@@ -750,7 +760,7 @@ def log_scan_module_status(uuid):
     if not module or not status:
         return jsonify({"error": "Missing module or status"}), 400
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     try:
         # Upsert status
@@ -775,7 +785,7 @@ def log_scan_module_status(uuid):
 
 @app.route('/scan/<uuid>/modules', methods=['GET'])
 def get_scan_modules_status(uuid):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
@@ -910,7 +920,7 @@ def get_scan_results(uuid):
     if not module_param:
         return jsonify({"error": "Missing 'module' query parameter"}), 400
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
@@ -964,7 +974,7 @@ def get_scan_results(uuid):
 
 @app.route('/scans', methods=['GET'])
 def list_scans():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM scans ORDER BY created_at DESC")
@@ -1005,7 +1015,7 @@ def execute_plugin(uuid):
     if not module:
         return jsonify({"error": "Missing 'module' parameter"}), 400
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM scans WHERE uuid = ?", (uuid,))
@@ -1070,7 +1080,7 @@ def execute_plugin(uuid):
 
 @app.route('/stats', methods=['GET'])
 def get_stats():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM scans")
     total_cases = c.fetchone()[0]
@@ -1122,7 +1132,7 @@ def list_evidences():
     # Pre-load Case Name map from DB
     case_map = {} # filename -> case name
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute("SELECT name, dump_path FROM scans ORDER BY created_at ASC")
@@ -1178,7 +1188,7 @@ def list_evidences():
              # Case Name match attempt
              matched_case_name = dump_base
              try:
-                 conn = sqlite3.connect(DB_PATH)
+                 conn = get_db_connection()
                  conn.row_factory = sqlite3.Row
                  c = conn.cursor()
                  c.execute("SELECT dump_path FROM scans WHERE name = ? ORDER BY created_at DESC LIMIT 1", (dump_base,))
@@ -1322,7 +1332,7 @@ def download_evidence(filename):
 def cleanup_timeouts():
     """Marks scans running for > 1 hour as failed (timeout)."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         one_hour_ago = time.time() - 3600
         
@@ -1369,7 +1379,8 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
         dump_filename = os.path.basename(uploaded_path)
 
         # Construct basic command
-        cmd = ["vol", "-q", "-f", f"/dump_dir/{dump_filename}", "-o", "/output"]
+        # Removing -q to see errors/warnings, adding -v for verbose
+        cmd = ["vol", "-v", "-f", f"/dump_dir/{dump_filename}", "-o", "/output"]
 
         # Parse Config
         config = {}
@@ -1414,8 +1425,19 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
         else:
             # Windows dump logic (default)
             cmd.append("windows.dumpfiles.DumpFiles")
-            cmd.append("--virtaddr")
-            cmd.append(str(virt_addr))
+            
+            # Heuristic: If address is small (< 2GB), likely physical offset 
+            # (Kernel VAs are usually > 0x80000000 on 32-bit and huge on 64-bit)
+            # The observed offsets are ~500MB which match the physical file size.
+            addr_val = int(virt_addr)
+            if addr_val < 0x80000000:
+                print(f"[{task_id}] DEBUG: Address {hex(addr_val)} looks physical, using --physaddr")
+                cmd.append("--physaddr")
+            else:
+                print(f"[{task_id}] DEBUG: Address {hex(addr_val)} looks virtual, using --virtaddr")
+                cmd.append("--virtaddr")
+                
+            cmd.append(hex(addr_val))
 
         print(f"[{task_id}] Running dump command inside container: {cmd}")
 
@@ -1459,21 +1481,23 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
 
         # Docker Volumes Mapping
         volumes = {
-            os.path.dirname(uploaded_path): {'bind': '/dump_dir', 'mode': 'ro'},
-            task_out_dir: {'bind': '/output', 'mode': 'rw'},
-            symbols_path: {'bind': '/symbols', 'mode': 'ro'},
-            cache_path: {'bind': '/root/.cache/volatility3', 'mode': 'rw'}
+            resolve_host_path(os.path.dirname(uploaded_path)): {'bind': '/dump_dir', 'mode': 'ro'},
+            resolve_host_path(task_out_dir): {'bind': '/output', 'mode': 'rw'},
+            resolve_host_path(symbols_path): {'bind': '/symbols', 'mode': 'rw'},
+            resolve_host_path(cache_path): {'bind': '/root/.cache/volatility3', 'mode': 'rw'}
         }
 
-        print(f"[{task_id}] Launching Docker container: {image_tag}")
-        print(f"[{task_id}] Volumes config: {volumes}")
-        
         # Consistent naming for debug
         # Format: vol3_dump_<short_scan_uuid>_<task_id>
         # Scan UUID is text, sanitize just in case
         safe_scan_id = re.sub(r'[^a-zA-Z0-9]', '', scan['uuid'])[:8]
         container_name = f"vol3_dump_{safe_scan_id}_{task_id}"
 
+        print(f"[{task_id}] Launching Docker container: {image_tag}")
+        print(f"[{task_id}] Container Name: {container_name}")
+        print(f"[{task_id}] Command: {cmd}")
+        print(f"[{task_id}] Volumes config: {volumes}")
+        
         try:
             client = docker.from_env()
             container = client.containers.run(
@@ -1486,8 +1510,10 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
                 stderr=True,
                 stdout=True
             )
-            print(f"[{task_id}] Docker finished. Output bytes: {len(container) if container else 0}")
-            # print(f"[{task_id}] Container output (first 200 chars): {container[:200] if container else ''}")
+            # Docker returns byte output when detach=False
+            output_str = container.decode('utf-8', errors='replace') if container else ""
+            print(f"[{task_id}] Docker execution finished. Output bytes: {len(container) if container else 0}")
+            print(f"[{task_id}] Full Container Output:\n{output_str}")
         except docker.errors.ImageNotFound:
              print(f"[{task_id}] Pulling image {image_tag}...")
              client.images.pull(image_tag)
@@ -1505,9 +1531,10 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
 
         # After run, check files in task_out_dir
         files = os.listdir(task_out_dir)
+        print(f"[{task_id}] Checking output directory: {task_out_dir}")
         print(f"[{task_id}] Files in output dir: {files}")
         if not files:
-            raise Exception("No file extracted by Volatility plugin.")
+            raise Exception(f"No file extracted by Volatility plugin. Dump command executed but output dir is empty. \nLast container output: {output_str[-500:] if 'output_str' in locals() else 'N/A'}")
         
         # Move files to final destination (case_extract_dir)
         # And maybe rename?
@@ -1541,7 +1568,7 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
     finally:
         # The original code updated the database, but the provided diff removes this.
         # Keeping the database update for consistency with other functions.
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         if dump_tasks[task_id]['status'] == 'completed':
             output_path = os.path.join(case_extract_dir, created_files[0]) if created_files else None
@@ -1556,7 +1583,7 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
 @app.route('/scan/<scan_id>/dump-file', methods=['POST'])
 def dump_file_from_memory(scan_id):
     # Use standard connection method
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
@@ -1602,7 +1629,7 @@ def dump_file_from_memory(scan_id):
 
 @app.route('/dump-task/<task_id>', methods=['GET'])
 def get_dump_status(task_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM dump_tasks WHERE task_id = ?", (task_id,))
@@ -1616,7 +1643,7 @@ def get_dump_status(task_id):
 
 @app.route('/dump-task/<task_id>/download', methods=['GET'])
 def download_dump_result(task_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM dump_tasks WHERE task_id = ?", (task_id,))
@@ -1645,7 +1672,7 @@ def download_fs_file(uuid):
     if not key_path:
         return jsonify({"error": "Missing path"}), 400
         
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
@@ -1674,7 +1701,7 @@ def get_strings_content(uuid):
     limit = request.args.get('limit', 1000, type=int)
     query = request.args.get('q', '')
     
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
@@ -1735,7 +1762,7 @@ def get_strings_content(uuid):
 
 @app.route('/results/<uuid>/strings/download', methods=['GET'])
 def download_strings(uuid):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
