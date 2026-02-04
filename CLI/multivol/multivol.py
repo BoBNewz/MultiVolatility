@@ -184,28 +184,6 @@ def runner(arguments):
                                                                     getattr(arguments, "scan_id", None)
                                                                 )
 
-            # Enforce priority execution for RecoverFs module (Linux)
-            recover_module = "linux.pagecache.RecoverFs"
-            if arguments.linux:
-                if recover_module in commands:
-                    commands.remove(recover_module)
-                    volatility3_instance.execute_command_volatility3(recover_module, 
-                                                                    os.path.basename(arguments.dump), 
-                                                                    os.path.abspath(arguments.dump), 
-                                                                    arguments.symbols_path, 
-                                                                    arguments.image,
-                                                                    os.path.abspath(arguments.cache_path),
-                                                                    os.path.abspath(arguments.plugins_dir),
-                                                                    output_dir,
-                                                                    arguments.format,
-                                                                    False, # quiet
-                                                                    lock,  # lock
-                                                                    arguments.host_path,
-                                                                    True if getattr(arguments, "fetch_symbol", False) else False,
-                                                                    getattr(arguments, "debug", False),
-                                                                    getattr(arguments, "custom_symbol", None),
-                                                                    getattr(arguments, "scan_id", None)
-                                                                )
 
             
             # Prepare arguments for imap

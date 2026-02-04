@@ -24,9 +24,9 @@ modules:
   - linux.modxview.Modxview
   - linux.netfilter.Netfilter
   - linux.pagecache.Files
-  - linux.pagecache.RecoverFs
   - linux.pidhashtable.PIDHashTable
   - linux.tracing.ftrace.CheckFtrace
   - linux.tracing.perf_events.PerfEvents
   - linux.tracing.tracepoints.CheckTracepoints
   - linux.tty_check.tty_check
+  - linux.pagecache.RecoverFs

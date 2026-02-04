@@ -79,19 +79,27 @@ def build_file_tree(base_path, relative_root=""):
             full_path = os.path.join(base_path, item)
             rel_path = os.path.join(relative_root, item)
             
+            # Skip broken symlinks (symlinks pointing to non-existent targets)
+            if os.path.islink(full_path) and not os.path.exists(full_path):
+                continue
+            
             node = {
                 "name": item,
                 "path": rel_path
             }
             
-            if os.path.isdir(full_path):
-                node["type"] = "directory"
-                node["children"] = build_file_tree(full_path, rel_path)
-            else:
-                node["type"] = "file"
-                node["size"] = os.path.getsize(full_path)
-            
-            tree.append(node)
+            try:
+                if os.path.isdir(full_path):
+                    node["type"] = "directory"
+                    node["children"] = build_file_tree(full_path, rel_path)
+                else:
+                    node["type"] = "file"
+                    node["size"] = os.path.getsize(full_path)
+                
+                tree.append(node)
+            except OSError:
+                # Skip files that can't be accessed (permission errors, etc.)
+                continue
     except Exception as e:
         print(f"[ERROR] build_file_tree: {e}")
     return tree
@@ -796,7 +804,7 @@ def get_scan_modules_status(uuid):
                     import re as re_module
                     sanitized_name = re_module.sub(r'[^a-zA-Z0-9_.-]', '', module_name)
                     container_name = f"vol3_{uuid[:8]}_{sanitized_name}"
-                    print(f"[DEBUG] Looking for container: {container_name}")
+                    # Debug print if needed: print(f"[DEBUG] Looking for container: {container_name}")
                     
                     try:
                         if docker_client is None:
@@ -863,6 +871,21 @@ def get_scan_modules_status(uuid):
                     "status": "COMPLETED", 
                     "error_message": None
                 })
+        
+        # Fallback 2: If status_list is still empty, scan output_dir for JSON files
+        if len(status_list) == 0 and output_dir and os.path.isdir(output_dir):
+            import glob
+            json_files = glob.glob(os.path.join(output_dir, "*_output.json"))
+            for jf in json_files:
+                basename = os.path.basename(jf)
+                # Extract module name from filename: "linux.pstree.PsTree_output.json" -> "linux.pstree.PsTree"
+                if basename.endswith("_output.json"):
+                    module_name = basename[:-len("_output.json")]
+                    status_list.append({
+                        "module": module_name,
+                        "status": "COMPLETED",
+                        "error_message": None
+                    })
 
         # Check for strings output file and inject into list if present
         if output_dir:
