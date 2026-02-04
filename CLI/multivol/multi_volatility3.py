@@ -107,6 +107,17 @@ class multi_volatility3:
             else:
                 container_name = f"vol3_{sanitized_name}_{str(uuid.uuid4())[:8]}"
 
+            # Remove existing container if it exists (fix for 409 Conflict)
+            try:
+                existing_container = client.containers.get(container_name)
+                if show_commands:
+                    print(f"[DEBUG] Removing existing container: {container_name}", flush=True)
+                existing_container.remove(force=True)
+            except docker.errors.NotFound:
+                pass
+            except Exception as e:
+                self.safe_print(f"[!] Warning: Failed to cleanup existing container {container_name}: {e}", lock)
+
             container = client.containers.run(
                 image=docker_image,
                 name=container_name,

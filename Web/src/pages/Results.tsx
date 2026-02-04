@@ -739,6 +739,8 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                     className="w-full bg-[#0b0a12]/50 border border-transparent rounded-lg pl-10 pr-3 py-2 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary focus:border-primary/50 transition-all outline-none"
                                     type="text"
                                     placeholder="Filter modules..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -751,46 +753,58 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                     <span className="text-xs">Scan Initializing...</span>
                                 </div>
                             ) : (
-                                modules.map((mod) => (
-                                    <div key={mod.name} className="relative group">
-                                        <button
-                                            onClick={() => {
-                                                if (mod.status === 'FAILED') {
-                                                    setShowErrorModal({ module: mod.name, error: mod.error || "Unknown error" });
-                                                } else if (mod.status === 'PENDING' || mod.status === 'RUNNING') {
-                                                    toast('Module execution in progress...', { icon: '⏳' });
-                                                } else {
-                                                    setActiveModule(mod.name);
-                                                }
-                                            }}
-                                            className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg
+
+                                modules
+                                    .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .length === 0 && modules.length > 0 ? (
+                                    <div className="px-4 py-8 text-center text-slate-500 text-xs">
+                                        No modules match your filter
+                                    </div>
+                                ) : (
+                                    modules
+                                        .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                        .map((mod) => (
+                                            <div key={mod.name} className="relative group">
+                                                <button
+                                                    onClick={() => {
+                                                        if (mod.status === 'FAILED') {
+                                                            setShowErrorModal({ module: mod.name, error: mod.error || "Unknown error" });
+                                                        } else if (mod.status === 'PENDING' || mod.status === 'RUNNING') {
+                                                            toast('Module execution in progress...', { icon: '⏳' });
+                                                        } else {
+                                                            setActiveModule(mod.name);
+                                                        }
+                                                    }}
+                                                    className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg
                                                 ${activeModule === mod.name ? 'bg-primary/20 text-white shadow-lg shadow-purple-900/20' : ''}
                                                 ${(mod.status === 'PENDING' || mod.status === 'RUNNING')
-                                                    ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                                                    : mod.status === 'FAILED'
-                                                        ? 'text-red-400 hover:bg-red-500/10'
-                                                        : 'text-slate-400 hover:text-white hover:bg-white/5'}
+                                                            ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                                                            : mod.status === 'FAILED'
+                                                                ? 'text-red-400 hover:bg-red-500/10'
+                                                                : 'text-slate-400 hover:text-white hover:bg-white/5'}
                                                 `}
-                                        >
-                                            {/* Status Icon */}
-                                            <div className="mr-3 flex-shrink-0">
-                                                {(mod.status === 'RUNNING' || mod.status === 'PENDING') && (
-                                                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                                                )}
-                                                {mod.status === 'COMPLETED' && <FileIcon className={`w-4 h-4 ${activeModule === mod.name ? 'text-primary' : 'opacity-50'}`} />}
-                                                {mod.status === 'FAILED' && <XCircle className="w-4 h-4 text-red-500" />}
+                                                >
+                                                    {/* Status Icon */}
+                                                    <div className="mr-3 flex-shrink-0">
+                                                        {(mod.status === 'RUNNING' || mod.status === 'PENDING') && (
+                                                            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                                        )}
+                                                        {mod.status === 'COMPLETED' && <FileIcon className={`w-4 h-4 ${activeModule === mod.name ? 'text-primary' : 'opacity-50'}`} />}
+                                                        {mod.status === 'FAILED' && <XCircle className="w-4 h-4 text-red-500" />}
+                                                    </div>
+
+                                                    <span className={`truncate flex-1 ${mod.status === 'FAILED' ? 'text-red-400' : ''}`}>
+                                                        {mod.name}
+                                                    </span>
+
+                                                    {mod.status === 'FAILED' && (
+                                                        <AlertTriangle className="w-3 h-3 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
+                                                    )}
+                                                </button>
                                             </div>
+                                        ))
+                                )
 
-                                            <span className={`truncate flex-1 ${mod.status === 'FAILED' ? 'text-red-400' : ''}`}>
-                                                {mod.name}
-                                            </span>
-
-                                            {mod.status === 'FAILED' && (
-                                                <AlertTriangle className="w-3 h-3 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
-                                            )}
-                                        </button>
-                                    </div>
-                                ))
                             )}
                         </div>
                     </div>

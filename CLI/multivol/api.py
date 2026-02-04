@@ -703,10 +703,14 @@ def list_volatility_plugins():
          
     try:
         script_content = """
+            import sys
+            # Ensure we can find the package in typical locations
+            if "/volatility3" not in sys.path:
+                sys.path.insert(0, "/volatility3")
+            
             from volatility3 import framework
             import volatility3.plugins
             import json
-            import sys
 
             try:
                 failures = framework.import_files(volatility3.plugins, ignore_errors=True)
@@ -719,7 +723,8 @@ def list_volatility_plugins():
                 }
                 print(json.dumps(output))
             except Exception as e:
-                print(json.dumps({"error": str(e)}))
+                import traceback
+                print(json.dumps({"error": str(e), "traceback": traceback.format_exc()}))
         """
         script_content = textwrap.dedent(script_content)
         
@@ -746,6 +751,8 @@ def list_volatility_plugins():
             volumes={
                 host_script_path: {'bind': '/list_plugins.py', 'mode': 'ro'}
             },
+            working_dir="/volatility3", # Set working dir to repo root avoids some path issues
+            environment={"PYTHONPATH": "/volatility3"}, # Explicitly set pythonpath
             stderr=True,
             remove=True
         )
@@ -1098,6 +1105,22 @@ def execute_plugin(uuid):
              ingest_results_to_db(s_id, args.output_dir)
         except Exception as e:
             print(f"[ERROR] Manual plugin execution failed: {e}")
+
+    # Insert into scan_module_status so UI tracks it
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        # Check if exists, update if so, else insert
+        c.execute("SELECT id FROM scan_module_status WHERE scan_id = ? AND module = ?", (uuid, module))
+        if c.fetchone():
+            c.execute("UPDATE scan_module_status SET status = 'RUNNING', updated_at = ? WHERE scan_id = ? AND module = ?", (time.time(), uuid, module))
+        else:
+            c.execute("INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, ?, ?)",
+                      (uuid, module, 'RUNNING', time.time()))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[ERROR] Failed to update module status for {module}: {e}")
 
     thread = threading.Thread(target=background_single_run, args=(uuid, args_obj))
     thread.daemon = True
