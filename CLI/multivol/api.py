@@ -398,6 +398,16 @@ def ingest_results_to_db(scan_id, output_dir):
 
                 c.execute("INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
                           (scan_id, module_name, content_str, time.time()))
+
+                c.execute(
+                    """
+                    UPDATE scan_module_status
+                    SET status = 'COMPLETED',
+                        updated_at = ?
+                    WHERE scan_id = ? AND module = ?
+                    """,
+                    (time.time(), scan_id, module_name)
+                )
         except Exception as e:
             print(f"[ERROR] Failed to ingest {f}: {e}")
             
