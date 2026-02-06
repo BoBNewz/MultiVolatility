@@ -236,6 +236,11 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             return;
         }
 
+        if (caseDetails.os?.toLowerCase() === 'linux' && activeModule !== 'linux.pagecache.RecoverFs') {
+            toast.error("File downloads on Linux are only available via the RecoverFs module.");
+            return;
+        }
+
         // Try to identify virtual address
         const virtAddr = nodeData['Virtual'] || nodeData['VirtualAddress'] || nodeData['Offset'] || nodeData['Base'] || nodeData['Address'] || nodeData['InodeAddr'];
 
@@ -459,12 +464,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         if (viewMode === 'tree' && isFileScan) {
             // New dedicated component handling its own hooks correctly
+
             return (
                 <FileTreeView
                     data={results}
                     viewMode={viewMode}
                     onToggleView={setViewMode}
-                    onDownload={handleDownloadFile}
+                    onDownload={caseDetails?.os?.toLowerCase() === 'linux' ? undefined : handleDownloadFile}
                 />
             );
         }

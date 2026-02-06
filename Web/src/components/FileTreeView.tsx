@@ -299,16 +299,18 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
                         className="fixed z-50 bg-[#1e1e2d] border border-white/10 rounded-lg shadow-xl py-1 min-w-[160px]"
                         style={{ top: contextMenu.y, left: contextMenu.x }}
                     >
-                        <button
-                            className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-primary transition-colors flex items-center"
-                            onClick={() => {
-                                if (onDownload) onDownload(contextMenu.node);
-                                setContextMenu(null);
-                            }}
-                        >
-                            <DownloadCloud size={14} className="mr-2" />
-                            Download File
-                        </button>
+                        {onDownload && (
+                            <button
+                                className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-primary transition-colors flex items-center"
+                                onClick={() => {
+                                    if (onDownload) onDownload(contextMenu.node);
+                                    setContextMenu(null);
+                                }}
+                            >
+                                <DownloadCloud size={14} className="mr-2" />
+                                Download File
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
