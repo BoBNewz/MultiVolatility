@@ -29,3 +29,4 @@ modules:
   - linux.tracing.perf_events.PerfEvents
   - linux.tracing.tracepoints.CheckTracepoints
   - linux.tty_check.tty_check
+  - linux.pagecache.RecoverFs

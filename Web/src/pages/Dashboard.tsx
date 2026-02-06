@@ -167,13 +167,17 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                                     background={{ fill: '#27272a' }}
                                     dataKey="count"
                                     cornerRadius={10}
-                                    label={{ position: 'insideStart', fill: '#fff', fontSize: '10px', fontWeight: 'bold' }}
                                 />
                                 <Legend
                                     iconSize={10}
-                                    layout="vertical"
-                                    verticalAlign="middle"
-                                    wrapperStyle={{ right: 0, top: '50%', transform: 'translate(0, -50%)', lineHeight: '24px' }}
+                                    layout="horizontal"
+                                    verticalAlign="bottom"
+                                    align="center"
+                                    wrapperStyle={{ paddingTop: '20px' }}
+                                    formatter={(value, entry) => {
+                                        const { payload } = entry as any;
+                                        return <span style={{ color: '#fff' }}>{value}: {payload?.count || 0}</span>;
+                                    }}
                                 />
                                 <Tooltip
                                     cursor={{ fill: 'transparent' }}

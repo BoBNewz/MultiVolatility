@@ -51,23 +51,26 @@ class multi_volatility2:
 
         if format == "json":
             self.output_file = os.path.join(output_dir, f"{command}_output.json")
+            output_filename = f"{command}_output.json"
         else:
             self.output_file = os.path.join(output_dir, f"{command}_output.txt")
+            output_filename = f"{command}_output.txt"
+        
+        # Redirect output to file inside container (avoids Docker log rotation issues)
+        cmd_with_redirect = f"/bin/sh -c 'vol.py {cmd_args} > /output/{output_filename} 2>&1'"
             
         try:
             container = client.containers.run(
                 image=docker_image,
-                command=cmd_args,
+                command=cmd_with_redirect,
                 volumes=volumes,
-                tty=True, # Corresponds to -t
+                tty=False,  # No TTY needed when redirecting to file
                 remove=False,
-                detach=True
+                detach=True,
+                log_config={"type": "none"}  # Disable Docker logging - output goes to file
             )
             
-            with open(self.output_file, "wb") as file:
-                for chunk in container.logs(stream=True):
-                    file.write(chunk)
-            
+            # Wait for container to finish (output is written to file, not logs)
             container.wait()
             container.remove()
 

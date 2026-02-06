@@ -13,7 +13,7 @@
 
 </div>
 
-MultiVol orchestrates **Volatility 2** and **Volatility 3** analysis in parallel using Docker. It features a powerful CLI for automation and a modern Web Interface for visualization.
+MultiVol orchestrates **Volatility 2** (WIP) and **Volatility 3** analysis in parallel using Docker. It features a powerful CLI for automation and a modern Web Interface for visualization.
 
 ![Demo](CLI/demo.gif)
 ![Web Dashboard](Web/screen.png)

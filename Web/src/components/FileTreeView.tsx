@@ -1,12 +1,15 @@
 import React from 'react';
-import { Tree, type NodeRendererProps } from 'react-arborist';
+import { Tree, type NodeRendererProps, type TreeApi } from 'react-arborist';
 import {
     Folder,
     FolderOpen,
     File as FileIcon,
     Network,
     List,
-    DownloadCloud
+    DownloadCloud,
+    ChevronsDownUp,
+    ChevronsUpDown,
+    Search
 } from 'lucide-react';
 
 interface TreeNode {
@@ -22,6 +25,7 @@ interface FileTreeViewProps {
     onToggleView: (mode: 'table' | 'tree') => void;
     viewMode: 'table' | 'tree';
     onDownload?: (node: any) => void;
+    isPrebuilt?: boolean;
 }
 
 const buildFileTree = (data: any[]): TreeNode[] => {
@@ -95,29 +99,41 @@ const buildFileTree = (data: any[]): TreeNode[] => {
     return root;
 };
 
-// Node renderer needs access to context menu handler passed via tree props or context?
-// React-arborist renders nodes. We can pass props down?
-// Actually simpler to just define NodeRenderer inside the component or pass the handler via a Context.
-// For now, let's just make NodeRenderer accept a custom prop if we can... 
-// But generic NodeRendererProps doesn't have our custom props.
-// We can use a factory or closure? 
-// Yes, define NodeRenderer inside FileTreeView or wrap it?
-// Or just export it ?
-// Let's modify FileTreeView to define the renderer using a useCallback or similar to capture the handler.
+const mapPrebuiltTree = (nodes: any[]): TreeNode[] => {
+    if (!nodes) return [];
 
-// BUT defining component inside component causes remounts.
-// Better: Pass the handlers via data? No.
-// Better: Use a global or context. 
-// However, since I am rewriting the file content, I can just change how it deals with it.
-// Let's move NodeRenderer inside FileTreeView temporarily or pass the handleContextMenu via a Ref accessible to it?
-// Actually, I can pass additional data to the Tree?
-// No, standard arborist pattern.
+    // Debug: log first node to understand structure
+    if (nodes.length > 0) {
+        console.log('mapPrebuiltTree received:', {
+            'nodes.length': nodes.length,
+            'nodes[0]': nodes[0],
+            'nodes[0].name': nodes[0]?.name,
+            'Object.keys(nodes[0])': nodes[0] ? Object.keys(nodes[0]) : 'N/A'
+        });
+    }
 
-// Let's just create a Context for the functionality.
+    return nodes.map((node, index) => {
+        // Robust name resolution
+        const name = node.name || (node.path ? node.path.split('/').pop() : `UNNAMED_${index}`);
+
+        return {
+            id: node.path || `node-${index}-${name}`,
+            name: name,
+            isFolder: node.type === 'directory',
+            children: node.children ? mapPrebuiltTree(node.children) : undefined,
+            data: node
+        };
+    });
+};
+
 const TreeContext = React.createContext<{ onContextMenu: (e: React.MouseEvent, node: any) => void }>({ onContextMenu: () => { } });
 
 const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<TreeNode>) => {
     const { onContextMenu } = React.useContext(TreeContext);
+    const treeNode = node.data;
+
+    // Safety fallback
+    const displayName = treeNode.name || "MISSING_NAME";
 
     return (
         <div
@@ -127,27 +143,36 @@ const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<TreeNode>) 
                 }`}
             onClick={() => node.toggle()}
             onContextMenu={(e) => {
-                if (!node.data.isFolder) {
-                    onContextMenu(e, node.data);
+                if (!treeNode.isFolder) {
+                    onContextMenu(e, treeNode.data);
                 }
             }}
         >
             <div className="mr-2 text-slate-400">
-                {node.data.isFolder ? (
+                {treeNode.isFolder ? (
                     node.isOpen ? <FolderOpen size={16} className="text-primary" /> : <Folder size={16} className="text-primary" />
                 ) : (
                     <FileIcon size={16} className="text-slate-500" />
                 )}
             </div>
-            <span className="truncate text-slate-200 text-sm">{node.data.name}</span>
+            <span className="truncate text-slate-200 text-sm" title={displayName}>
+                {displayName}
+            </span>
         </div>
     );
 };
 
-export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, viewMode, onDownload }) => {
-    const treeData = React.useMemo(() => buildFileTree(data), [data]);
+export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, viewMode, onDownload, isPrebuilt }) => {
+    const treeData = React.useMemo(() => {
+        if (isPrebuilt) {
+            return mapPrebuiltTree(data);
+        }
+        return buildFileTree(data);
+    }, [data, isPrebuilt]);
     const [containerRef, setContainerRef] = React.useState<HTMLDivElement | null>(null);
     const [dims, setDims] = React.useState({ width: 0, height: 0 });
+    const treeRef = React.useRef<TreeApi<TreeNode> | null>(null);
+    const [searchTerm, setSearchTerm] = React.useState('');
 
     // Context Menu State
     const [contextMenu, setContextMenu] = React.useState<{ x: number, y: number, node: any } | null>(null);
@@ -158,12 +183,12 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
         return () => window.removeEventListener('click', handleClick);
     }, []);
 
-    const handleContextMenu = (e: React.MouseEvent, node: any) => {
+    const handleContextMenu = (e: React.MouseEvent, nodeData: any) => {
         e.preventDefault();
         setContextMenu({
             x: e.clientX,
             y: e.clientY,
-            node: node.data // node.data is the item object (with VirtualAddress etc)
+            node: nodeData // nodeData is already the raw API node (with path, type, name)
         });
     };
 
@@ -187,6 +212,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
         <TreeContext.Provider value={{ onContextMenu: handleContextMenu }}>
             <div className="flex flex-col h-full min-h-0 relative">
                 <div className="flex items-center space-x-2 mb-4">
+                    {/* View Toggles */}
                     <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
                         <button
                             onClick={() => onToggleView('table')}
@@ -205,15 +231,52 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
                             Tree
                         </button>
                     </div>
+
+                    {/* Expand/Collapse All Buttons */}
+                    <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
+                        <button
+                            onClick={() => treeRef.current?.openAll()}
+                            className="flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5"
+                            title="Expand All Folders"
+                        >
+                            <ChevronsUpDown size={14} className="mr-2" />
+                            Expand All
+                        </button>
+                        <button
+                            onClick={() => treeRef.current?.closeAll()}
+                            className="flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5"
+                            title="Collapse All Folders"
+                        >
+                            <ChevronsDownUp size={14} className="mr-2" />
+                            Collapse All
+                        </button>
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="flex-1 max-w-sm relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search size={14} className="text-slate-500" />
+                        </div>
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search files..."
+                            className="block w-full pl-9 pr-3 py-1.5 border border-white/10 rounded-lg leading-5 bg-white/5 text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-primary focus:border-primary sm:text-xs"
+                        />
+                    </div>
                 </div>
 
                 <div
                     ref={setContainerRef}
                     className="flex-1 bg-[#13111c]/95 backdrop-blur-sm rounded-xl border border-white/5 overflow-hidden relative shadow-inner min-h-0"
                 >
-                    {dims.width > 0 && dims.height > 0 && (
+                    {dims.width > 0 && dims.height > 0 && treeData.length > 0 && (
                         <Tree
-                            initialData={treeData}
+                            ref={treeRef}
+                            data={treeData}
+                            searchTerm={searchTerm}
+                            searchMatch={(node, term) => node.data.name.toLowerCase().includes(term.toLowerCase())}
                             openByDefault={false}
                             width={dims.width}
                             height={dims.height}
@@ -229,22 +292,25 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
                     )}
                 </div>
 
+
                 {/* Context Menu */}
                 {contextMenu && (
                     <div
                         className="fixed z-50 bg-[#1e1e2d] border border-white/10 rounded-lg shadow-xl py-1 min-w-[160px]"
                         style={{ top: contextMenu.y, left: contextMenu.x }}
                     >
-                        <button
-                            className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-primary transition-colors flex items-center"
-                            onClick={() => {
-                                if (onDownload) onDownload(contextMenu.node);
-                                setContextMenu(null);
-                            }}
-                        >
-                            <DownloadCloud size={14} className="mr-2" />
-                            Download File
-                        </button>
+                        {onDownload && (
+                            <button
+                                className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-primary transition-colors flex items-center"
+                                onClick={() => {
+                                    if (onDownload) onDownload(contextMenu.node);
+                                    setContextMenu(null);
+                                }}
+                            >
+                                <DownloadCloud size={14} className="mr-2" />
+                                Download File
+                            </button>
+                        )}
                     </div>
                 )}
             </div>

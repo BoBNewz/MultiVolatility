@@ -14,19 +14,30 @@ import {
     Network,
     Play,
     Terminal,
-    Loader2
+    Loader2,
+    XCircle,
+    AlertTriangle,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { api } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
 import { ProcessTreeView } from '../components/ProcessTreeView';
 import { NetworkGraphView } from '../components/NetworkGraphView';
 
+interface ModuleState {
+    name: string;
+    status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+    error?: string;
+}
+
 export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> = ({ onBack, caseId: propCaseId }) => {
     const { caseId: paramCaseId } = useParams();
     const caseId = propCaseId || paramCaseId;
 
-    const [modules, setModules] = React.useState<string[]>([]);
+    const [modules, setModules] = React.useState<ModuleState[]>([]);
     const [activeModule, setActiveModule] = React.useState<string | null>(null);
+    const [showErrorModal, setShowErrorModal] = React.useState<{ module: string, error: string } | null>(null);
     const [showRunModal, setShowRunModal] = React.useState(false);
     const [runPluginName, setRunPluginName] = React.useState('');
     const [results, setResults] = React.useState<any[]>([]);
@@ -38,17 +49,31 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [hiddenCols, setHiddenCols] = React.useState<string[]>([]);
     const [viewMode, setViewMode] = React.useState<'table' | 'tree' | 'graph'>('table');
     const [caseDetails, setCaseDetails] = React.useState<any | null>(null);
+    const [error, setError] = React.useState<string | null>(null);
+
+    // Strings View State
+    const [stringsContent, setStringsContent] = React.useState<{ content: string[], total: number, page: number, limit: number } | null>(null);
+    const [stringsQuery, setStringsQuery] = React.useState('');
+    const [stringsPage, setStringsPage] = React.useState(1);
+    const [stringsLoading, setStringsLoading] = React.useState(false);
 
     // Column resizing state
     const [colWidths, setColWidths] = React.useState<Record<string, number>>({});
     const resizingRef = React.useRef<{ col: string; startX: number; startWidth: number } | null>(null);
     const [rowsLimit, setRowsLimit] = React.useState(50);
 
+    // Track previous status of active module to detect completion
+    const prevActiveModuleStatusRef = React.useRef<string | null>(null);
+
+
+
+    // Polling effect
     React.useEffect(() => {
-        if (caseId) {
-            loadModules();
-            loadCaseDetails();
-        }
+        if (!caseId) return;
+        loadModules();
+        loadCaseDetails(); // Load case details once when caseId changes
+        const interval = setInterval(loadModules, 3000); // 3 seconds polling
+        return () => clearInterval(interval);
     }, [caseId]);
 
     const loadCaseDetails = async () => {
@@ -73,15 +98,70 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const loadModules = async () => {
         if (!caseId) return;
         try {
-            const data = await api.getScanModules(caseId);
-            setModules(data);
-            if (data.length > 0 && !activeModule) {
-                setActiveModule(data[0]);
+            // Only fetch status from DB (single source of truth)
+            const statusData = await api.getScanModulesStatus(caseId);
+
+            const merged: Record<string, ModuleState> = {};
+
+            if (Array.isArray(statusData)) {
+                statusData.forEach((s: any) => {
+                    const modName = s.module;
+                    if (!modName) return;
+
+                    merged[modName] = {
+                        name: modName,
+                        status: s.status?.toUpperCase() || 'PENDING',
+                        error: s.error_message
+                    };
+                });
             }
+
+            const sorted = Object.values(merged).sort((a: ModuleState, b: ModuleState) => a.name.localeCompare(b.name));
+
+            // Only update modules state if something actually changed
+            // This prevents unnecessary re-renders that can reset scroll position
+            setModules((prevModules: ModuleState[]) => {
+                // Quick check: if lengths differ, definitely update
+                if (prevModules.length !== sorted.length) return sorted;
+
+                // Check if any module status changed
+                const hasChanges = sorted.some((mod: ModuleState, i: number) => {
+                    const prev = prevModules[i];
+                    return !prev || prev.name !== mod.name || prev.status !== mod.status;
+                });
+
+                return hasChanges ? sorted : prevModules;
+            });
+
+            // Auto-select first module ONLY on initial load (when no module is selected yet)
+            // Use functional update to avoid stale closure issues
+            setActiveModule((prev: string | null) => {
+                if (prev === null && sorted.length > 0) {
+                    return sorted[0].name;
+                }
+                return prev;
+            });
         } catch (error) {
             console.error('Failed to load modules:', error);
         }
     };
+
+    // Auto-reload results when active module's status changes to COMPLETED
+    React.useEffect(() => {
+        if (!activeModule || !modules.length) return;
+
+        const currentModule = modules.find((m: ModuleState) => m.name === activeModule);
+        const currentStatus = currentModule?.status || null;
+        const prevStatus = prevActiveModuleStatusRef.current;
+
+        // If status changed to COMPLETED from something else, reload results
+        if (currentStatus === 'COMPLETED' && prevStatus !== null && prevStatus !== 'COMPLETED') {
+            loadResults();
+        }
+
+        // Update the ref
+        prevActiveModuleStatusRef.current = currentStatus;
+    }, [activeModule, modules]);
 
     React.useEffect(() => {
         if (caseId && activeModule) {
@@ -92,14 +172,35 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const loadResults = async () => {
         if (!caseId || !activeModule) return;
         setLoading(true);
+        setError(null);
+
         try {
-            const data = await api.getScanResults(caseId, activeModule);
-            if (Array.isArray(data)) {
-                setResults(data);
-            } else if (data) {
-                setResults([data]);
+            if (activeModule === 'strings') {
+                setStringsLoading(true);
+                const queryParams = new URLSearchParams({
+                    page: stringsPage.toString(),
+                    limit: '1000',
+                    q: stringsQuery
+                });
+
+                try {
+                    const response = await fetch(`http://localhost:5001/results/${caseId}/strings?${queryParams}`);
+                    if (!response.ok) throw new Error('Failed to load strings');
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+
+                    setStringsContent(data);
+                    setResults([]); // Clear standard results
+                } catch (err: any) {
+                    setError(err.message || 'Failed to load strings');
+                    setStringsContent(null);
+                } finally {
+                    setStringsLoading(false);
+                }
             } else {
-                setResults([]);
+                const data = await api.getScanResults(caseId, activeModule);
+                setResults(Array.isArray(data) ? data : []);
+                setStringsContent(null);
             }
         } catch (error) {
             console.error('Failed to load results:', error);
@@ -108,6 +209,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             setLoading(false);
         }
     };
+
+    // Reload strings when pagination or query changes
+    React.useEffect(() => {
+        if (activeModule === 'strings') {
+            loadResults();
+        }
+    }, [stringsPage, stringsQuery]);
 
     const handleDownload = () => {
         if (!results || !activeModule || !caseId) return;
@@ -125,6 +233,11 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const handleDownloadFile = async (nodeData: any) => {
         if (!caseId || !caseDetails) {
             toast.error("Case details not loaded.");
+            return;
+        }
+
+        if (caseDetails.os?.toLowerCase() === 'linux' && activeModule !== 'linux.pagecache.RecoverFs') {
+            toast.error("File downloads on Linux are only available via the RecoverFs module.");
             return;
         }
 
@@ -213,6 +326,120 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     };
 
     const renderModuleContent = () => {
+        if (error) {
+            return (
+                <div className="flex-1 flex items-center justify-center flex-col text-red-400">
+                    <AlertTriangle className="w-12 h-12 mb-4 opacity-50" />
+                    <p className="font-medium">{error}</p>
+                </div>
+            );
+        }
+
+        // Special View for Strings Module
+        if (activeModule === 'strings') {
+            return (
+                <div className="flex flex-col h-full bg-[#13111c]/95 backdrop-blur-sm rounded-xl border border-white/5 shadow-inner overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex items-center gap-4 p-4 border-b border-white/5 bg-[#13111c]">
+                        <div className="flex-1 relative">
+                            <input
+                                type="text"
+                                className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 pl-9 text-sm text-slate-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder-slate-600"
+                                placeholder="Grep search (case insensitive)..."
+                                value={stringsQuery}
+                                onChange={(e) => setStringsQuery(e.target.value)}
+                            />
+                            <div className="absolute left-3 top-2.5 text-slate-500">
+                                <Search size={14} />
+                            </div>
+                        </div>
+                        <button
+                            className="flex items-center px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
+                            onClick={() => window.open(`http://localhost:5001/results/${caseId}/strings/download`, '_blank')}
+                        >
+                            <Download size={14} className="mr-2" />
+                            Download .txt
+                        </button>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 overflow-auto p-4 font-mono text-xs text-slate-300 bg-black/20 leading-relaxed">
+                        {stringsLoading ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-3">
+                                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                <p>Reading file...</p>
+                            </div>
+                        ) : stringsContent?.content?.length ? (
+                            <div className="space-y-1">
+                                {stringsContent.content.map((line, i) => (
+                                    <div key={i} className="whitespace-pre-wrap break-all hover:bg-white/5 px-2 py-0.5 rounded transition-colors selection:bg-primary/30 selection:text-white">
+                                        {line}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50">
+                                <p>No content found matching criteria.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Pagination Footer */}
+                    <div className="p-3 border-t border-white/5 bg-[#13111c] flex items-center justify-between text-xs text-slate-500">
+                        <div className="font-medium text-slate-400">
+                            {stringsContent?.total ? (
+                                <span>Found ~{stringsContent.total.toLocaleString()} lines/matches</span>
+                            ) : (
+                                <span>Ready</span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={stringsPage <= 1 || stringsLoading}
+                                onClick={() => setStringsPage(p => Math.max(1, p - 1))}
+                                className="p-1.5 rounded hover:bg-white/5 disabled:opacity-30 text-slate-400 hover:text-white transition-colors"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="min-w-[3ch] text-center font-mono text-slate-300 bg-white/5 px-2 py-0.5 rounded border border-white/5">{stringsPage}</span>
+                            <button
+                                disabled={!stringsContent?.content?.length || stringsLoading}
+                                onClick={() => setStringsPage(p => p + 1)}
+                                className="p-1.5 rounded hover:bg-white/5 disabled:opacity-30 text-slate-400 hover:text-white transition-colors"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Special View for RecoverFs
+        if (activeModule === 'linux.pagecache.RecoverFs') {
+            console.log('DEBUG RecoverFs: results =', results);
+            console.log('DEBUG RecoverFs: results[0] =', results[0]);
+            console.log('DEBUG RecoverFs: results[0]?.name =', results[0]?.name);
+
+            return (
+                <FileTreeView
+                    data={results}
+                    isPrebuilt={true}
+                    viewMode="tree"
+                    onToggleView={() => { }}
+                    onDownload={(nodeData) => {
+                        if (nodeData.type !== 'file') return;
+                        const filePath = nodeData.path;
+                        if (!filePath) {
+                            toast.error("Invalid file path");
+                            return;
+                        }
+                        window.open(`http://localhost:5001/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}`, '_blank');
+                    }}
+                />
+            );
+        }
+
         if (loading) {
             return (
                 <div className="flex-1 flex items-center justify-center flex-col text-slate-500">
@@ -237,12 +464,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         if (viewMode === 'tree' && isFileScan) {
             // New dedicated component handling its own hooks correctly
+
             return (
                 <FileTreeView
                     data={results}
                     viewMode={viewMode}
                     onToggleView={setViewMode}
-                    onDownload={handleDownloadFile}
+                    onDownload={caseDetails?.os?.toLowerCase() === 'linux' ? undefined : handleDownloadFile}
                 />
             );
         }
@@ -517,24 +745,73 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                     className="w-full bg-[#0b0a12]/50 border border-transparent rounded-lg pl-10 pr-3 py-2 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary focus:border-primary/50 transition-all outline-none"
                                     type="text"
                                     placeholder="Filter modules..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
                             <p className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Available Modules</p>
-                            {modules.map((mod) => (
-                                <button
-                                    key={mod}
-                                    onClick={() => setActiveModule(mod)}
-                                    className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg overflow-hidden group ${activeModule === mod
-                                        ? 'bg-primary/20 text-white shadow-lg shadow-purple-900/20'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                        }`}
-                                >
-                                    <FileIcon className={`w-4 h-4 mr-3 flex-shrink-0 ${activeModule === mod ? 'text-primary' : 'opacity-50'}`} />
-                                    <span className="truncate">{mod}</span>
-                                </button>
-                            ))}
+
+                            {modules.length === 0 ? (
+                                <div className="px-4 py-8 flex flex-col items-center justify-center text-center text-slate-500">
+                                    <Loader2 className="w-6 h-6 animate-spin text-primary/50 mb-2" />
+                                    <span className="text-xs">Scan Initializing...</span>
+                                </div>
+                            ) : (
+
+                                modules
+                                    .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .length === 0 && modules.length > 0 ? (
+                                    <div className="px-4 py-8 text-center text-slate-500 text-xs">
+                                        No modules match your filter
+                                    </div>
+                                ) : (
+                                    modules
+                                        .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                        .map((mod) => (
+                                            <div key={mod.name} className="relative group">
+                                                <button
+                                                    onClick={() => {
+                                                        if (mod.status === 'FAILED') {
+                                                            setShowErrorModal({ module: mod.name, error: mod.error || "Unknown error" });
+                                                        } else if (mod.status === 'PENDING' || mod.status === 'RUNNING') {
+                                                            toast('Module execution in progress...', { icon: '⏳' });
+                                                        } else {
+                                                            setActiveModule(mod.name);
+                                                        }
+                                                    }}
+                                                    className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center transition-all rounded-lg
+                                                ${activeModule === mod.name ? 'bg-primary/20 text-white shadow-lg shadow-purple-900/20' : ''}
+                                                ${(mod.status === 'PENDING' || mod.status === 'RUNNING')
+                                                            ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                                                            : mod.status === 'FAILED'
+                                                                ? 'text-red-400 hover:bg-red-500/10'
+                                                                : 'text-slate-400 hover:text-white hover:bg-white/5'}
+                                                `}
+                                                >
+                                                    {/* Status Icon */}
+                                                    <div className="mr-3 flex-shrink-0">
+                                                        {(mod.status === 'RUNNING' || mod.status === 'PENDING') && (
+                                                            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                                        )}
+                                                        {mod.status === 'COMPLETED' && <FileIcon className={`w-4 h-4 ${activeModule === mod.name ? 'text-primary' : 'opacity-50'}`} />}
+                                                        {mod.status === 'FAILED' && <XCircle className="w-4 h-4 text-red-500" />}
+                                                    </div>
+
+                                                    <span className={`truncate flex-1 ${mod.status === 'FAILED' ? 'text-red-400' : ''}`}>
+                                                        {mod.name}
+                                                    </span>
+
+                                                    {mod.status === 'FAILED' && (
+                                                        <AlertTriangle className="w-3 h-3 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        ))
+                                )
+
+                            )}
                         </div>
                     </div>
                 )}
@@ -785,6 +1062,44 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             >
                                 {executingPlugin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
                                 Execute
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Error Log Modal */}
+            {showErrorModal && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-[#1e1e2d] border border-red-500/20 rounded-xl shadow-2xl w-full max-w-2xl ring-1 ring-red-500/20 animate-fadeIn">
+                        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#13111c] rounded-t-xl">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
+                                    <AlertTriangle size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Module Failed</h3>
+                                    <p className="text-xs text-red-400">{showErrorModal.module}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowErrorModal(null)}
+                                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-0">
+                            <div className="bg-black/50 p-4 font-mono text-sm text-red-300 overflow-x-auto whitespace-pre-wrap max-h-[60vh]">
+                                {showErrorModal.error || "No error log available."}
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-white/5 bg-[#13111c] flex justify-end rounded-b-xl">
+                            <button
+                                onClick={() => setShowErrorModal(null)}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                Close
                             </button>
                         </div>
                     </div>

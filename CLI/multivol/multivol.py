@@ -17,6 +17,11 @@ except ImportError:
     from multi_volatility3 import multi_volatility3
     from strings import get_strings
 
+
+
+# Wrapper for Volatility 3 to use with imap
+
+
 # Wrapper for Volatility 3 to use with imap
 def vol3_wrapper(packed_args):
     instance, args = packed_args
@@ -33,10 +38,12 @@ def runner(arguments):
     if not arguments.light and not arguments.full:
         arguments.light = True
 
-    if hasattr(arguments, "output") and arguments.output:
+    if hasattr(arguments, "output_dir") and arguments.output_dir:
+        output_dir = arguments.output_dir
+    elif hasattr(arguments, "output") and arguments.output:
         output_dir = arguments.output
     else:
-        output_dir = f"output_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}"
+        output_dir = f"output_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
     os.makedirs(output_dir, exist_ok=True)
 
     # Handle Volatility2 mode
@@ -145,7 +152,12 @@ def runner(arguments):
                 getattr(arguments, "debug", False)
                 ) for cmd in commands]
             )
+            # Vol2 Starmap doesn't use wrapper, so we can't easily report running/completed per module unless we wrap it too.
+            # For now we focus on Vol3
+            # But we should probably fix Vol2 too.
+            # TODO: Add wrapper for Vol2 or update vol2 logic.
         else:
+
             # Enforce priority execution for Info module to ensure symbols are downloaded/cached
             if arguments.windows:
                 info_module = "windows.info.Info"
@@ -168,12 +180,16 @@ def runner(arguments):
                                                                     arguments.host_path,
                                                                     True if getattr(arguments, "fetch_symbol", False) else False,
                                                                     getattr(arguments, "debug", False),
-                                                                    getattr(arguments, "custom_symbol", None)
+                                                                    getattr(arguments, "custom_symbol", None),
+                                                                    getattr(arguments, "scan_id", None)
                                                                 )
+
 
             
             # Prepare arguments for imap
             # We must pass the instance because wrapper is global and doesn't see local variable
+            # Signature: command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, 
+            #            quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None
             tasks_args = [(volatility3_instance, (cmd, 
                 os.path.basename(arguments.dump), 
                 os.path.abspath(arguments.dump), 
@@ -183,12 +199,13 @@ def runner(arguments):
                 os.path.abspath(arguments.plugins_dir), 
                 output_dir,
                 arguments.format,
-                False, # quiet=False so we see the output as it happens
-                lock, # lock
+                False,  # quiet=False so we see the output as it happens
+                lock,   # lock
                 arguments.host_path,
-                True if getattr(arguments, "fetch_symbol", False) else False,
-                getattr(arguments, "debug", False),
-                getattr(arguments, "custom_symbol", None)
+                getattr(arguments, "fetch_symbol", False),  # fetch_symbols
+                getattr(arguments, "debug", False),         # show_commands
+                getattr(arguments, "custom_symbol", None),  # custom_symbol
+                getattr(arguments, "scan_id", None)         # scan_id
                 )) for cmd in commands]
             
             # Progress counters
@@ -283,6 +300,7 @@ def main():
     
     # Global arguments
     parser.add_argument("--debug", action="store_true", help="Show executed Docker commands")
+    parser.add_argument("--scan-id", help="Scan UUID for API status updates", required=False)
 
     args = parser.parse_args()
 
