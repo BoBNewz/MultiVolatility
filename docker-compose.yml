@@ -1,15 +1,14 @@
 services:
-  # Python Backend API
   api:
     build: ./CLI
     container_name: multivol-api
     ports:
       - "5001:5001"
     environment:
-      - HOST_PATH=${PWD} # Valid path to project root on Host, required for DooD
-      - DISABLE_LOCALHOST_ONLY=1 # Allow connections from other containers/host
+      - HOST_PATH=.
+      - DISABLE_LOCALHOST_ONLY=1
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./outputs:/app/outputs
       - ./storage:/app/storage
       - ./volatility3_symbols:/app/volatility3_symbols
@@ -17,11 +16,19 @@ services:
       - ./volatility3_plugins:/app/volatility3_plugins
       - ./volatility3_cache:/app/volatility3_cache
 
-  # React Frontend
   web:
     build: ./Web
     container_name: multivol-web
     ports:
       - "80:80"
+    depends_on:
+      - api
+
+  mcp:
+    build: ./MCP
+    container_name: multivol-mcp
+    environment:
+      - TARGET_URL=http://api
+      - TARGET_PORT=5001
     depends_on:
       - api
