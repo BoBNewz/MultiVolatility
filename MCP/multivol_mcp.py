@@ -3,11 +3,11 @@ import requests
 from fastmcp import FastMCP
 
 # Initialisation du serveur MCP
-mcp = FastMCP("Scan Proxy MCP")
+mcp = FastMCP("MultiVol MCP")
 
 # Configuration cible
-BASE_URL = os.getenv("TARGET_URL", "http://localhost")
-PORT = os.getenv("TARGET_PORT", "8000")
+BASE_URL = os.getenv("TARGET_URL", "http://api")
+PORT = os.getenv("TARGET_PORT", "5001")
 
 
 def build_url(path: str) -> str:
