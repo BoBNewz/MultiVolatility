@@ -1,23 +1,12 @@
 {
-    "mcpServers": {
-      "multivol": {
-        "command": "docker",
-        "args": [
-          "run",
-          "--network",
-          "multivolatility_default",
-          "-i",
-          "-e",
-          "TARGET_URL=http://api",
-          "-e",
-          "TARGET_PORT=5001",
-          "multivolatility-mcp"
-        ]
-      }
-    },
-    "preferences": {
-      "coworkWebSearchEnabled": true,
-      "sidebarMode": "chat",
-      "coworkScheduledTasksEnabled": false
+  "mcpServers": {
+    "multivol": {
+      "httpUrl": "http://127.0.0.1:8000/sse"
     }
+  },
+  "preferences": {
+    "coworkWebSearchEnabled": true,
+    "sidebarMode": "chat",
+    "coworkScheduledTasksEnabled": false
+  }
 }

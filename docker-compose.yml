@@ -27,6 +27,8 @@ services:
   mcp:
     build: ./MCP
     container_name: multivol-mcp
+    ports:
+      - "8000:8000"
     environment:
       - TARGET_URL=http://api
       - TARGET_PORT=5001

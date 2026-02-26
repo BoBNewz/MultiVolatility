@@ -33,7 +33,7 @@ def get_scans() -> dict:
     """
     response = requests.get(build_url("/scans"))
     response.raise_for_status()
-    return response.json()
+    return {"scans": response.json()}
 
 
 @mcp.tool()
@@ -50,7 +50,7 @@ def get_scan_modules(uuid: str) -> dict:
     """
     response = requests.get(build_url(f"/scan/{uuid}/modules"))
     response.raise_for_status()
-    return response.json()
+    return {"modules": response.json()}
 
 
 @mcp.tool()
@@ -65,8 +65,8 @@ def get_results(uuid: str, module: str) -> dict:
         params={"module": module}
     )
     response.raise_for_status()
-    return response.json()
+    return {"results": response.json()}
 
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio", log_level="error")
+   mcp.run(transport="http", host="0.0.0.0", port=8000)
