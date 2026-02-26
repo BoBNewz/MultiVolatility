@@ -6,7 +6,8 @@ import {
     Briefcase,
     FileText,
     LogOut,
-    Database
+    Database,
+    BrainCircuit
 } from 'lucide-react';
 
 interface SidebarItemProps {
@@ -107,6 +108,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                         label="Symbols"
                         active={activeTab === 'symbols'}
                         onClick={() => onTabChange('symbols')}
+                        open={open}
+                    />
+
+                    {/* AI Section */}
+                    <div className={`mx-4 my-3 border-t border-white/5 ${open ? '' : 'mx-2'}`} />
+                    <SidebarItem
+                        icon={BrainCircuit}
+                        label="AI Analyst"
+                        active={activeTab === 'ai'}
+                        onClick={() => onTabChange('ai')}
                         open={open}
                     />
                 </nav>

@@ -8,6 +8,7 @@ import { Cases } from './pages/Cases';
 import { Evidences } from './pages/Evidences';
 import { Login } from './pages/Login';
 import { Symbols } from './pages/Symbols';
+import { AIAssistant } from './pages/AIAssistant';
 import { api } from './services/api';
 import type { Scan } from './types';
 import { Toaster, toast } from 'react-hot-toast';
@@ -137,6 +138,7 @@ function App() {
     if (path.startsWith('/cases')) return 'cases';
     if (path.startsWith('/evidences')) return 'evidences';
     if (path.startsWith('/symbols')) return 'symbols';
+    if (path.startsWith('/ai')) return 'ai';
     if (path.startsWith('/scan/new')) return 'new scan';
     if (path.startsWith('/results')) return 'results';
     return 'dashboard';
@@ -148,6 +150,7 @@ function App() {
       case 'cases': navigate('/cases'); break;
       case 'evidences': navigate('/evidences'); break;
       case 'symbols': navigate('/symbols'); break;
+      case 'ai': navigate('/ai'); break;
       case 'new scan': navigate('/scan/new'); break;
       default: navigate('/dashboard');
     }
@@ -195,6 +198,7 @@ function App() {
                 } />
                 <Route path="evidences" element={<Evidences />} />
                 <Route path="symbols" element={<Symbols />} />
+                <Route path="ai" element={<AIAssistant cases={cases} />} />
                 <Route path="scan/new" element={<NewScan onStartScan={handleAddCase} />} />
                 <Route path="results/:caseId" element={<Results onBack={() => navigate('/cases')} />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
