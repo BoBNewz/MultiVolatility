@@ -23,9 +23,16 @@ class multi_volatility3:
                  rel_path = os.path.relpath(path, "/storage")
                  return os.path.join(host_path, "storage", "data", rel_path)
 
-            if path.startswith(os.getcwd()):
-                rel_path = os.path.relpath(path, os.getcwd())
-                return os.path.join(host_path, rel_path)
+            try:
+                from api_server.config import BASE_DIR
+                if path.startswith(BASE_DIR):
+                    rel_path = os.path.relpath(path, BASE_DIR)
+                    return os.path.join(host_path, rel_path)
+            except ImportError:
+                # Fallback for CLI standalone usage without API
+                if path.startswith(os.getcwd()):
+                    rel_path = os.path.relpath(path, os.getcwd())
+                    return os.path.join(host_path, rel_path)
         return path
 
     def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None, extra_args=""):
@@ -149,19 +156,6 @@ class multi_volatility3:
                         f.writelines(lines[2:])
             except:
                 pass
-        
-        # Filescan filtering logic (commented out in original)
-        """
-        if command == "windows.filescan.FileScan":
-            try:
-                with open(os.path.join(output_dir, "windows.filescan.FileScan_filtered_output.json"), "w") as file:
-                   # ... implementation details omitted as logic matches original structure ...
-                   pass
-            except:
-                pass
-        """
-
-
 
         if not quiet:
             self.safe_print(f"[+] {command} finished.", lock)

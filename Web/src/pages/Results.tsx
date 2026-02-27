@@ -20,7 +20,7 @@ import {
     ChevronLeft,
     ChevronRight
 } from 'lucide-react';
-import { api } from '../services/api';
+import { api, API_TOKEN } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
 import { ProcessTreeView } from '../components/ProcessTreeView';
 import { NetworkGraphView } from '../components/NetworkGraphView';
@@ -184,11 +184,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                 });
 
                 try {
-                    const response = await fetch(`http://localhost:5001/results/${caseId}/strings?${queryParams}`);
-                    if (!response.ok) throw new Error('Failed to load strings');
-                    const data = await response.json();
-                    if (data.error) throw new Error(data.error);
-
+                    const data = await api.getStrings(caseId as string, queryParams);
                     setStringsContent(data);
                     setResults([]); // Clear standard results
                 } catch (err: any) {
@@ -355,7 +351,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                         </div>
                         <button
                             className="flex items-center px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
-                            onClick={() => window.open(`http://localhost:5001/results/${caseId}/strings/download`, '_blank')}
+                            onClick={() => window.open(`http://localhost:5001/results/${caseId}/strings/download?token=${API_TOKEN}`, '_blank')}
                         >
                             <Download size={14} className="mr-2" />
                             Download .txt
@@ -434,7 +430,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             toast.error("Invalid file path");
                             return;
                         }
-                        window.open(`http://localhost:5001/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}`, '_blank');
+                        window.open(`http://localhost:5001/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}&token=${API_TOKEN}`, '_blank');
                     }}
                 />
             );

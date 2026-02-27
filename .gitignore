@@ -12,3 +12,4 @@ memdump.elf
 memory.dump
 config.yml
 Win7SP1x86.dmp
+.env

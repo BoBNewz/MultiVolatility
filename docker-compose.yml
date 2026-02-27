@@ -6,8 +6,8 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - HOST_PATH=${PWD} # Valid path to project root on Host, required for DooD
-      - DISABLE_LOCALHOST_ONLY=1 # Allow connections from other containers/host
+      - HOST_PATH=${HOST_PATH} # Valid path to project root on Host, required for DooD
+      - API_TOKEN=multivol_default_secret_token
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
       - ./outputs:/app/outputs
@@ -17,10 +17,14 @@ services:
       - ./volatility3_plugins:/app/volatility3_plugins
       - ./volatility3_cache:/app/volatility3_cache
 
-
   web:
-    build: ./Web
+    build:
+      context: ./Web
+      args:
+        - VITE_API_TOKEN=multivol_default_secret_token
     container_name: multivol-web
+    environment:
+      - VITE_API_TOKEN=multivol_default_secret_token
     ports:
       - "80:80"
     depends_on:
@@ -34,5 +38,6 @@ services:
     environment:
       - TARGET_URL=http://api
       - TARGET_PORT=5001
+      - API_TOKEN=multivol_default_secret_token
     depends_on:
       - api

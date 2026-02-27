@@ -1,0 +1,23 @@
+from flask import request, jsonify
+from .config import API_TOKEN
+
+def check_authorization():
+    # Allow OPTIONS requests for CORS
+    if request.method == 'OPTIONS':
+        return None
+
+    auth_header = request.headers.get("Authorization")
+    token_query = request.args.get("token")
+
+    provided_token = None
+
+    if auth_header and auth_header.startswith("Bearer "):
+        provided_token = auth_header.split(" ")[1]
+    elif token_query:
+        provided_token = token_query
+
+    if not provided_token or provided_token != API_TOKEN:
+        print("[AUTH] Unauthorized access attempt.")
+        return jsonify({"error": "Unauthorized"}), 401
+
+    return None

@@ -306,9 +306,9 @@ def main():
 
     if args.api:
         try:
-            from .api import run_api
+            from .api_server import run_api
         except ImportError:
-            from api import run_api
+            from api_server import run_api
         run_api(runner, debug_mode=args.dev)
         sys.exit(0)
 

@@ -1,11 +1,28 @@
 import type { Scan } from '../types';
 
 const API_BASE_URL = 'http://localhost:5001';
+// @ts-ignore
+export const API_TOKEN = import.meta.env.VITE_API_TOKEN || 'multivol_default_secret_token';
+
+const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+    const headers = new Headers(options.headers || {});
+    headers.set('Authorization', `Bearer ${API_TOKEN}`);
+    return fetch(url, { ...options, headers });
+};
 
 export const api = {
+    getStrings: async (uuid: string, queryParams: URLSearchParams): Promise<any> => {
+        const response = await fetchWithAuth(`${API_BASE_URL}/results/${uuid}/strings?${queryParams}`);
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to fetch strings');
+        }
+        return response.json();
+    },
+
     getScans: async (): Promise<Scan[]> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/scans`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/scans`);
             if (!response.ok) throw new Error('Failed to fetch scans');
             const data = await response.json();
 
@@ -29,7 +46,7 @@ export const api = {
 
     getScan: async (uuid: string): Promise<Scan | null> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/status/${uuid}`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/status/${uuid}`);
             if (!response.ok) return null;
             const item = await response.json();
             return {
@@ -51,7 +68,7 @@ export const api = {
     },
 
     createScan: async (config: any): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/scan`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/scan`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -67,7 +84,7 @@ export const api = {
 
     checkHealth: async (): Promise<boolean> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/health`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/health`);
             return response.ok;
         } catch {
             return false;
@@ -75,30 +92,30 @@ export const api = {
     },
 
     getStats: async (): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/stats`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/stats`);
         return response.json();
     },
 
     getEvidences: async (): Promise<any[]> => {
-        const response = await fetch(`${API_BASE_URL}/evidences`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/evidences`);
         return response.json();
     },
 
     getScanModules: async (uuid: string): Promise<string[]> => {
-        const response = await fetch(`${API_BASE_URL}/results/${uuid}/modules`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/results/${uuid}/modules`);
         if (!response.ok) return [];
         const data = await response.json();
         return data.modules || [];
     },
 
     getScanModulesStatus: async (uuid: string): Promise<any[]> => {
-        const response = await fetch(`${API_BASE_URL}/scan/${uuid}/modules`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/scan/${uuid}/modules`);
         if (!response.ok) return [];
         return response.json();
     },
 
     getScanResults: async (uuid: string, module: string): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/results/${uuid}?module=${module}`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/results/${uuid}?module=${module}`);
         if (!response.ok) return null;
         return response.json();
     },
@@ -112,6 +129,7 @@ export const api = {
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', `${API_BASE_URL}/upload`, true);
+            xhr.setRequestHeader('Authorization', `Bearer ${API_TOKEN}`);
 
             if (xhr.upload && onProgress) {
                 xhr.upload.onprogress = (e) => {
@@ -144,14 +162,14 @@ export const api = {
     },
 
     deleteEvidence: async (id: string): Promise<boolean> => {
-        const response = await fetch(`${API_BASE_URL}/evidence/${id}`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/evidence/${id}`, {
             method: 'DELETE',
         });
         return response.ok;
     },
 
     renameScan: async (uuid: string, name: string): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/scans/${uuid}`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/scans/${uuid}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name })
@@ -161,7 +179,7 @@ export const api = {
     },
 
     deleteScan: async (uuid: string): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/scans/${uuid}`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/scans/${uuid}`, {
             method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete scan');
@@ -169,12 +187,12 @@ export const api = {
     },
 
     getEvidenceDownloadUrl: (id: string): string => {
-        return `${API_BASE_URL}/evidence/${id}/download`;
+        return `${API_BASE_URL}/evidence/${id}/download?token=${API_TOKEN}`;
     },
 
     getDockerImages: async (): Promise<string[]> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/list_images`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/list_images`);
             if (!response.ok) return [];
             const data = await response.json();
             return data.images || [];
@@ -186,11 +204,11 @@ export const api = {
 
     downloadScanResults: (uuid: string) => {
         // Trigger browser download by opening window or creating anchor
-        window.open(`${API_BASE_URL}/scans/${uuid}/download`, '_blank');
+        window.open(`${API_BASE_URL}/scans/${uuid}/download?token=${API_TOKEN}`, '_blank');
     },
 
     startDumpTask: async (scanId: string, virtAddr: string, image: string, filePath?: string): Promise<{ task_id: string, status: string }> => {
-        const response = await fetch(`${API_BASE_URL}/scan/${scanId}/dump-file`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/scan/${scanId}/dump-file`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ virt_addr: virtAddr, image: image, file_path: filePath })
@@ -203,18 +221,18 @@ export const api = {
     },
 
     getDumpTaskStatus: async (taskId: string): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/dump-task/${taskId}`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/dump-task/${taskId}`);
         if (!response.ok) throw new Error('Failed to get task status');
         return response.json();
     },
 
     getDumpDownloadUrl: (taskId: string): string => {
-        return `${API_BASE_URL}/dump-task/${taskId}/download`;
+        return `${API_BASE_URL}/dump-task/${taskId}/download?token=${API_TOKEN}`;
     },
 
     getSymbols: async (): Promise<any[]> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/symbols`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/symbols`);
             if (!response.ok) return [];
             const data = await response.json();
             return data.symbols || [];
@@ -228,7 +246,7 @@ export const api = {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_BASE_URL}/symbols`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/symbols`, {
             method: 'POST',
             body: formData,
         });
@@ -241,7 +259,7 @@ export const api = {
     },
 
     listPlugins: async (image: string): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/volatility3/plugins?image=${image}`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/volatility3/plugins?image=${image}`);
         if (!response.ok) {
             try {
                 const err = await response.json();
@@ -255,7 +273,7 @@ export const api = {
     },
 
     executePlugin: async (uuid: string, module: string): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/scans/${uuid}/execute`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/scans/${uuid}/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ module })

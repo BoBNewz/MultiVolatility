@@ -13,7 +13,6 @@ class multi_volatility2:
         pass
     
     def resolve_path(self, path, host_path):
-        # If host_path is set, replacing the current working directory prefix with host_path
         if host_path:
             if path.startswith("/storage"):
                  # Handle special storage mapping for Docker
@@ -21,9 +20,15 @@ class multi_volatility2:
                  rel_path = os.path.relpath(path, "/storage")
                  return os.path.join(host_path, "storage", "data", rel_path)
 
-            if path.startswith(os.getcwd()):
-                rel_path = os.path.relpath(path, os.getcwd())
-                return os.path.join(host_path, rel_path)
+            try:
+                from api_server.config import BASE_DIR
+                if path.startswith(BASE_DIR):
+                    rel_path = os.path.relpath(path, BASE_DIR)
+                    return os.path.join(host_path, rel_path)
+            except ImportError:
+                if path.startswith(os.getcwd()):
+                    rel_path = os.path.relpath(path, os.getcwd())
+                    return os.path.join(host_path, rel_path)
         return path
 
     def execute_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, output_dir, format, quiet=False, lock=None, host_path=None, show_commands=False):
@@ -59,9 +64,24 @@ class multi_volatility2:
         # Redirect output to file inside container (avoids Docker log rotation issues)
         cmd_with_redirect = f"/bin/sh -c 'vol.py {cmd_args} > /output/{output_filename} 2>&1'"
             
+        import re
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', command)
+        
+        # We don't have scan_id here by default but we can try to extract it from dump_dir or pass it
+        # Actually, let's just use the current output_dir which has the UUID
+        scan_id = os.path.basename(os.path.normpath(output_dir))
+        container_name = f"vol2_{scan_id[:8]}_{sanitized_name}"
+
+        try:
+            existing = client.containers.get(container_name)
+            existing.remove(force=True)
+        except:
+            pass
+            
         try:
             container = client.containers.run(
                 image=docker_image,
+                name=container_name,
                 command=cmd_with_redirect,
                 volumes=volumes,
                 tty=False,  # No TTY needed when redirecting to file
@@ -72,7 +92,7 @@ class multi_volatility2:
             
             # Wait for container to finish (output is written to file, not logs)
             container.wait()
-            container.remove()
+            # Do NOT remove container here. Let the API handle cleanup so it can track status
 
         except Exception as e:
              self.safe_print(f"[!] Error running {command}: {e}", lock)
