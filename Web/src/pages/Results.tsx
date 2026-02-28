@@ -21,7 +21,7 @@ import {
     ChevronRight,
     HardDrive
 } from 'lucide-react';
-import { api, API_TOKEN } from '../services/api';
+import { api, getApiToken, API_BASE_URL } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
 import { ProcessTreeView } from '../components/ProcessTreeView';
 import { NetworkGraphView } from '../components/NetworkGraphView';
@@ -393,7 +393,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                         </div>
                         <button
                             className="flex items-center px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
-                            onClick={() => window.open(`http://localhost:5001/results/${caseId}/strings/download?token=${API_TOKEN}`, '_blank')}
+                            onClick={() => window.open(`${API_BASE_URL}/results/${caseId}/strings/download?token=${getApiToken()}`, '_blank')}
                         >
                             <Download size={14} className="mr-2" />
                             Download .txt
@@ -481,7 +481,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             toast.error("Invalid file path");
                             return;
                         }
-                        window.open(`http://localhost:5001/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}&token=${API_TOKEN}`, '_blank');
+                        window.open(`${API_BASE_URL}/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}&token=${getApiToken()}`, '_blank');
                     }}
                 />
             );

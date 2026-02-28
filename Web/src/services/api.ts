@@ -1,12 +1,12 @@
 import type { Scan } from '../types';
 
-const API_BASE_URL = 'http://localhost:5001';
-// @ts-ignore
-export const API_TOKEN = import.meta.env.VITE_API_TOKEN || 'multivol_default_secret_token';
+export const API_BASE_URL = 'http://localhost:5001';
+
+export const getApiToken = () => localStorage.getItem('API_TOKEN') || import.meta.env.VITE_API_TOKEN || 'multivol_default_secret_token';
 
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     const headers = new Headers(options.headers || {});
-    headers.set('Authorization', `Bearer ${API_TOKEN}`);
+    headers.set('Authorization', `Bearer ${getApiToken()}`);
     return fetch(url, { ...options, headers });
 };
 
@@ -129,7 +129,7 @@ export const api = {
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', `${API_BASE_URL}/upload`, true);
-            xhr.setRequestHeader('Authorization', `Bearer ${API_TOKEN}`);
+            xhr.setRequestHeader('Authorization', `Bearer ${getApiToken()}`);
 
             if (xhr.upload && onProgress) {
                 xhr.upload.onprogress = (e) => {
@@ -187,7 +187,7 @@ export const api = {
     },
 
     getEvidenceDownloadUrl: (id: string): string => {
-        return `${API_BASE_URL}/evidence/${id}/download?token=${API_TOKEN}`;
+        return `${API_BASE_URL}/evidence/${id}/download?token=${getApiToken()}`;
     },
 
     getDockerImages: async (): Promise<string[]> => {
@@ -204,7 +204,7 @@ export const api = {
 
     downloadScanResults: (uuid: string) => {
         // Trigger browser download by opening window or creating anchor
-        window.open(`${API_BASE_URL}/scans/${uuid}/download?token=${API_TOKEN}`, '_blank');
+        window.open(`${API_BASE_URL}/scans/${uuid}/download?token=${getApiToken()}`, '_blank');
     },
 
     startDumpTask: async (scanId: string, virtAddr: string, image: string, filePath?: string): Promise<{ task_id: string, status: string }> => {
@@ -227,7 +227,7 @@ export const api = {
     },
 
     getDumpDownloadUrl: (taskId: string): string => {
-        return `${API_BASE_URL}/dump-task/${taskId}/download?token=${API_TOKEN}`;
+        return `${API_BASE_URL}/dump-task/${taskId}/download?token=${getApiToken()}`;
     },
 
     getSymbols: async (): Promise<any[]> => {
@@ -312,6 +312,15 @@ export const api = {
     },
 
     getMemProcFSDownloadUrl: (uuid: string, vfsPath: string): string => {
-        return `${API_BASE_URL}/memprocfs/${uuid}/download?path=${encodeURIComponent(vfsPath)}&token=${API_TOKEN}`;
+        return `${API_BASE_URL}/memprocfs/${uuid}/download?path=${encodeURIComponent(vfsPath)}&token=${getApiToken()}`;
+    },
+
+    login: async (password: string): Promise<{ success: boolean; token?: string; error?: string }> => {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+        return response.json();
     }
 };

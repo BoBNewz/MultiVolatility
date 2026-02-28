@@ -2,8 +2,8 @@ from flask import request, jsonify
 from .config import API_TOKEN
 
 def check_authorization():
-    # Allow OPTIONS requests for CORS
-    if request.method == 'OPTIONS':
+    # Allow OPTIONS requests for CORS or login endpoint
+    if request.method == 'OPTIONS' or request.path == '/auth/login':
         return None
 
     auth_header = request.headers.get("Authorization")

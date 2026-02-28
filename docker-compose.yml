@@ -8,6 +8,7 @@ services:
     environment:
       - HOST_PATH=${HOST_PATH} # Valid path to project root on Host, required for DooD
       - API_TOKEN=multivol_default_secret_token
+      - APP_PASSWORD=admin
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
       - ./outputs:/app/outputs

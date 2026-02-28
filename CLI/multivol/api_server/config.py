@@ -17,3 +17,4 @@ os.makedirs(os.path.join(BASE_DIR, 'volatility3_cache'), exist_ok=True)
 os.makedirs(os.path.join(BASE_DIR, 'volatility2_profiles'), exist_ok=True)
 
 API_TOKEN = os.getenv("API_TOKEN", "multivol_default_secret_token")
+APP_PASSWORD = os.getenv("APP_PASSWORD", "multivol_password")

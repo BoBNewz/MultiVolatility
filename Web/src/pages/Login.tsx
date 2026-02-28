@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { Lock, ArrowRight } from 'lucide-react';
 
 interface LoginProps {
-    onLogin: (password: string) => boolean;
+    onLogin: (password: string) => Promise<boolean>;
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (onLogin(password)) {
+        const success = await onLogin(password);
+        if (success) {
             setError(false);
         } else {
             setError(true);
