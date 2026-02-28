@@ -89,19 +89,21 @@ def init_db():
     # 3. Rename case_name to name in scans if missing
     if 'name' not in columns and 'case_name' in columns:
         print("[DB Migration] Translating 'case_name' -> 'name'.")
-        # SQLite doesn't natively support RENAME COLUMN easily in older versions, 
-        # but modern sqlite (>=3.25.0) supports it.
         try:
              c.execute("ALTER TABLE scans RENAME COLUMN case_name TO name")
         except Exception as e:
              print(f"[DB Migration Error] Could not rename column: {e}. If 'name' is missing, schema might be corrupt or older SQLite.")
     elif 'name' not in columns:
-         # Table might be empty or missing this column entirely?
          print("[DB Migration] Warning: 'name' column missing. Attempting ADD COLUMN.")
          try:
              c.execute("ALTER TABLE scans ADD COLUMN name TEXT")
          except:
              pass
+
+    # 4. Add mode to scans if missing
+    if 'mode' not in columns:
+        print("[DB Migration] Adding 'mode' column to 'scans' table.")
+        c.execute("ALTER TABLE scans ADD COLUMN mode TEXT DEFAULT 'full'")
 
     conn.commit()
     conn.close()

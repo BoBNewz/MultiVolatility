@@ -15,6 +15,51 @@ from ..config import STORAGE_DIR, BASE_DIR
 
 scan_bp = Blueprint('scan_bp', __name__)
 
+def build_fs_tree(base_dir):
+    """
+    Walk the recovered_fs/ directory and build a nested tree structure:
+    [{"name": "/", "path": "/", "type": "directory", "children": [...]}]
+    """
+    root = {"name": "/", "path": "/", "type": "directory", "children": []}
+    nodes_by_path = {"/": root}
+
+    for dirpath, dirnames, filenames in os.walk(base_dir):
+        rel_dir = os.path.relpath(dirpath, base_dir)
+        if rel_dir == ".":
+            parent_node = root
+        else:
+            parent_path = "/" + rel_dir.replace(os.sep, "/")
+            parent_node = nodes_by_path.get(parent_path, root)
+
+        # Sort for consistent order
+        dirnames.sort()
+        filenames.sort()
+
+        for d in dirnames:
+            child_path = "/" + os.path.join(rel_dir, d).replace(os.sep, "/") if rel_dir != "." else "/" + d
+            child_node = {
+                "name": d,
+                "path": child_path,
+                "type": "directory",
+                "children": []
+            }
+            parent_node["children"].append(child_node)
+            nodes_by_path[child_path] = child_node
+
+        for f in filenames:
+            file_rel = os.path.join(rel_dir, f).replace(os.sep, "/") if rel_dir != "." else f
+            file_path = "/" + file_rel
+            full_path = os.path.join(dirpath, f)
+            file_node = {
+                "name": f,
+                "path": file_path,
+                "type": "file",
+                "size": os.path.getsize(full_path) if os.path.exists(full_path) else 0
+            }
+            parent_node["children"].append(file_node)
+
+    return [root]
+
 runner_func = None # Needs to be initialized via init_runner
 def init_runner(runner_cb):
     global runner_func
@@ -428,12 +473,9 @@ def get_scan_results(uuid):
         return jsonify({"error": "Missing 'module' query parameter"}), 400
         
     try:
-        limit = int(request.args.get('limit', 50))
+        limit = int(request.args.get('limit', 0))
     except ValueError:
-        limit = 50
-        
-    if limit <= 0:
-        limit = 50
+        limit = 0
         
     try:
         offset = int(request.args.get('offset', 0))
@@ -441,7 +483,7 @@ def get_scan_results(uuid):
         offset = 0
 
     def paginate_data(data):
-        if isinstance(data, list):
+        if isinstance(data, list) and limit > 0:
             return data[offset : offset + limit]
         return data
 
@@ -449,16 +491,27 @@ def get_scan_results(uuid):
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
-    if module_param != 'linux.pagecache.RecoverFs':
-        c.execute("SELECT content FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_param))
-        row = c.fetchone()
-        if row:
-            conn.close()
-            try:
-                data = json.loads(row['content'])
-                return jsonify(paginate_data(data))
-            except:
-                return jsonify({"error": "Failed to parse stored content", "raw": row['content']}), 500
+    # RecoverFs: dynamically build tree from the recovered_fs/ directory on disk
+    if module_param == 'linux.pagecache.RecoverFs':
+        c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
+        scan = c.fetchone()
+        conn.close()
+        if not scan:
+            return jsonify({"error": "Scan not found"}), 404
+        extract_dir = os.path.join(scan['output_dir'], "recovered_fs")
+        if os.path.exists(extract_dir):
+            return jsonify(build_fs_tree(extract_dir))
+        return jsonify({"error": "RecoverFs output directory not found"}), 404
+
+    c.execute("SELECT content FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_param))
+    row = c.fetchone()
+    if row:
+        conn.close()
+        try:
+            data = json.loads(row['content'])
+            return jsonify(paginate_data(data))
+        except:
+            return jsonify({"error": "Failed to parse stored content", "raw": row['content']}), 500
 
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
     scan = c.fetchone()
@@ -758,6 +811,7 @@ def view_fs_file(uuid):
 
     if not key_path:
         return jsonify({"error": "Missing path"}), 400
+    key_path = key_path.lstrip('/')
 
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
@@ -818,6 +872,7 @@ def download_fs_file(uuid):
     key_path = request.args.get('path')
     if not key_path:
         return jsonify({"error": "Missing path"}), 400
+    key_path = key_path.lstrip('/')
         
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
@@ -846,6 +901,9 @@ def get_strings_content(uuid):
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 1000, type=int)
     query = request.args.get('q', '')
+    context = request.args.get('context', 0, type=int)
+    # Cap context lines at 100 to prevent excessive output
+    context = min(max(context, 0), 100)
     
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
@@ -868,7 +926,10 @@ def get_strings_content(uuid):
 
     if query:
         try:
-            cmd = ['grep', '-i', '-n', '-m', str(limit), query, strings_file]
+            cmd = ['grep', '-i', '-n']
+            if context > 0:
+                cmd += ['-C', str(context)]
+            cmd += ['-m', str(limit), query, strings_file]
             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             content = result.stdout.splitlines()
             total_lines = len(content) 
@@ -894,7 +955,8 @@ def get_strings_content(uuid):
         "content": content,
         "total": total_lines,
         "page": page,
-        "limit": limit
+        "limit": limit,
+        "context": context
     })
 
 @scan_bp.route('/results/<uuid>/strings/download', methods=['GET'])

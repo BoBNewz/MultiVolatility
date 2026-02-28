@@ -44,18 +44,22 @@ def safe_request(method: str, url: str, **kwargs) -> dict:
 mcp = FastMCP("MultiVol MCP", auth=StaticTokenAuth(), list_page_size=50)
 
 @mcp.tool()
-def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matches: int = 50) -> dict:
+def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matches: int = 50, context_lines: int = 0) -> dict:
     """
     Search through ALL results of a scan module using a Regular Expression.
     
     CRITICAL INSTRUCTIONS FOR AI:
     - Use this tool INSTEAD of get_results when looking for specific IoCs.
     - Provide a valid Python regex string (e.g., '192\.168\.\d+\.\d+' or '(?i)malware\.exe').
+    - For the 'strings' module, use context_lines (0-100) to show surrounding lines around each match (like grep -C).
     """
     try:
         pattern = re.compile(regex_pattern, re.IGNORECASE)
     except re.error as e:
         return {"error": f"Invalid regex pattern: {e}. Please fix."}
+
+    # Cap context_lines at 100
+    context_lines = min(max(context_lines, 0), 100)
 
     chunk_size = 2000
     offset = 0
@@ -66,7 +70,10 @@ def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matc
     # 2. True Pagination: Loop until we hit max_matches or run out of data
     while len(matched_results) < max_matches:
         if module == "strings":
-            data = safe_request("GET", build_url(f"/results/{uuid}/strings"), params={"limit": chunk_size, "page": page, "q": regex_pattern})
+            params = {"limit": chunk_size, "page": page, "q": regex_pattern}
+            if context_lines > 0:
+                params["context"] = context_lines
+            data = safe_request("GET", build_url(f"/results/{uuid}/strings"), params=params)
         else:
             data = safe_request("GET", build_url(f"/results/{uuid}"), params={"module": module, "limit": chunk_size, "offset": offset})
             
@@ -91,6 +98,7 @@ def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matc
     return {
         "metadata": {
             "regex_used": regex_pattern,
+            "context_lines": context_lines if module == "strings" else "N/A",
             "total_matches_returned": len(matched_results),
             "rows_scanned": total_scanned,
             "status": "Capped at max_matches" if len(matched_results) >= max_matches else "Scanned all available rows"
@@ -144,9 +152,9 @@ def get_multivol_results(uuid: str, module: str, limit: int = 50, offset: int = 
     }
 
 @mcp.tool()
-def list_multivol_recovered_files(uuid: str, offset: int = 0, limit: int = 100, search: str = "") -> dict:
+def list_multivol_linux_recovered_files(uuid: str, offset: int = 0, limit: int = 100, search: str = "") -> dict:
     """
-    Lists files that were successfully extracted by the recoverFS module.
+    Lists files that were successfully extracted by the recoverFS module (LINUX ONLY).
     Use `offset` and `limit` to paginate through the list.
     Use `search` to filter files matching a specific string or extension (e.g. search=".txt" or search="passwd").
     """
@@ -175,9 +183,76 @@ def list_multivol_recovered_files(uuid: str, offset: int = 0, limit: int = 100, 
     }
 
 @mcp.tool()
-def view_multivol_recovered_file(uuid: str, file_path: str, regex_pattern: str = "", max_matches: int = 50) -> dict:
+def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limit: int = 100, search: str = "") -> dict:
     """
-    Search or paginate through a specific file extracted by recoverFS.
+    Lists files that are available for recovery on Windows (MemProcFS + FileScan).
+    This tool combines results from MemProcFS.FileList (highly reliable if session active)
+    and windows.filescan.FileScan (static results from previous analysis).
+    """
+    merged_files = {}
+
+    # 1. Try MemProcFS.FileList results
+    # We use limit=0 to fetch all, as we'll paginate manually after merging
+    memproc_data = safe_request("GET", build_url(f"/memprocfs/{uuid}/files"), params={"limit": 0})
+    if not isinstance(memproc_data, dict) or "error" not in memproc_data:
+        files = memproc_data.get("results", []) if isinstance(memproc_data, dict) else []
+        for f in files:
+            name = f.get("Name", "UNKNOWN")
+            merged_files[name] = {
+                "name": name,
+                "vfs_path": f.get("VfsPath"),
+                "size": f.get("Size"),
+                "source": f.get("Source", "MemProcFS"),
+                "is_downloadable": True if f.get("VfsPath") else False
+            }
+
+    # 2. Try windows.filescan.FileScan results
+    filescan_data = safe_request("GET", build_url(f"/results/{uuid}"), params={"module": "windows.filescan.FileScan", "limit": 0})
+    # get_results returns a list or {"results": [...]}
+    filescan_results = filescan_data if isinstance(filescan_data, list) else filescan_data.get("results", []) if isinstance(filescan_data, dict) else []
+    
+    for f in filescan_results:
+        name = f.get("Name", "UNKNOWN")
+        if name in merged_files:
+            # Update existing with offset info
+            merged_files[name]["offset"] = f.get("Offset")
+        else:
+            merged_files[name] = {
+                "name": name,
+                "offset": f.get("Offset"),
+                "source": "FileScan",
+                "is_downloadable": False # FileScan results don't provide direct VfsPath access without MemProcFS
+            }
+
+    # 3. Filter and Paginate
+    all_files = list(merged_files.values())
+    if search:
+        search_lower = search.lower()
+        all_files = [f for f in all_files if search_lower in f["name"].lower()]
+
+    # Sort so results are consistent
+    all_files.sort(key=lambda x: x["name"])
+    
+    paginated = all_files[offset:offset+limit]
+    has_more = (offset + limit) < len(all_files)
+
+    return {
+        "metadata": {
+            "total_files": len(all_files),
+            "current_offset": offset,
+            "limit": limit,
+            "has_more": has_more,
+            "next_offset": offset + limit if has_more else None,
+            "search_filter": search,
+            "note": "Files with 'is_downloadable: true' can be downloaded using download_multivol_windows_recovered_file"
+        },
+        "files": paginated
+    }
+
+@mcp.tool()
+def view_multivol_linux_recovered_file(uuid: str, file_path: str, regex_pattern: str = "", max_matches: int = 50) -> dict:
+    """
+    Search or paginate through a specific file extracted by recoverFS (LINUX ONLY).
     Pass a regex_pattern to grep through the file. Leave it empty to read the first max_matches lines.
     """
     chunk_size = 2000
@@ -221,12 +296,13 @@ def view_multivol_recovered_file(uuid: str, file_path: str, regex_pattern: str =
 
 
 @mcp.tool()
-def get_multivol_download_link(uuid: str, file_path: str) -> dict:
+def get_multivol_linux_download_link(uuid: str, file_path: str) -> dict:
+    """
+    Get a download link (curl command) for a file extracted by recoverFS (LINUX ONLY).
+    """
     import urllib.parse
     encoded_path = urllib.parse.quote(file_path)
     
-    # We must explicitly use `/results/<uuid>/fs/download` because that is
-    # the exact route defined in scan.py and registered directly (without prefixes) in app.py
     get_params = f"/results/{uuid}/fs/download?path={encoded_path}"
     
     file_name = os.path.basename(file_path)
@@ -236,7 +312,31 @@ def get_multivol_download_link(uuid: str, file_path: str) -> dict:
     
     return {
         "success": True,
-        "message": "Ask the user for the Multivol API URL (e.g. http://192.168.1.10:5001) and then execute the provided curl_command in your shell replacing [YOUR_MULTIVOL_API_URL] to download the file locally.",
+        "message": "Execute the provided curl_command replacing [YOUR_MULTIVOL_API_URL] to download the linux file locally.",
+        "curl_command": curl_command,
+        "expected_output_file": output_name
+    }
+
+@mcp.tool()
+def download_multivol_windows_recovered_file(uuid: str, vfs_path: str) -> dict:
+    """
+    Get a download link (curl command) for a Windows file extracted by MemProcFS.
+    The 'vfs_path' should be taken from list_multivol_windows_recovered_files.
+    MemProcFS sidecar session MUST be running for this to work.
+    """
+    import urllib.parse
+    encoded_path = urllib.parse.quote(vfs_path)
+    
+    get_params = f"/memprocfs/{uuid}/download?path={encoded_path}"
+    
+    file_name = os.path.basename(vfs_path)
+    output_name = f"{uuid[:8]}_{file_name}"
+    
+    curl_command = f'curl -sSf -H "Authorization: Bearer {API_TOKEN}" "[YOUR_MULTIVOL_API_URL]{get_params}" -o "{output_name}"'
+    
+    return {
+        "success": True,
+        "message": "Ensure MemProcFS is started. Use the provided curl_command replacing [YOUR_MULTIVOL_API_URL] to download the windows file locally.",
         "curl_command": curl_command,
         "expected_output_file": output_name
     }

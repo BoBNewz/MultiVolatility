@@ -8,3 +8,4 @@ from .files import files_bp
 from .docker import docker_bp
 from .scan import scan_bp
 from .dump import dump_bp
+from .memprocfs import memprocfs_bp

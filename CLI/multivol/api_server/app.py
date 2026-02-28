@@ -10,6 +10,7 @@ from .routes.files import files_bp
 from .routes.docker import docker_bp
 from .routes.scan import scan_bp, init_runner
 from .routes.dump import dump_bp
+from .routes.memprocfs import memprocfs_bp
 
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
@@ -27,6 +28,7 @@ app.register_blueprint(files_bp)
 app.register_blueprint(docker_bp)
 app.register_blueprint(scan_bp)
 app.register_blueprint(dump_bp)
+app.register_blueprint(memprocfs_bp)
 
 # Init Database
 try:

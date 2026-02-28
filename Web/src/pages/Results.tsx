@@ -18,7 +18,8 @@ import {
     XCircle,
     AlertTriangle,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    HardDrive
 } from 'lucide-react';
 import { api, API_TOKEN } from '../services/api';
 import { FileTreeView } from '../components/FileTreeView';
@@ -43,6 +44,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [results, setResults] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [moduleSearchTerm, setModuleSearchTerm] = React.useState('');
     const [selectedResult, setSelectedResult] = React.useState<any | null>(null);
     const [isFullScreen, setIsFullScreen] = React.useState(false);
     const [wrapText, setWrapText] = React.useState(false);
@@ -55,12 +57,16 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [stringsContent, setStringsContent] = React.useState<{ content: string[], total: number, page: number, limit: number } | null>(null);
     const [stringsQuery, setStringsQuery] = React.useState('');
     const [stringsPage, setStringsPage] = React.useState(1);
+    const [stringsContext, setStringsContext] = React.useState(0);
     const [stringsLoading, setStringsLoading] = React.useState(false);
 
     // Column resizing state
     const [colWidths, setColWidths] = React.useState<Record<string, number>>({});
     const resizingRef = React.useRef<{ col: string; startX: number; startWidth: number } | null>(null);
     const [rowsLimit, setRowsLimit] = React.useState(50);
+
+    // MemProcFS state
+    const [memprocfsStarting, setMemprocfsStarting] = React.useState(false);
 
     // Track previous status of active module to detect completion
     const prevActiveModuleStatusRef = React.useRef<string | null>(null);
@@ -180,7 +186,8 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                 const queryParams = new URLSearchParams({
                     page: stringsPage.toString(),
                     limit: '1000',
-                    q: stringsQuery
+                    q: stringsQuery,
+                    context: stringsContext.toString()
                 });
 
                 try {
@@ -193,6 +200,16 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                 } finally {
                     setStringsLoading(false);
                 }
+            } else if (activeModule === 'MemProcFS.FileList') {
+                // Use dedicated MemProcFS API with server-side search
+                // The server has ALL files cached; we only fetch a page of 500
+                const data = await api.getMemProcFSFiles(caseId as string, 500, 0, searchTerm);
+                if (data && data.results) {
+                    setResults(data.results);
+                } else {
+                    setResults([]);
+                }
+                setStringsContent(null);
             } else {
                 const data = await api.getScanResults(caseId, activeModule);
                 setResults(Array.isArray(data) ? data : []);
@@ -211,7 +228,16 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         if (activeModule === 'strings') {
             loadResults();
         }
-    }, [stringsPage, stringsQuery]);
+    }, [stringsPage, stringsQuery, stringsContext]);
+
+    // Reload MemProcFS results when search term changes (debounced)
+    React.useEffect(() => {
+        if (activeModule !== 'MemProcFS.FileList') return;
+        const timer = setTimeout(() => {
+            loadResults();
+        }, 300);  // 300ms debounce
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
     const handleDownload = () => {
         if (!results || !activeModule || !caseId) return;
@@ -349,6 +375,22 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 <Search size={14} />
                             </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs text-slate-500 font-medium whitespace-nowrap">Context:</label>
+                            <select
+                                value={stringsContext}
+                                onChange={(e) => setStringsContext(Number(e.target.value))}
+                                className="bg-black/20 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all cursor-pointer"
+                                title="Number of context lines around each match (like grep -C)"
+                            >
+                                <option value="0">None</option>
+                                <option value="3">±3 lines</option>
+                                <option value="5">±5 lines</option>
+                                <option value="10">±10 lines</option>
+                                <option value="25">±25 lines</option>
+                                <option value="50">±50 lines</option>
+                            </select>
+                        </div>
                         <button
                             className="flex items-center px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
                             onClick={() => window.open(`http://localhost:5001/results/${caseId}/strings/download?token=${API_TOKEN}`, '_blank')}
@@ -366,12 +408,21 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 <p>Reading file...</p>
                             </div>
                         ) : stringsContent?.content?.length ? (
-                            <div className="space-y-1">
-                                {stringsContent.content.map((line, i) => (
-                                    <div key={i} className="whitespace-pre-wrap break-all hover:bg-white/5 px-2 py-0.5 rounded transition-colors selection:bg-primary/30 selection:text-white">
-                                        {line}
-                                    </div>
-                                ))}
+                            <div className="space-y-0">
+                                {stringsContent.content.map((line, i) => {
+                                    const isSeparator = line === '--';
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={`whitespace-pre-wrap break-all px-2 py-0.5 rounded transition-colors selection:bg-primary/30 selection:text-white ${isSeparator
+                                                ? 'text-slate-600 border-t border-b border-white/5 my-1 text-center text-[10px] py-1'
+                                                : 'hover:bg-white/5'
+                                                }`}
+                                        >
+                                            {isSeparator ? '· · ·' : line}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50">
@@ -454,19 +505,28 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             );
         }
 
-        const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft') || activeModule?.toLowerCase().includes('pagecache.files');
+        const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft') || activeModule?.toLowerCase().includes('pagecache.files') || activeModule === 'MemProcFS.FileList';
+        // MemProcFS can have 100k+ files — force table view to prevent memory explosion from tree building
+        const forceTableView = activeModule === 'MemProcFS.FileList';
         const isProcessTree = activeModule?.toLowerCase().includes('pstree');
         const isNetScan = activeModule?.toLowerCase().includes('netscan');
 
-        if (viewMode === 'tree' && isFileScan) {
+        if (viewMode === 'tree' && isFileScan && !forceTableView) {
             // New dedicated component handling its own hooks correctly
+            const downloadHandler = activeModule === 'MemProcFS.FileList'
+                ? (nodeData: any) => {
+                    const vfsPath = nodeData['VfsPath'];
+                    if (!vfsPath) { toast.error('No VFS path available for this file'); return; }
+                    window.open(api.getMemProcFSDownloadUrl(caseId as string, vfsPath), '_blank');
+                }
+                : caseDetails?.os?.toLowerCase() === 'linux' ? undefined : handleDownloadFile;
 
             return (
                 <FileTreeView
                     data={results}
                     viewMode={viewMode}
                     onToggleView={setViewMode}
-                    onDownload={caseDetails?.os?.toLowerCase() === 'linux' ? undefined : handleDownloadFile}
+                    onDownload={downloadHandler}
                 />
             );
         }
@@ -533,7 +593,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 <AlignLeft size={14} className="mr-2" />
                                 Table
                             </button>
-                            {(isFileScan || isProcessTree) && (
+                            {(isFileScan || isProcessTree) && activeModule !== 'MemProcFS.FileList' && (
                                 <button
                                     onClick={() => setViewMode('tree')}
                                     className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'tree' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -584,6 +644,11 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                         />
                                     </th>
                                 ))}
+                                {activeModule === 'MemProcFS.FileList' && (
+                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-white/5 bg-[#13111c] w-32 text-right">
+                                        Actions
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -611,6 +676,24 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                             />
                                         </td>
                                     ))}
+                                    {/* MemProcFS download button */}
+                                    {activeModule === 'MemProcFS.FileList' && (
+                                        <td className="px-6 py-4 text-right">
+                                            {row['VfsPath'] && row['Size'] > 0 && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMemProcFSDownload(row);
+                                                    }}
+                                                    className="opacity-0 group-hover/row:opacity-100 p-1.5 rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 hover:text-emerald-300 transition-all"
+                                                    title="Download via MemProcFS"
+                                                >
+                                                    <Download size={14} className="mr-1 inline" />
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Download</span>
+                                                </button>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -699,6 +782,33 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         }
     };
 
+    // ── MemProcFS handlers ──
+    const handleStartMemProcFS = async () => {
+        if (!caseId) return;
+        setMemprocfsStarting(true);
+        try {
+            const resp = await api.startMemProcFS(caseId);
+            if (resp.error) {
+                toast.error(resp.error);
+            } else {
+                toast.success('MemProcFS session starting...', { duration: 3000 });
+                // Refresh modules to pick up the new MemProcFS.FileList module
+                setTimeout(loadModules, 2000);
+            }
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to start MemProcFS');
+        } finally {
+            setMemprocfsStarting(false);
+        }
+    };
+
+    // MemProcFS download handler for table view rows
+    const handleMemProcFSDownload = (nodeData: any) => {
+        const vfsPath = nodeData['VfsPath'];
+        if (!vfsPath) { toast.error('No VFS path available for this file'); return; }
+        window.open(api.getMemProcFSDownloadUrl(caseId as string, vfsPath), '_blank');
+    };
+
     return (
         <div className={`flex flex-col h-full w-full overflow-hidden ${isFullScreen ? 'fixed inset-0 z-50 bg-[#0b0a12] p-0' : 'p-6'}`}>
             {/* Header */}
@@ -720,13 +830,42 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             </div>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowRunModal(true)}
-                        className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg shadow-purple-900/20 transition-all hover:scale-105 active:scale-95 border border-white/10"
-                    >
-                        <Play className="w-4 h-4 mr-2" />
-                        Run Plugin
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {/* MemProcFS Button — Windows scans only */}
+                        {caseDetails?.os?.toLowerCase() === 'windows' && (() => {
+                            const memprocfsMod = modules.find(m => m.name === 'MemProcFS.FileList');
+                            const isCompleted = memprocfsMod?.status === 'COMPLETED';
+                            const isRunning = memprocfsMod?.status === 'RUNNING';
+                            const isFailed = memprocfsMod?.status === 'FAILED';
+                            const canStart = !memprocfsStarting && !isCompleted && !isRunning;
+                            const label = isCompleted ? 'MemProcFS Active'
+                                : isRunning ? 'MemProcFS Initializing...'
+                                    : isFailed ? 'Retry MemProcFS'
+                                        : 'Start MemProcFS';
+                            return (
+                                <button
+                                    onClick={handleStartMemProcFS}
+                                    disabled={!canStart}
+                                    className="bg-emerald-600/80 hover:bg-emerald-600 disabled:bg-emerald-800/30 disabled:text-emerald-500/50 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 border border-white/10 disabled:hover:scale-100"
+                                    title={isCompleted ? 'MemProcFS already active' : 'Start MemProcFS for advanced file recovery'}
+                                >
+                                    {(memprocfsStarting || isRunning) ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <HardDrive className="w-4 h-4 mr-2" />
+                                    )}
+                                    {label}
+                                </button>
+                            );
+                        })()}
+                        <button
+                            onClick={() => setShowRunModal(true)}
+                            className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg shadow-purple-900/20 transition-all hover:scale-105 active:scale-95 border border-white/10"
+                        >
+                            <Play className="w-4 h-4 mr-2" />
+                            Run Plugin
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -741,8 +880,8 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                     className="w-full bg-[#0b0a12]/50 border border-transparent rounded-lg pl-10 pr-3 py-2 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary focus:border-primary/50 transition-all outline-none"
                                     type="text"
                                     placeholder="Filter modules..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    value={moduleSearchTerm}
+                                    onChange={(e) => setModuleSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -757,14 +896,14 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             ) : (
 
                                 modules
-                                    .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .filter(mod => mod.name.toLowerCase().includes(moduleSearchTerm.toLowerCase()))
                                     .length === 0 && modules.length > 0 ? (
                                     <div className="px-4 py-8 text-center text-slate-500 text-xs">
                                         No modules match your filter
                                     </div>
                                 ) : (
                                     modules
-                                        .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                        .filter(mod => mod.name.toLowerCase().includes(moduleSearchTerm.toLowerCase()))
                                         .map((mod) => (
                                             <div key={mod.name} className="relative group">
                                                 <button

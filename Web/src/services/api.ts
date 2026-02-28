@@ -280,5 +280,38 @@ export const api = {
         });
         if (!response.ok) throw new Error('Failed to execute plugin');
         return response.json();
+    },
+
+    // ── MemProcFS ──────────────────────────────────────
+    startMemProcFS: async (uuid: string): Promise<any> => {
+        const response = await fetchWithAuth(`${API_BASE_URL}/memprocfs/${uuid}/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return response.json();
+    },
+
+    getMemProcFSStatus: async (uuid: string): Promise<any> => {
+        const response = await fetchWithAuth(`${API_BASE_URL}/memprocfs/${uuid}/status`);
+        return response.json();
+    },
+
+    getMemProcFSFiles: async (uuid: string, limit = 500, offset = 0, search = ''): Promise<any> => {
+        const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+        if (search) params.set('search', search);
+        const response = await fetchWithAuth(`${API_BASE_URL}/memprocfs/${uuid}/files?${params}`);
+        if (!response.ok) return null;
+        return response.json();
+    },
+
+    stopMemProcFS: async (uuid: string): Promise<any> => {
+        const response = await fetchWithAuth(`${API_BASE_URL}/memprocfs/${uuid}/stop`, {
+            method: 'DELETE'
+        });
+        return response.json();
+    },
+
+    getMemProcFSDownloadUrl: (uuid: string, vfsPath: string): string => {
+        return `${API_BASE_URL}/memprocfs/${uuid}/download?path=${encodeURIComponent(vfsPath)}&token=${API_TOKEN}`;
     }
 };
