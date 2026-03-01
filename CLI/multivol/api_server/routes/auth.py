@@ -4,7 +4,7 @@ from multivol.api_server.config import APP_PASSWORD, API_TOKEN
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/auth/login', methods=['POST', 'OPTIONS'])
+@auth_bp.route('/auth/login', methods=['POST'])
 def login():
     data = request.get_json()
     if not data:

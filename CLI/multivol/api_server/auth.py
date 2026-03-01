@@ -3,8 +3,12 @@ import logging
 from multivol.api_server.config import API_TOKEN
 
 def check_authorization():
-    # Allow OPTIONS requests for CORS or login endpoint
-    if request.method == 'OPTIONS' or request.path == '/auth/login':
+    # Allow OPTIONS requests for CORS (preflight)
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    # Allow login endpoint
+    if request.path == '/auth/login':
         return None
 
     auth_header = request.headers.get("Authorization")
