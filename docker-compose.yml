@@ -17,7 +17,6 @@ services:
       - ./volatility2_profiles:/app/volatility2_profiles
       - ./volatility3_plugins:/app/volatility3_plugins
       - ./volatility3_cache:/app/volatility3_cache
-      - ./CLI:/app
 
   web:
     build:
