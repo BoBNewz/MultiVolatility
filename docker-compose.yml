@@ -23,9 +23,8 @@ services:
       context: ./Web
       args:
         - VITE_API_TOKEN=multivol_default_secret_token
+        - VITE_API_URL=http://localhost:5001
     container_name: multivol-web
-    environment:
-      - VITE_API_TOKEN=multivol_default_secret_token
     ports:
       - "80:80"
     depends_on:

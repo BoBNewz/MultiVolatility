@@ -1,6 +1,6 @@
 import type { Scan } from '../types';
 
-export const API_BASE_URL = 'http://localhost:5001';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export const getApiToken = () => localStorage.getItem('API_TOKEN') || import.meta.env.VITE_API_TOKEN || 'multivol_default_secret_token';
 
