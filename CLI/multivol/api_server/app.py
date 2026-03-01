@@ -24,7 +24,8 @@ from multivol.api_server.routes.memprocfs import memprocfs_bp
 from multivol.api_server.routes.auth import auth_bp
 
 app = Flask(__name__)
-CORS(app) # Enable CORS for all routes
+# Enable CORS for all routes and explicitly allow Authorization header
+CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
 
 @app.route('/health', methods=['GET'])
 def health_check():
