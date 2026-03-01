@@ -1,5 +1,6 @@
 from flask import request, jsonify
-from .config import API_TOKEN
+import logging
+from multivol.api_server.config import API_TOKEN
 
 def check_authorization():
     # Allow OPTIONS requests for CORS or login endpoint
@@ -17,7 +18,7 @@ def check_authorization():
         provided_token = token_query
 
     if not provided_token or provided_token != API_TOKEN:
-        print("[AUTH] Unauthorized access attempt.")
+        logging.warning(f"Unauthorized access attempt to {request.path}")
         return jsonify({"error": "Unauthorized"}), 401
 
     return None

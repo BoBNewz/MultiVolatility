@@ -8,6 +8,8 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'storage', 'uploads')
 STORAGE_DIR = os.environ.get("STORAGE_DIR", os.path.join(BASE_DIR, "storage"))
+os.makedirs(STORAGE_DIR, exist_ok=True)
+
 
 # Create dirs if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

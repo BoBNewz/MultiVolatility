@@ -13,11 +13,12 @@ import json
 import sqlite3
 import threading
 import docker
+import logging
 from flask import Blueprint, request, jsonify, Response
 import requests as http_requests
-from ..database import get_db_connection
-from ..utils import resolve_host_path
-from ..config import STORAGE_DIR, BASE_DIR
+from multivol.api_server.database import get_db_connection
+from multivol.api_server.utils import resolve_host_path
+from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 
 memprocfs_bp = Blueprint('memprocfs_bp', __name__)
 
@@ -64,7 +65,7 @@ def cleanup_container(container_name):
         except docker.errors.NotFound:
             pass
     except Exception as e:
-        print(f"[WARN] Failed to cleanup container {container_name}: {e}")
+        logging.warning(f"Failed to cleanup container {container_name}: {e}")
 
 
 # ──────────────────────────────────────────────
@@ -130,7 +131,7 @@ def start_memprocfs(uuid):
             )
             conn.commit()
     except Exception as e:
-        print(f"[ERROR] Failed to update module status: {e}")
+        logging.error(f"Failed to update module status: {e}")
     finally:
         conn.close()
 
@@ -200,13 +201,13 @@ def start_memprocfs(uuid):
                             )
                             conn2.commit()
                             conn2.close()
-                            print(f"[+] MemProcFS sidecar ready for {uuid}", flush=True)
+                            logging.info(f"MemProcFS sidecar ready for {uuid}")
                             return
                 except:
                     pass
                 time.sleep(3)
 
-            print(f"[-] MemProcFS sidecar timeout for {uuid}", flush=True)
+            logging.error(f"MemProcFS sidecar timeout for {uuid}")
             # Mark as failed
             conn2 = get_db_connection()
             c2 = conn2.cursor()
@@ -288,7 +289,7 @@ def get_memprocfs_files(uuid):
                 conn.commit()
                 conn.close()
             except Exception as e:
-                print(f"[WARN] Failed to cache MemProcFS results: {e}")
+                logging.warning(f"Failed to cache MemProcFS results: {e}")
 
         except http_requests.exceptions.ConnectionError:
             return jsonify({"error": "MemProcFS sidecar is not reachable. It may still be initializing."}), 503

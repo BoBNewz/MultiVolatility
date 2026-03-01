@@ -8,10 +8,11 @@ import subprocess
 import uuid
 import glob
 import docker
+import logging
 from flask import Blueprint, request, jsonify, send_file
-from ..database import get_db_connection
-from ..utils import clean_and_parse_json, process_recover_fs
-from ..config import STORAGE_DIR, BASE_DIR
+from multivol.api_server.database import get_db_connection
+from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
+from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 
 scan_bp = Blueprint('scan_bp', __name__)
 
@@ -67,9 +68,9 @@ def init_runner(runner_cb):
 
 def ingest_results_to_db(scan_id, output_dir):
     """Reads JSON output files and stores them in the database."""
-    print(f"[DEBUG] Ingesting results for {scan_id} from {output_dir}")
+    logging.debug(f"Ingesting results for {scan_id} from {output_dir}")
     if not os.path.exists(output_dir):
-         print(f"[ERROR] Output dir not found: {output_dir}")
+         logging.error(f"Output dir not found: {output_dir}")
          return
 
     conn = get_db_connection()
@@ -107,11 +108,11 @@ def ingest_results_to_db(scan_id, output_dir):
                     (time.time(), scan_id, module_name)
                 )
         except Exception as e:
-            print(f"[ERROR] Failed to ingest {f}: {e}")
+            logging.error(f"Failed to ingest {f}: {e}")
             
     conn.commit()
     conn.close()
-    print(f"[DEBUG] Ingestion complete for {scan_id}")
+    logging.debug(f"Ingestion complete for {scan_id}")
 
 @scan_bp.route('/scan', methods=['POST'])
 def scan():
@@ -126,7 +127,7 @@ def scan():
         if existing_scan:
             return jsonify({"error": "A scan is already in progress. Please wait for it to complete."}), 429
     except Exception as e:
-        print(f"[ERROR] Failed to check concurrency: {e}")
+        logging.error(f"Failed to check concurrency: {e}")
         # Fail open or closed? Closed seems safer for stability.
         return jsonify({"error": f"Database error checking concurrency: {e}"}), 500
 
@@ -192,7 +193,7 @@ def scan():
     try:
         os.makedirs(final_output_dir, exist_ok=True)
     except Exception as e:
-        print(f"[ERROR] Failed to create output dir {final_output_dir}: {e}")
+        logging.error(f"Failed to create output dir {final_output_dir}: {e}")
         return jsonify({"error": f"Failed to create output directory: {e}"}), 500
 
     # Determine OS and Volatility Version for DB
@@ -225,14 +226,14 @@ def scan():
                     yaml_data = yaml.safe_load(f)
                     command_list = yaml_data.get("modules", [])
             else:
-                print(f"[WARNING] Plugin list not found: {yaml_path}")
+                logging.warning(f"Plugin list not found: {yaml_path}")
         
         # Inject explicit commands into args for CLI
         if command_list:
             args_obj.commands = ",".join(command_list)
             
     except Exception as e:
-        print(f"[ERROR] Failed to determine commands: {e}")
+        logging.error(f"Failed to determine commands: {e}")
         command_list = []
 
     conn = get_db_connection()
@@ -274,7 +275,7 @@ def scan():
             c.execute("UPDATE scans SET status = 'completed' WHERE uuid = ?", (s_id,))
             conn.commit()
         except Exception as e:
-            print(f"[ERROR] Scan failed: {e}")
+            logging.error(f"Scan failed: {e}")
             c.execute("UPDATE scans SET status = 'failed', error = ? WHERE uuid = ?", (str(e), s_id))
             conn.commit()
         finally:
@@ -343,7 +344,7 @@ def update_scan_module_status(uuid):
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
-        print(f"[ERROR] Failed to log status: {e}")
+        logging.error(f"Failed to log status: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
@@ -409,7 +410,7 @@ def get_scan_modules_status(uuid):
                                                 c.execute("INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
                                                           (uuid, module_name, content_str, time.time()))
                                         except Exception as e:
-                                            print(f"[ERROR] Failed to ingest {module_name}: {e}")
+                                            logging.error(f"Failed to ingest {module_name}: {e}")
                                             import traceback
                                             traceback.print_exc()
                                 
@@ -423,9 +424,9 @@ def get_scan_modules_status(uuid):
                                     pass
                                     
                     except Exception as e:
-                        print(f"[ERROR] Exception checking container {container_names}: {e}")
+                        logging.error(f"Exception checking container {container_names}: {e}")
                         import traceback
-                        traceback.print_exc()
+                        logging.error(traceback.format_exc())
                 
                 status_list.append(mod_dict)
             
@@ -461,7 +462,7 @@ def get_scan_modules_status(uuid):
         return jsonify(status_list)
 
     except Exception as e:
-        print(f"[ERROR] Fetching module status: {e}")
+        logging.error(f"Fetching module status: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
@@ -603,7 +604,7 @@ def delete_scan(uuid):
         try:
             shutil.rmtree(row['output_dir'])
         except Exception as e:
-            print(f"Error deleting output dir: {e}")
+            logging.error(f"Error deleting output dir: {e}")
             
     # Delete related records first (foreign key constraints)
     c.execute("DELETE FROM scan_module_status WHERE scan_id = ?", (uuid,))
@@ -651,7 +652,7 @@ def download_scan_zip(uuid):
                      
         return send_file(zip_filepath, as_attachment=True, download_name=zip_filename)
     except Exception as e:
-         print(f"[ERROR] ZIP creation failed: {e}")
+         logging.error(f"ZIP creation failed: {e}")
          return jsonify({"error": "Failed to generate ZIP archive"}), 500
 
 @scan_bp.route('/scans/<uuid>/execute', methods=['POST'])
@@ -724,7 +725,7 @@ def execute_plugin(uuid):
                  conn_bg.commit()
                  conn_bg.close()
         except Exception as e:
-            print(f"[ERROR] Manual plugin execution failed: {e}")
+            logging.error(f"Manual plugin execution failed: {e}")
 
     try:
         conn = get_db_connection()
@@ -738,7 +739,7 @@ def execute_plugin(uuid):
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"[ERROR] Failed to update module status for {module}: {e}")
+        logging.error(f"Failed to update module status for {module}: {e}")
 
     thread = threading.Thread(target=background_single_run, args=(uuid, args_obj))
     thread.daemon = True

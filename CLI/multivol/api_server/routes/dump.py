@@ -7,10 +7,11 @@ import json
 import threading
 import docker
 import re
+import logging
 from flask import Blueprint, request, jsonify, send_file
-from ..database import get_db_connection
-from ..utils import resolve_host_path
-from ..config import STORAGE_DIR
+from multivol.api_server.database import get_db_connection
+from multivol.api_server.utils import resolve_host_path
+from multivol.api_server.config import STORAGE_DIR
 
 dump_bp = Blueprint('dump_bp', __name__)
 
@@ -20,7 +21,7 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
     """
     Executes a Volatility3 dump command.
     """
-    print(f"[{task_id}] DEBUG: Starting background dump task for scan: {scan['uuid']}")
+    logging.debug(f"[{task_id}] Starting background dump task for scan: {scan['uuid']}")
     dump_tasks[task_id] = {'status': 'running'}
     
     try:

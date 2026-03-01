@@ -1,9 +1,10 @@
 import os
-import requests
+import httpx
 from fastmcp import FastMCP
 from fastmcp.server.auth.auth import TokenVerifier, AccessToken
 import re
 import json
+import asyncio
 
 API_TOKEN = os.getenv("API_TOKEN")
 MCP_TOKEN = os.getenv("MCP_TOKEN", "my-super-secret-token")
@@ -25,18 +26,19 @@ class StaticTokenAuth(TokenVerifier):
 def build_url(path: str) -> str:
     return f"{BASE_URL}:{PORT}{path}"
 
-# 1. Set up a Session for connection pooling and default headers
-session = requests.Session()
-session.headers.update({"Authorization": f"Bearer {API_TOKEN}"})
-TIMEOUT = 30 # seconds
+# Use an async client for better concurrency and to avoid double-response issues in FastMCP
+client = httpx.AsyncClient(
+    headers={"Authorization": f"Bearer {API_TOKEN}"},
+    timeout=httpx.Timeout(60.0, connect=10.0)
+)
 
-def safe_request(method: str, url: str, **kwargs) -> dict:
+async def safe_request(method: str, url: str, **kwargs) -> dict:
     """Helper to handle requests gracefully so the AI gets clean errors instead of stack traces."""
     try:
-        response = session.request(method, url, timeout=TIMEOUT, **kwargs)
+        response = await client.request(method, url, **kwargs)
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.RequestException as e:
+    except httpx.HTTPError as e:
         return {"error": f"Backend API request failed: {str(e)}"}
     except json.JSONDecodeError:
         return {"error": "Backend API returned invalid JSON."}
@@ -44,13 +46,13 @@ def safe_request(method: str, url: str, **kwargs) -> dict:
 mcp = FastMCP("MultiVol MCP", auth=StaticTokenAuth(), list_page_size=50)
 
 @mcp.tool()
-def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matches: int = 50, context_lines: int = 0) -> dict:
+async def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matches: int = 50, context_lines: int = 0) -> dict:
     """
     Search through ALL results of a scan module using a Regular Expression.
     
     CRITICAL INSTRUCTIONS FOR AI:
     - Use this tool INSTEAD of get_results when looking for specific IoCs.
-    - Provide a valid Python regex string (e.g., '192\.168\.\d+\.\d+' or '(?i)malware\.exe').
+    - Provide a valid Python regex string (e.g., '192\\.168\\.\\d+\\.\\d+' or '(?i)malware\\.exe').
     - For the 'strings' module, use context_lines (0-100) to show surrounding lines around each match (like grep -C).
     """
     try:
@@ -73,9 +75,9 @@ def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matc
             params = {"limit": chunk_size, "page": page, "q": regex_pattern}
             if context_lines > 0:
                 params["context"] = context_lines
-            data = safe_request("GET", build_url(f"/results/{uuid}/strings"), params=params)
+            data = await safe_request("GET", build_url(f"/results/{uuid}/strings"), params=params)
         else:
-            data = safe_request("GET", build_url(f"/results/{uuid}"), params={"module": module, "limit": chunk_size, "offset": offset})
+            data = await safe_request("GET", build_url(f"/results/{uuid}"), params={"module": module, "limit": chunk_size, "offset": offset})
             
         if "error" in data:
             return data # Surface backend errors immediately
@@ -107,17 +109,17 @@ def search_multivol_results(uuid: str, module: str, regex_pattern: str, max_matc
     }
 
 @mcp.tool()
-def get_multivol_scans() -> dict:
+async def get_multivol_scans() -> dict:
     """Get all scans from the server. Returns UUIDs, OS, image names, and status."""
-    return {"scans": safe_request("GET", build_url("/scans"))}
+    return {"scans": await safe_request("GET", build_url("/scans"))}
 
 @mcp.tool()
-def get_multivol_scan_modules(uuid: str) -> dict:
+async def get_multivol_scan_modules(uuid: str) -> dict:
     """Get all modules of a specific scan."""
-    return {"modules": safe_request("GET", build_url(f"/scan/{uuid}/modules"))}
+    return {"modules": await safe_request("GET", build_url(f"/scan/{uuid}/modules"))}
 
 @mcp.tool()
-def get_multivol_results(uuid: str, module: str, limit: int = 50, offset: int = 0) -> dict:
+async def get_multivol_results(uuid: str, module: str, limit: int = 50, offset: int = 0) -> dict:
     """
     Get the results of a module of a specific scan. 
 
@@ -130,9 +132,9 @@ def get_multivol_results(uuid: str, module: str, limit: int = 50, offset: int = 
 
     if module == "strings":
         page = (offset // limit) + 1 if limit > 0 else 1
-        data = safe_request("GET", build_url(f"/results/{uuid}/strings"), params={"limit": limit, "page": page})
+        data = await safe_request("GET", build_url(f"/results/{uuid}/strings"), params={"limit": limit, "page": page})
     else:
-        data = safe_request("GET", build_url(f"/results/{uuid}"), params={"module": module, "limit": limit, "offset": offset})
+        data = await safe_request("GET", build_url(f"/results/{uuid}"), params={"module": module, "limit": limit, "offset": offset})
 
     if isinstance(data, dict) and "error" in data:
         return data
@@ -152,13 +154,13 @@ def get_multivol_results(uuid: str, module: str, limit: int = 50, offset: int = 
     }
 
 @mcp.tool()
-def list_multivol_linux_recovered_files(uuid: str, offset: int = 0, limit: int = 100, search: str = "") -> dict:
+async def list_multivol_linux_recovered_files(uuid: str, offset: int = 0, limit: int = 100, search: str = "") -> dict:
     """
     Lists files that were successfully extracted by the recoverFS module (LINUX ONLY).
     Use `offset` and `limit` to paginate through the list.
     Use `search` to filter files matching a specific string or extension (e.g. search=".txt" or search="passwd").
     """
-    data = safe_request("GET", build_url(f"/results/{uuid}/fs/list"))
+    data = await safe_request("GET", build_url(f"/results/{uuid}/fs/list"))
     if "error" in data:
         return data
         
@@ -183,7 +185,7 @@ def list_multivol_linux_recovered_files(uuid: str, offset: int = 0, limit: int =
     }
 
 @mcp.tool()
-def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limit: int = 100, search: str = "") -> dict:
+async def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limit: int = 100, search: str = "") -> dict:
     """
     Lists files that are available for recovery on Windows (MemProcFS + FileScan).
     This tool combines results from MemProcFS.FileList (highly reliable if session active)
@@ -192,8 +194,7 @@ def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limit: int
     merged_files = {}
 
     # 1. Try MemProcFS.FileList results
-    # We use limit=0 to fetch all, as we'll paginate manually after merging
-    memproc_data = safe_request("GET", build_url(f"/memprocfs/{uuid}/files"), params={"limit": 0})
+    memproc_data = await safe_request("GET", build_url(f"/memprocfs/{uuid}/files"), params={"limit": 0})
     if not isinstance(memproc_data, dict) or "error" not in memproc_data:
         files = memproc_data.get("results", []) if isinstance(memproc_data, dict) else []
         for f in files:
@@ -207,30 +208,26 @@ def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limit: int
             }
 
     # 2. Try windows.filescan.FileScan results
-    filescan_data = safe_request("GET", build_url(f"/results/{uuid}"), params={"module": "windows.filescan.FileScan", "limit": 0})
-    # get_results returns a list or {"results": [...]}
+    filescan_data = await safe_request("GET", build_url(f"/results/{uuid}"), params={"module": "windows.filescan.FileScan", "limit": 0})
     filescan_results = filescan_data if isinstance(filescan_data, list) else filescan_data.get("results", []) if isinstance(filescan_data, dict) else []
     
     for f in filescan_results:
         name = f.get("Name", "UNKNOWN")
         if name in merged_files:
-            # Update existing with offset info
             merged_files[name]["offset"] = f.get("Offset")
         else:
             merged_files[name] = {
                 "name": name,
                 "offset": f.get("Offset"),
                 "source": "FileScan",
-                "is_downloadable": False # FileScan results don't provide direct VfsPath access without MemProcFS
+                "is_downloadable": False 
             }
 
-    # 3. Filter and Paginate
     all_files = list(merged_files.values())
     if search:
         search_lower = search.lower()
         all_files = [f for f in all_files if search_lower in f["name"].lower()]
 
-    # Sort so results are consistent
     all_files.sort(key=lambda x: x["name"])
     
     paginated = all_files[offset:offset+limit]
@@ -250,7 +247,7 @@ def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limit: int
     }
 
 @mcp.tool()
-def view_multivol_linux_recovered_file(uuid: str, file_path: str, regex_pattern: str = "", max_matches: int = 50) -> dict:
+async def view_multivol_linux_recovered_file(uuid: str, file_path: str, regex_pattern: str = "", max_matches: int = 50) -> dict:
     """
     Search or paginate through a specific file extracted by recoverFS (LINUX ONLY).
     Pass a regex_pattern to grep through the file. Leave it empty to read the first max_matches lines.
@@ -265,7 +262,7 @@ def view_multivol_linux_recovered_file(uuid: str, file_path: str, regex_pattern:
         if regex_pattern:
             params["q"] = regex_pattern
             
-        data = safe_request("GET", build_url(f"/results/{uuid}/fs/view"), params=params)
+        data = await safe_request("GET", build_url(f"/results/{uuid}/fs/view"), params=params)
         
         if "error" in data:
             return data
@@ -296,7 +293,7 @@ def view_multivol_linux_recovered_file(uuid: str, file_path: str, regex_pattern:
 
 
 @mcp.tool()
-def get_multivol_linux_download_link(uuid: str, file_path: str) -> dict:
+async def get_multivol_linux_download_link(uuid: str, file_path: str) -> dict:
     """
     Get a download link (curl command) for a file extracted by recoverFS (LINUX ONLY).
     """
@@ -318,7 +315,7 @@ def get_multivol_linux_download_link(uuid: str, file_path: str) -> dict:
     }
 
 @mcp.tool()
-def download_multivol_windows_recovered_file(uuid: str, vfs_path: str) -> dict:
+async def download_multivol_windows_recovered_file(uuid: str, vfs_path: str) -> dict:
     """
     Get a download link (curl command) for a Windows file extracted by MemProcFS.
     The 'vfs_path' should be taken from list_multivol_windows_recovered_files.

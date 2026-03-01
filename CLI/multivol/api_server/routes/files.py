@@ -2,11 +2,12 @@ import os
 import sqlite3
 import time
 import shutil
+import logging
 from flask import Blueprint, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
-from ..config import UPLOAD_FOLDER, STORAGE_DIR, BASE_DIR
-from ..utils import get_file_hash
-from ..database import get_db_connection
+from multivol.api_server.config import UPLOAD_FOLDER, STORAGE_DIR, BASE_DIR
+from multivol.api_server.utils import get_file_hash
+from multivol.api_server.database import get_db_connection
 
 files_bp = Blueprint('files_bp', __name__)
 
@@ -25,17 +26,17 @@ def upload_file():
         # Check if file already exists to avoid overwrite or just overwrite?
         # For simplicity, we overwrite.
         try:
-            print(f"[DEBUG] Saving file to {save_path}")
+            logging.debug(f"Saving file to {save_path}")
             file.save(save_path)
             
             # Calculate and cache hash immediately
-            print(f"[DEBUG] Calculating hash for {save_path}")
+            logging.debug(f"Calculating hash for {save_path}")
             get_file_hash(save_path)
             
-            print(f"[DEBUG] File saved successfully")
+            logging.debug(f"File saved successfully")
             return jsonify({"status": "success", "path": save_path, "server_path": save_path})
         except Exception as e:
-            print(f"[ERROR] Failed to save file: {e}")
+            logging.error(f"Failed to save file: {e}")
             return jsonify({"error": str(e)}), 500
 
 @files_bp.route('/symbols', methods=['GET', 'POST', 'DELETE'])
@@ -103,7 +104,7 @@ def list_evidences():
         # Robustly filter system files immediately
         items = [i for i in items if not (i.startswith("scans.db") or i.endswith(".sha256"))]
     except FileNotFoundError:
-        print(f"[ERROR] Storage dir not found: {STORAGE_DIR}")
+        logging.error(f"Storage dir not found: {STORAGE_DIR}")
         items = []
 
     # Pre-load Case Name map from DB
@@ -263,7 +264,7 @@ def delete_evidence(filename):
                 
             return jsonify({"status": "deleted"})
         except Exception as e:
-            print(f"[ERROR] Failed to delete {path}: {e}")
+            logging.error(f"Failed to delete {path}: {e}")
             return jsonify({"error": str(e)}), 500
     return jsonify({"error": "File not found"}), 404
 

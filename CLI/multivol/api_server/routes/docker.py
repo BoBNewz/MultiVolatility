@@ -3,8 +3,9 @@ import docker
 import os
 import textwrap
 import json
-from ..utils import resolve_host_path
-from ..config import BASE_DIR
+import logging
+from multivol.api_server.utils import resolve_host_path
+from multivol.api_server.config import BASE_DIR
 
 docker_bp = Blueprint('docker_bp', __name__)
 
@@ -71,7 +72,7 @@ def list_volatility_plugins():
         client = docker.from_env()
         
         # Run container
-        print(f"[DEBUG] running list_plugins on image {image}")
+        logging.debug(f"running list_plugins on image {image}")
         container = client.containers.run(
             image=image,
             entrypoint="python3", 
@@ -106,5 +107,5 @@ def list_volatility_plugins():
              return jsonify({"error": "Failed to parse script output", "raw": raw_output}), 500
 
     except Exception as e:
-        print(f"[ERROR] List plugins failed: {e}")
+        logging.error(f"List plugins failed: {e}")
         return jsonify({"error": str(e)}), 500

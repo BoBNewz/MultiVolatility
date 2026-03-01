@@ -3,6 +3,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 ENV STORAGE_DIR=/app/storage/data
+ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies if any (we might need gcc for some python packages, but trying slim first)
 # Volatility usage inside is via Docker SDK, so we don't need vol2/vol3 deps here, 
@@ -21,4 +22,4 @@ COPY . .
 # Create cache/symbol directories to ensure they exist
 RUN mkdir -p volatility2_profiles volatility3_symbols volatility3_plugins volatility3_cache
 
-ENTRYPOINT ["python", "multivol/multivol.py", "--api"]
+ENTRYPOINT ["python", "-m", "multivol.multivol", "--api"]

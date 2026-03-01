@@ -1,6 +1,7 @@
 import sqlite3
 import os
-from .config import STORAGE_DIR
+import logging
+from multivol.api_server.config import STORAGE_DIR
 
 def get_db_connection():
     db_path = os.path.join(STORAGE_DIR, 'scans.db')
@@ -76,25 +77,25 @@ def init_db():
     c.execute("PRAGMA table_info(scans)")
     columns = [col[1] for col in c.fetchall()]
     if 'dump_path' not in columns:
-        print("[DB Migration] Adding 'dump_path' column to 'scans' table.")
+        logging.info("Adding 'dump_path' column to 'scans' table.")
         c.execute("ALTER TABLE scans ADD COLUMN dump_path TEXT")
         # Migrate filepath -> dump_path
         c.execute("UPDATE scans SET dump_path = filepath")
 
     # 2. Add config_json to scans if missing
     if 'config_json' not in columns:
-         print("[DB Migration] Adding 'config_json' column to 'scans' table.")
+         logging.info("Adding 'config_json' column to 'scans' table.")
          c.execute("ALTER TABLE scans ADD COLUMN config_json TEXT")
 
     # 3. Rename case_name to name in scans if missing
     if 'name' not in columns and 'case_name' in columns:
-        print("[DB Migration] Translating 'case_name' -> 'name'.")
+        logging.info("Translating 'case_name' -> 'name'.")
         try:
              c.execute("ALTER TABLE scans RENAME COLUMN case_name TO name")
         except Exception as e:
-             print(f"[DB Migration Error] Could not rename column: {e}. If 'name' is missing, schema might be corrupt or older SQLite.")
+             logging.error(f"Could not rename column: {e}. If 'name' is missing, schema might be corrupt or older SQLite.")
     elif 'name' not in columns:
-         print("[DB Migration] Warning: 'name' column missing. Attempting ADD COLUMN.")
+         logging.warning("'name' column missing. Attempting ADD COLUMN.")
          try:
              c.execute("ALTER TABLE scans ADD COLUMN name TEXT")
          except:
@@ -102,7 +103,7 @@ def init_db():
 
     # 4. Add mode to scans if missing
     if 'mode' not in columns:
-        print("[DB Migration] Adding 'mode' column to 'scans' table.")
+        logging.info("Adding 'mode' column to 'scans' table.")
         c.execute("ALTER TABLE scans ADD COLUMN mode TEXT DEFAULT 'full'")
 
     conn.commit()

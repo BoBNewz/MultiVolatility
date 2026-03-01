@@ -3,7 +3,8 @@ import hashlib
 import time
 import json
 import sqlite3
-from .database import get_db_connection
+import logging
+from multivol.api_server.database import get_db_connection
 
 def resolve_host_path(container_path):
     """
@@ -12,11 +13,11 @@ def resolve_host_path(container_path):
     """
     host_base = os.environ.get("HOST_PATH")
     if not host_base:
-         print("[WARNING] HOST_PATH not set. Docker volumes might map incorrectly if not using named volumes.")
+         logging.warning("HOST_PATH not set. Docker volumes might map incorrectly if not using named volumes.")
          return container_path # Fallback, might work if paths somehow align or not using docker-in-docker
          
     try:
-        from .config import BASE_DIR
+        from multivol.api_server.config import BASE_DIR
         
         # If the container_path is inside BASE_DIR, we translate it
         if container_path.startswith(BASE_DIR):
@@ -57,13 +58,13 @@ def get_file_hash(filepath):
             f.write(file_hash)
         return file_hash
     except Exception as e:
-        print(f"[ERROR] Failed to calc hash for {filepath}: {e}")
+        logging.error(f"Failed to calc hash for {filepath}: {e}")
         return "Error"
 
 def clean_and_parse_json(filepath):
     """Helper to parse JSON from Volatility output files, handling errors gracefully."""
     if not os.path.exists(filepath):
-        print(f"[WARN] File not found: {filepath}")
+        logging.warning(f"File not found: {filepath}")
         return {"error": "File not found", "raw_output": ""}
 
     try:
@@ -123,7 +124,7 @@ def process_recover_fs(output_dir):
             import subprocess
             subprocess.run(["tar", "-xzf", tar_path, "-C", extract_dir], check=True)
         except Exception as e:
-            print(f"[ERROR] Failed to extract recovered_fs.tar.gz via system tar: {e}")
+            logging.error(f"Failed to extract recovered_fs.tar.gz via system tar: {e}")
 
     try:
         data = clean_and_parse_json(json_path)
@@ -207,11 +208,11 @@ def process_recover_fs(output_dir):
         with open(json_path, 'w') as f:
             json.dump([tree], f, indent=2) # Wrap in array for consistency
             
-        print(f"[DEBUG] process_recover_fs completed for {output_dir}")
+        logging.debug(f"process_recover_fs completed for {output_dir}")
             
     except Exception as e:
         import traceback
-        print(f"[ERROR] Failed to process RecoverFs:\n{traceback.format_exc()}")
+        logging.error(f"Failed to process RecoverFs:\n{traceback.format_exc()}")
 
 def cleanup_timeouts():
     """Marks scans running for > 1 hour as failed (timeout)."""
@@ -225,10 +226,10 @@ def cleanup_timeouts():
         stale_scans = c.fetchall()
         
         if stale_scans:
-            print(f"Cleaning up {len(stale_scans)} stale scans...")
+            logging.info(f"Cleaning up {len(stale_scans)} stale scans...")
             c.execute("UPDATE scans SET status='failed', error='Timeout (>1h)' WHERE status='running' AND created_at < ?", (one_hour_ago,))
             conn.commit()
             
         conn.close()
     except Exception as e:
-        print(f"Error cleaning up timeouts: {e}")
+        logging.error(f"Error cleaning up timeouts: {e}")

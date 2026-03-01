@@ -1,17 +1,27 @@
 import os
+import logging
+import sys
+
+# Configure logging at the very start so it applies to all imported modules
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.StreamHandler(sys.stderr)]
+)
+
 from flask import Flask
 from flask_cors import CORS
-from .database import init_db
-from .auth import check_authorization
-from .utils import cleanup_timeouts
+from multivol.api_server.database import init_db
+from multivol.api_server.auth import check_authorization
+from multivol.api_server.utils import cleanup_timeouts
 
 # Import Blueprints
-from .routes.files import files_bp
-from .routes.docker import docker_bp
-from .routes.scan import scan_bp, init_runner
-from .routes.dump import dump_bp
-from .routes.memprocfs import memprocfs_bp
-from .routes.auth import auth_bp
+from multivol.api_server.routes.files import files_bp
+from multivol.api_server.routes.docker import docker_bp
+from multivol.api_server.routes.scan import scan_bp, init_runner
+from multivol.api_server.routes.dump import dump_bp
+from multivol.api_server.routes.memprocfs import memprocfs_bp
+from multivol.api_server.routes.auth import auth_bp
 
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
@@ -35,9 +45,9 @@ app.register_blueprint(auth_bp)
 # Init Database
 try:
     init_db()
-    print("[INFO] Database initialized.")
+    logging.info("Database initialized.")
 except Exception as e:
-    print(f"[ERROR] Failed to init DB: {e}")
+    logging.error(f"Failed to init DB: {e}")
 
 
 def run_api(runner_cb, debug_mode=False):
@@ -46,4 +56,11 @@ def run_api(runner_cb, debug_mode=False):
     """
     init_runner(runner_cb)
     cleanup_timeouts() # Clean up stale tasks on startup
-    app.run(host='0.0.0.0', port=5001, debug=debug_mode)
+    
+    if debug_mode:
+        logging.info("Starting Flask in DEBUG mode...")
+        app.run(host='0.0.0.0', port=5001, debug=True)
+    else:
+        from waitress import serve
+        logging.info("Starting production server (waitress) on port 5001...")
+        serve(app, host='0.0.0.0', port=5001, threads=10)

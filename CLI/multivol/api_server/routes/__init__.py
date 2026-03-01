@@ -4,8 +4,8 @@ from flask import Blueprint
 api_blueprint = Blueprint('api', __name__)
 
 # Import route definers to register them
-from .files import files_bp
-from .docker import docker_bp
-from .scan import scan_bp
-from .dump import dump_bp
-from .memprocfs import memprocfs_bp
+from multivol.api_server.routes.files import files_bp
+from multivol.api_server.routes.docker import docker_bp
+from multivol.api_server.routes.scan import scan_bp
+from multivol.api_server.routes.dump import dump_bp
+from multivol.api_server.routes.memprocfs import memprocfs_bp
