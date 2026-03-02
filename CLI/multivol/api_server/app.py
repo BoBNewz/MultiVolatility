@@ -63,5 +63,6 @@ def run_api(runner_cb, debug_mode=False):
         app.run(host='0.0.0.0', port=5001, debug=True)
     else:
         from waitress import serve
-        logging.info("Starting production server (waitress) on port 5001 with 50GB limit...")
-        serve(app, host='0.0.0.0', port=5001, threads=10, max_request_body_size=53687091200) # 50GB limit
+        logging.info("Starting production server (waitress) on port 5001 with 50GB and 24h timeout...")
+        serve(app, host='0.0.0.0', port=5001, threads=10, max_request_body_size=53687091200, channel_timeout=86400)
+        # 50GB limit, 24h timeout

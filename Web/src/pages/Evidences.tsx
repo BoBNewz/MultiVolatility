@@ -30,7 +30,7 @@ export const Evidences: React.FC = () => {
                     {uploading && (
                         <div className="flex items-center space-x-3 mr-4 animate-fadeIn">
                             <span className="text-xs text-slate-400 font-medium">Uploading</span>
-                            <CircularProgress progress={uploadProgress} size={24} strokeWidth={3} />
+                            <CircularProgress progress={uploadProgress} size={24} strokeWidth={3} showValue />
                         </div>
                     )}
                     {uploadSuccess && (

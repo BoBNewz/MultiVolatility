@@ -242,20 +242,41 @@ export const api = {
         }
     },
 
-    uploadSymbol: async (file: File): Promise<any> => {
-        const formData = new FormData();
-        formData.append('file', file);
+    uploadSymbol: async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('file', file);
 
-        const response = await fetchWithAuth(`${API_BASE_URL}/symbols`, {
-            method: 'POST',
-            body: formData,
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${API_BASE_URL}/symbols`, true);
+            xhr.setRequestHeader('Authorization', `Bearer ${getApiToken()}`);
+
+            if (xhr.upload && onProgress) {
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        onProgress(percent);
+                    }
+                };
+            }
+
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        resolve(response);
+                    } catch (e) {
+                        reject(new Error("Invalid response from server"));
+                    }
+                } else {
+                    reject(new Error(`Upload failed with status: ${xhr.status}`));
+                }
+            };
+
+            xhr.onerror = () => reject(new Error("Network Error during upload"));
+
+            xhr.send(formData);
         });
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || 'Failed to upload symbol');
-        }
-        return response.json();
     },
 
     listPlugins: async (image: string): Promise<any> => {

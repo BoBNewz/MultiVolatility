@@ -5,13 +5,15 @@ interface CircularProgressProps {
     size?: number;
     strokeWidth?: number;
     className?: string;
+    showValue?: boolean;
 }
 
 export const CircularProgress: React.FC<CircularProgressProps> = ({
     progress,
     size = 40,
     strokeWidth = 3,
-    className = ""
+    className = "",
+    showValue = false
 }) => {
     const radius = size / 2 - strokeWidth;
     const circumference = radius * 2 * Math.PI;
@@ -50,6 +52,13 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
                     className="text-primary transition-all duration-300 ease-in-out drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]"
                 />
             </svg>
+            {showValue && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-white font-bold text-[10px]" style={{ fontSize: `${size / 4}px` }}>
+                        {Math.round(progress)}%
+                    </span>
+                </div>
+            )}
         </div>
     );
 };
