@@ -6,7 +6,7 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - HOST_PATH=${HOST_PATH} # Valid path to project root on Host, required for DooD
+      - HOST_PATH=${PWD} # Valid path to project root on Host, required for DooD
       - API_TOKEN=multivol_default_secret_token
       - APP_PASSWORD=admin
     volumes:
