@@ -1,12 +1,17 @@
 # multivol.py
 # Entry point for MultiVolatility: orchestrates running Volatility2 and Volatility3 memory analysis in parallel using multiprocessing.
-import multiprocessing, time, os, argparse, sys, logging
+import multiprocessing
+import time
+import os
+import argparse
+import sys
+import logging
 from typing import Any, Union
 import docker
 from datetime import datetime
 from rich.console import Console
 from rich.theme import Theme
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 try:
     from .multi_volatility2 import MultiVolatility2

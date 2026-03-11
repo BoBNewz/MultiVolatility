@@ -1,6 +1,5 @@
 # multi_volatility3.py
 # Implements Volatility3 memory analysis orchestration, Docker command generation, and backend communication.
-import time
 import os
 import json
 import logging
@@ -123,7 +122,7 @@ class MultiVolatility3(MultiVolatilityBase):
                     if lines:
                         with open(output_file, "w") as f:
                             f.writelines(lines[2:])
-                except OSError as e:
+                except OSError:
                     logging.warning("Could not trim JSON output for %s", command, exc_info=True)
 
         except Exception as e:

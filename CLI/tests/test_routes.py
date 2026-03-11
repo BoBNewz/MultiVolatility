@@ -1,16 +1,8 @@
 """Integration tests for critical Flask route handlers using the test client."""
-import json
 import os
 import sqlite3
 import time
 import pytest
-from multivol.api_server.routes.scan import (
-    ingest_results_to_db,
-    _require_runner,
-    _fetch_scan,
-    _upsert_module_status,
-    ScanRecord,
-)
 
 
 def _seed_scan(storage_dir: str, uuid: str, name: str = "test-case") -> None:

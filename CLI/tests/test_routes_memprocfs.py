@@ -1,5 +1,4 @@
 """Tests for memprocfs routes (multivol/api_server/routes/memprocfs.py)."""
-import pytest
 from multivol.api_server.routes.memprocfs import (
     get_sidecar_url,
     get_next_port,

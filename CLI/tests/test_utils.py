@@ -1,7 +1,6 @@
 """Tests for CLI/multivol/api_server/utils.py"""
 import json
 import os
-import pytest
 
 
 def test_get_file_hash_returns_sha256(tmp_path):

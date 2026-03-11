@@ -7,7 +7,6 @@ from multivol.multi_volatility_base import MultiVolatilityBase
 
 def get_strings(dump: str, dump_dir: str, output_dir: str, docker_image: str, lock: Any = False, host_path: str | None = None) -> None:
     base = MultiVolatilityBase()
-    output_file = os.path.join(output_dir, "strings_output.txt")
     host_output_dir = base.resolve_path(os.path.abspath(output_dir), host_path)
 
     host_dump_path = base.resolve_path(os.path.abspath(dump_dir), host_path)

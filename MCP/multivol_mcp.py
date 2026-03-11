@@ -4,7 +4,6 @@ from fastmcp import FastMCP
 from fastmcp.server.auth.auth import TokenVerifier, AccessToken
 import re
 import json
-import asyncio
 
 API_TOKEN = os.getenv("API_TOKEN")
 MCP_TOKEN = os.getenv("MCP_TOKEN", "my-super-secret-token")

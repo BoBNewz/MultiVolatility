@@ -1,5 +1,4 @@
 """Tests for multivol/api_server/database.py"""
-import os
 import sqlite3
 import pytest
 

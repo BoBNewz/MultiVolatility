@@ -6,7 +6,7 @@ import logging
 from typing import Any
 from flask import Blueprint, request, jsonify, send_from_directory, Response
 from werkzeug.utils import secure_filename
-from multivol.api_server.config import UPLOAD_FOLDER, STORAGE_DIR, BASE_DIR
+from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 from multivol.api_server.utils import get_file_hash
 from multivol.api_server.database import get_db_connection
 
@@ -34,7 +34,7 @@ def upload_file() -> Response:
             logging.debug(f"Calculating hash for {save_path}")
             get_file_hash(save_path)
             
-            logging.debug(f"File saved successfully")
+            logging.debug("File saved successfully")
             return jsonify({"status": "success", "path": save_path, "server_path": save_path})
         except Exception as e:
             logging.exception("Failed to save file")
@@ -146,7 +146,7 @@ def _build_extracted_group(item: str, path: str, processed_dumps: set[str]) -> d
             if os.path.isfile(subpath):
                 files.append({"id": os.path.join(item, sub), "name": sub,
                                "size": os.path.getsize(subpath), "type": "Extracted File"})
-    except Exception as e:
+    except Exception:
         logging.exception("Error reading subdir %s", path)
 
     source_dump = _resolve_source_dump_name(dump_base)

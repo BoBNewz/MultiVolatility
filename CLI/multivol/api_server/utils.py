@@ -2,10 +2,9 @@ import os
 import hashlib
 import time
 import json
-import sqlite3
 import logging
 import subprocess
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from multivol.api_server.database import get_db_connection
 
 def resolve_host_path(container_path: str, host_path_override: Optional[str] = None) -> str:
@@ -29,7 +28,7 @@ def resolve_host_path(container_path: str, host_path_override: Optional[str] = N
         if 'storage' in container_path:
             rel_path = container_path[container_path.find('storage'):]
             return os.path.join(host_base, rel_path)
-    except Exception as e:
+    except Exception:
         logging.warning("resolve_host_path fallback triggered", exc_info=True)
     return container_path
 
@@ -188,7 +187,7 @@ def _extract_recoverfs_tarball(output_dir: str) -> None:
     try:
         os.makedirs(extract_dir, exist_ok=True)
         subprocess.run(["tar", "-xzf", tar_path, "-C", extract_dir], check=True, timeout=120)
-    except Exception as e:
+    except Exception:
         logging.exception("Failed to extract recovered_fs.tar.gz in %s", output_dir)
 
 

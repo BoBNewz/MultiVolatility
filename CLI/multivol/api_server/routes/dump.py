@@ -1,4 +1,3 @@
-VOLATILITY3_SYMBOLS_BANNER_URL = "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"
 import os
 import sqlite3
 import time
@@ -14,6 +13,8 @@ from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import resolve_host_path
 from multivol.api_server.config import STORAGE_DIR
+
+VOLATILITY3_SYMBOLS_BANNER_URL = "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"
 
 dump_bp = Blueprint('dump_bp', __name__)
 

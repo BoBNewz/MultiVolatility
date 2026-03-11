@@ -92,14 +92,14 @@ def init_db() -> None:
         logging.info("Translating 'case_name' -> 'name'.")
         try:
              c.execute("ALTER TABLE scans RENAME COLUMN case_name TO name")
-        except sqlite3.OperationalError as e:
+        except sqlite3.OperationalError:
              logging.exception("Could not rename column; schema may be corrupt or SQLite version too old.")
              raise
     elif 'name' not in columns:
          logging.warning("'name' column missing. Attempting ADD COLUMN.")
          try:
              c.execute("ALTER TABLE scans ADD COLUMN name TEXT")
-         except sqlite3.OperationalError as e:
+         except sqlite3.OperationalError:
              logging.exception("Could not add 'name' column; schema may be corrupt.")
              raise
 

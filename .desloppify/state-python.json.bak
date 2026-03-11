@@ -1,39 +1,39 @@
 {
   "version": 1,
   "created": "2026-03-11T08:21:23+00:00",
-  "last_scan": "2026-03-11T20:17:41+00:00",
-  "scan_count": 8,
+  "last_scan": "2026-03-11T20:37:39+00:00",
+  "scan_count": 9,
   "overall_score": 74.0,
-  "objective_score": 66.8,
-  "strict_score": 68.4,
-  "verified_strict_score": 66.8,
+  "objective_score": 66.9,
+  "strict_score": 68.5,
+  "verified_strict_score": 66.9,
   "stats": {
-    "total": 398,
-    "auto_resolved": 150,
+    "total": 400,
+    "auto_resolved": 152,
     "false_positive": 0,
-    "fixed": 119,
-    "open": 129,
+    "fixed": 122,
+    "open": 126,
     "wontfix": 0,
     "by_tier": {
       "1": {
         "auto_resolved": 0,
         "false_positive": 0,
-        "fixed": 104,
-        "open": 6,
+        "fixed": 105,
+        "open": 5,
         "wontfix": 0
       },
       "2": {
         "auto_resolved": 43,
         "false_positive": 0,
-        "fixed": 15,
-        "open": 30,
+        "fixed": 16,
+        "open": 29,
         "wontfix": 0
       },
       "3": {
-        "auto_resolved": 86,
+        "auto_resolved": 88,
         "false_positive": 0,
-        "fixed": 0,
-        "open": 62,
+        "fixed": 1,
+        "open": 61,
         "wontfix": 0
       },
       "4": {
@@ -52,9 +52,9 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Large file: large (1081 LOC) / complexity score 68",
+      "summary": "Large file: large (1129 LOC) / complexity score 68",
       "detail": {
-        "loc": 1081,
+        "loc": 1129,
         "complexity_score": 68,
         "complexity_signals": [
           "function with 8 params",
@@ -64,7 +64,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -124,7 +124,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -178,12 +178,12 @@
         "complexity_signals": [
           "nesting depth 30"
         ],
-        "loc": 229
+        "loc": 241
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -308,7 +308,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -323,16 +323,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Mixed responsibilities: 39 top-level funcs across 18 disconnected clusters (8, 7, 5, 5, 1, +13 more)",
+      "summary": "Mixed responsibilities: 42 top-level funcs across 19 disconnected clusters (8, 7, 5, 5, 3, +14 more)",
       "detail": {
-        "loc": 1081,
-        "function_count": 39,
-        "component_count": 18,
+        "loc": 1129,
+        "function_count": 42,
+        "component_count": 19,
         "component_sizes": [
           8,
           7,
           5,
           5,
+          3,
           1,
           1,
           1,
@@ -349,7 +350,7 @@
           1
         ],
         "family_count": 13,
-        "import_cluster_count": 31,
+        "import_cluster_count": 34,
         "families": [
           "",
           "build",
@@ -364,7 +365,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -379,14 +380,14 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (1081 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (1129 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 1081
+        "loc": 1129
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -408,7 +409,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -430,7 +431,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -452,7 +453,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -474,7 +475,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -496,7 +497,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -511,14 +512,14 @@
       "file": "CLI/multivol/api_server/utils.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (229 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (241 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 229
+        "loc": 241
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -533,14 +534,14 @@
       "file": "CLI/multivol/api_server/routes/dump.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (214 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (225 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 214
+        "loc": 225
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -562,7 +563,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -584,7 +585,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -662,7 +663,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -689,7 +690,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1352,7 +1353,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1373,13 +1374,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          422
+          449
         ]
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1400,14 +1401,14 @@
         "severity": "high",
         "count": 2,
         "lines": [
-          95,
-          103
+          98,
+          106
         ]
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1434,7 +1435,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1461,7 +1462,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1895,7 +1896,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1924,7 +1925,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1945,18 +1946,18 @@
         "severity": "high",
         "count": 6,
         "lines": [
-          128,
-          441,
-          457,
-          477,
-          700,
-          841
+          151,
+          472,
+          488,
+          508,
+          731,
+          831
         ]
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -1978,17 +1979,17 @@
         "count": 6,
         "lines": [
           32,
-          55,
-          67,
-          179,
-          208,
-          228
+          58,
+          70,
+          191,
+          220,
+          240
         ]
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -2159,7 +2160,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -2252,7 +2253,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2928,13 +2929,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          154
+          177
         ]
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -2994,7 +2995,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -3021,7 +3022,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -3048,7 +3049,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -3109,7 +3110,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -3136,7 +3137,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -3163,7 +3164,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -3290,7 +3291,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3377,14 +3378,14 @@
         "severity": "low",
         "count": 2,
         "lines": [
-          697,
-          729
+          728,
+          760
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3411,7 +3412,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3538,7 +3539,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3565,7 +3566,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3593,7 +3594,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3620,7 +3621,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3655,7 +3656,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3676,13 +3677,13 @@
         "severity": "low",
         "count": 1,
         "lines": [
-          216
+          228
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3730,17 +3731,17 @@
       "file": "CLI/multivol/api_server/routes/dump.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Module-level mutable 'dump_tasks' (line 20) modified from 1 site(s)",
+      "summary": "Module-level mutable 'dump_tasks' (line 31) modified from 1 site(s)",
       "detail": {
         "mutation_count": 1,
         "mutation_lines": [
-          77
+          88
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3766,7 +3767,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3781,17 +3782,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Module-level mutable 'runner_func' (line 69) modified from 1 site(s)",
+      "summary": "Module-level mutable 'runner_func' (line 84) modified from 1 site(s)",
       "detail": {
         "mutation_count": 1,
         "mutation_lines": [
-          78
+          93
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3817,7 +3818,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3844,7 +3845,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3984,17 +3985,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 2,
       "confidence": "high",
-      "summary": "Dict key \"uuid\" read at line 655 but never written to `scan_dict`",
+      "summary": "Dict key \"uuid\" read at line 686 but never written to `scan_dict`",
       "detail": {
         "kind": "phantom_read",
         "key": "uuid",
-        "line": 655,
-        "info": "Created at line 654 in list_scans() \u2014 will raise KeyError or return None via .get()"
+        "line": 686,
+        "info": "Created at line 685 in list_scans() \u2014 will raise KeyError or return None via .get()"
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -4968,7 +4969,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4990,7 +4991,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5012,7 +5013,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5034,7 +5035,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5056,7 +5057,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5078,7 +5079,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5100,7 +5101,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5122,7 +5123,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5144,7 +5145,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5166,7 +5167,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5188,7 +5189,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5210,7 +5211,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5232,7 +5233,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -5254,7 +5255,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -8364,7 +8365,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8389,7 +8390,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8446,7 +8447,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8472,7 +8473,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8529,7 +8530,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8554,7 +8555,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8569,18 +8570,18 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 2,
       "confidence": "high",
-      "summary": "Untested critical module (1081 LOC, 0 importers) \u2014 high blast radius",
+      "summary": "Untested critical module (1129 LOC, 0 importers) \u2014 high blast radius",
       "detail": {
         "kind": "untested_critical",
-        "loc": 1081,
+        "loc": 1129,
         "importer_count": 0,
-        "loc_weight": 32.87856444554719,
+        "loc_weight": 33.60059523282288,
         "complexity_score": 68
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8606,7 +8607,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:21+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8658,13 +8659,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          86
+          97
         ]
       },
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T17:08:22+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8691,7 +8692,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T17:08:22+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8718,7 +8719,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T17:08:22+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8778,7 +8779,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T17:08:22+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8846,7 +8847,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T17:08:22+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -8906,7 +8907,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:22+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9643,7 +9644,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9666,7 +9667,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9689,7 +9690,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9712,7 +9713,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9730,12 +9731,12 @@
       "summary": "File changed since last review \u2014 re-review recommended",
       "detail": {
         "reason": "changed",
-        "loc": 214
+        "loc": 225
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9758,7 +9759,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9781,7 +9782,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9799,12 +9800,12 @@
       "summary": "File changed since last review \u2014 re-review recommended",
       "detail": {
         "reason": "changed",
-        "loc": 1081
+        "loc": 1129
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9822,12 +9823,12 @@
       "summary": "File changed since last review \u2014 re-review recommended",
       "detail": {
         "reason": "changed",
-        "loc": 229
+        "loc": 241
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9850,7 +9851,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9873,7 +9874,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9896,7 +9897,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -9919,7 +9920,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9971,7 +9972,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -9995,7 +9996,7 @@
       "status": "auto_resolved",
       "note": "resolved by holistic review import",
       "first_seen": "2026-03-11T17:08:23+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": "2026-03-11T18:08:47+00:00",
       "reopen_count": 0,
       "lang": "python",
@@ -11442,7 +11443,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was auto_resolved)",
       "first_seen": "2026-03-11T18:08:48+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -11471,7 +11472,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T18:08:48+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -11498,7 +11499,7 @@
       "status": "open",
       "note": "Reopened (\u00d71) \u2014 reappeared in scan (was fixed)",
       "first_seen": "2026-03-11T18:08:48+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 1,
       "lang": "python",
@@ -11876,7 +11877,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T18:08:49+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "zone": "production",
@@ -12001,7 +12002,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T18:08:49+00:00",
-      "last_seen": "2026-03-11T20:17:41+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -12350,16 +12351,22 @@
         "reasoning": "",
         "content_hash": "65b3afd2"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "API surface fixes: /list_images renamed to /images; /dump-task renamed to /dump-tasks (plural consistent); /symbols now returns {symbols:[]} wrapper matching frontend expectation (data.symbols||[]); frontend updated for all URL changes; route handler function names are consistent snake_case verb-noun throughout.",
       "first_seen": "2026-03-11T20:00:02+00:00",
       "last_seen": "2026-03-11T20:00:02+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T20:32:34+00:00",
       "reopen_count": 0,
       "lang": "python",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "manual",
+        "text": "I understand the plan may be stale but I have actually fixed the API surface naming issues and response shape for symbols and all 61 tests pass and I am not gaming the score.",
+        "attested_at": "2026-03-11T20:32:34+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::api_surface_coherence::mixed_url_path_conventions": {
       "id": "review::.::holistic::api_surface_coherence::mixed_url_path_conventions",
@@ -12624,16 +12631,22 @@
         "reasoning": "",
         "content_hash": "0a86f359"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "Route handler functions already use consistent snake_case throughout; /list_images URL renamed to /images",
       "first_seen": "2026-03-11T20:00:02+00:00",
       "last_seen": "2026-03-11T20:00:02+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T20:37:27+00:00",
       "reopen_count": 0,
       "lang": "python",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "manual",
+        "text": "I have actually verified all route handlers use consistent snake_case naming and renamed the /list_images URL to /images and all 61 tests pass and I am not gaming the score.",
+        "attested_at": "2026-03-11T20:37:27+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::high_level_elegance::strings_module_misplaced": {
       "id": "review::.::holistic::high_level_elegance::strings_module_misplaced",
@@ -12734,16 +12747,22 @@
         "reasoning": "",
         "content_hash": "1af6e931"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "Fixed restating docstrings; extracted execute_plugin helpers (_fetch_scan, _upsert_module_status, _background_single_plugin); added ScanRecord/DumpTask TypedDicts; ApiScanConfig done; error tests added.",
       "first_seen": "2026-03-11T20:00:02+00:00",
       "last_seen": "2026-03-11T20:00:02+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T20:38:28+00:00",
       "reopen_count": 0,
       "lang": "python",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "manual",
+        "text": "I have actually completed these design-quality fixes and all 61 tests pass and I am not gaming the score.",
+        "attested_at": "2026-03-11T20:38:28+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::authorization_consistency::public_paths_list_undocumented": {
       "id": "review::.::holistic::authorization_consistency::public_paths_list_undocumented",
@@ -12925,7 +12944,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:38+00:00",
-      "last_seen": "2026-03-11T20:17:38+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -12947,7 +12966,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:39+00:00",
-      "last_seen": "2026-03-11T20:17:39+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -12972,7 +12991,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:39+00:00",
-      "last_seen": "2026-03-11T20:17:39+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -12997,7 +13016,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:39+00:00",
-      "last_seen": "2026-03-11T20:17:39+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -13012,17 +13031,17 @@
       "file": "CLI/multivol/api_server/routes/dump.py",
       "tier": 3,
       "confidence": "high",
-      "summary": "Untested module (214 LOC, 0 importers)",
+      "summary": "Untested module (225 LOC, 0 importers)",
       "detail": {
         "kind": "untested_module",
-        "loc": 214,
+        "loc": 225,
         "importer_count": 0,
-        "loc_weight": 14.628738838327793
+        "loc_weight": 15.0
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:39+00:00",
-      "last_seen": "2026-03-11T20:17:39+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -13049,7 +13068,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:39+00:00",
-      "last_seen": "2026-03-11T20:17:39+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -13085,7 +13104,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:39+00:00",
-      "last_seen": "2026-03-11T20:17:39+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -13110,7 +13129,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:39+00:00",
-      "last_seen": "2026-03-11T20:17:39+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -13136,7 +13155,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:40+00:00",
-      "last_seen": "2026-03-11T20:17:40+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "zone": "production",
@@ -13164,7 +13183,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:40+00:00",
-      "last_seen": "2026-03-11T20:17:40+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "zone": "production",
@@ -13192,7 +13211,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:40+00:00",
-      "last_seen": "2026-03-11T20:17:40+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "zone": "production",
@@ -13217,17 +13236,23 @@
         "test_name": "start_process_with_partial_path",
         "source": "bandit"
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T20:17:40+00:00",
       "last_seen": "2026-03-11T20:17:40+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T20:37:39+00:00",
       "reopen_count": 0,
       "zone": "production",
       "lang": "python",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T20:37:39+00:00",
+        "scan_verified": true
+      }
     },
     "security::CLI/multivol/api_server/utils.py::security::B603::CLI/multivol/api_server/utils.py::178": {
       "id": "security::CLI/multivol/api_server/utils.py::security::B603::CLI/multivol/api_server/utils.py::178",
@@ -13245,17 +13270,23 @@
         "test_name": "subprocess_without_shell_equals_true",
         "source": "bandit"
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T20:17:40+00:00",
       "last_seen": "2026-03-11T20:17:40+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T20:37:39+00:00",
       "reopen_count": 0,
       "zone": "production",
       "lang": "python",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T20:37:39+00:00",
+        "scan_verified": true
+      }
     },
     "dict_keys::CLI/multivol/api_server/routes/scan.py::phantom_read::mod_dict::status": {
       "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::phantom_read::mod_dict::status",
@@ -13263,17 +13294,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 2,
       "confidence": "high",
-      "summary": "Dict key \"status\" read at line 527 but never written to `mod_dict`",
+      "summary": "Dict key \"status\" read at line 558 but never written to `mod_dict`",
       "detail": {
         "kind": "phantom_read",
         "key": "status",
-        "line": 527,
-        "info": "Created at line 526 in get_scan_modules_status() \u2014 will raise KeyError or return None via .get()"
+        "line": 558,
+        "info": "Created at line 557 in get_scan_modules_status() \u2014 will raise KeyError or return None via .get()"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:40+00:00",
-      "last_seen": "2026-03-11T20:17:40+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -13296,7 +13327,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:40+00:00",
-      "last_seen": "2026-03-11T20:17:40+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -13319,11 +13350,67 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T20:17:40+00:00",
-      "last_seen": "2026-03-11T20:17:40+00:00",
+      "last_seen": "2026-03-11T20:37:39+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/utils.py::security::B607::CLI/multivol/api_server/utils.py::190": {
+      "id": "security::CLI/multivol/api_server/utils.py::security::B607::CLI/multivol/api_server/utils.py::190",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/utils.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B607] Starting a process with a partial executable path",
+      "detail": {
+        "kind": "B607",
+        "severity": "low",
+        "line": 190,
+        "content": "189         os.makedirs(extract_dir, exist_ok=True)\n190         subprocess.run([\"tar\", \"-xzf\", tar_path, \"-C\", extract_dir], check=True, timeout=120)\n191     except Exception as e:\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
+        "test_name": "start_process_with_partial_path",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T20:37:38+00:00",
+      "last_seen": "2026-03-11T20:37:38+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/utils.py::security::B603::CLI/multivol/api_server/utils.py::190": {
+      "id": "security::CLI/multivol/api_server/utils.py::security::B603::CLI/multivol/api_server/utils.py::190",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/utils.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 190,
+        "content": "189         os.makedirs(extract_dir, exist_ok=True)\n190         subprocess.run([\"tar\", \"-xzf\", tar_path, \"-C\", extract_dir], check=True, timeout=120)\n191     except Exception as e:\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T20:37:38+00:00",
+      "last_seen": "2026-03-11T20:37:38+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
       "suppressed": false,
       "suppressed_at": null,
       "suppression_pattern": null
@@ -13346,7 +13433,7 @@
         }
       },
       "warnings": [],
-      "updated_at": "2026-03-11T20:17:41+00:00"
+      "updated_at": "2026-03-11T20:37:39+00:00"
     }
   },
   "score_confidence": {
@@ -13374,12 +13461,18 @@
     "ai_generated_debt": {
       "score": 88,
       "source": "holistic",
-      "assessed_at": "2026-03-11T20:00:02+00:00"
+      "assessed_at": "2026-03-11T20:00:02+00:00",
+      "needs_review_refresh": true,
+      "refresh_reason": "review_issue_fixed",
+      "stale_since": "2026-03-11T20:38:28+00:00"
     },
     "api_surface_coherence": {
       "score": 75,
       "source": "holistic",
-      "assessed_at": "2026-03-11T20:00:02+00:00"
+      "assessed_at": "2026-03-11T20:00:02+00:00",
+      "needs_review_refresh": true,
+      "refresh_reason": "review_issue_fixed",
+      "stale_since": "2026-03-11T20:32:34+00:00"
     },
     "authorization_consistency": {
       "score": 90,
@@ -13399,8 +13492,8 @@
       "source": "holistic",
       "assessed_at": "2026-03-11T20:00:02+00:00",
       "needs_review_refresh": true,
-      "refresh_reason": "mechanical_issues_changed",
-      "stale_since": "2026-03-11T20:17:41+00:00"
+      "refresh_reason": "review_issue_fixed",
+      "stale_since": "2026-03-11T20:37:27+00:00"
     },
     "cross_module_architecture": {
       "score": 80,
@@ -14532,6 +14625,135 @@
           "strict": 72.0
         }
       }
+    },
+    {
+      "timestamp": "2026-03-11T20:37:39+00:00",
+      "lang": "python",
+      "strict_score": 68.5,
+      "verified_strict_score": 66.9,
+      "objective_score": 66.9,
+      "overall_score": 74.0,
+      "open": 127,
+      "diff_new": 2,
+      "diff_resolved": 2,
+      "ignored": 0,
+      "raw_issues": 114,
+      "suppressed_pct": 0.0,
+      "ignore_patterns": 0,
+      "subjective_integrity": {
+        "status": "pass",
+        "matched_count": 0,
+        "reset_count": 0,
+        "target_score": 95.0
+      },
+      "score_confidence": {
+        "status": "full",
+        "confidence": 1.0,
+        "detector_count": 0,
+        "dimension_count": 0
+      },
+      "dimension_scores": {
+        "Code quality": {
+          "score": 80.4,
+          "strict": 69.3
+        },
+        "Security": {
+          "score": 95.1,
+          "strict": 82.5
+        },
+        "File health": {
+          "score": 86.0,
+          "strict": 68.5
+        },
+        "Duplication": {
+          "score": 100.0,
+          "strict": 99.0
+        },
+        "Test health": {
+          "score": 24.0,
+          "strict": 0.0
+        },
+        "Abstraction fit": {
+          "score": 85.0,
+          "strict": 85.0
+        },
+        "AI generated debt": {
+          "score": 88.0,
+          "strict": 88.0
+        },
+        "API coherence": {
+          "score": 75.0,
+          "strict": 75.0
+        },
+        "Auth consistency": {
+          "score": 90.0,
+          "strict": 90.0
+        },
+        "Contracts": {
+          "score": 80.0,
+          "strict": 80.0
+        },
+        "Convention drift": {
+          "score": 82.0,
+          "strict": 82.0
+        },
+        "Cross-module arch": {
+          "score": 80.0,
+          "strict": 80.0
+        },
+        "Dep health": {
+          "score": 88.0,
+          "strict": 88.0
+        },
+        "Design coherence": {
+          "score": 77.0,
+          "strict": 77.0
+        },
+        "Error consistency": {
+          "score": 70.0,
+          "strict": 70.0
+        },
+        "High elegance": {
+          "score": 84.0,
+          "strict": 84.0
+        },
+        "Stale migration": {
+          "score": 92.0,
+          "strict": 92.0
+        },
+        "Init coupling": {
+          "score": 78.0,
+          "strict": 78.0
+        },
+        "Logic clarity": {
+          "score": 78.0,
+          "strict": 78.0
+        },
+        "Low elegance": {
+          "score": 76.0,
+          "strict": 76.0
+        },
+        "Mid elegance": {
+          "score": 75.0,
+          "strict": 75.0
+        },
+        "Naming quality": {
+          "score": 82.0,
+          "strict": 82.0
+        },
+        "Structure nav": {
+          "score": 85.0,
+          "strict": 85.0
+        },
+        "Test strategy": {
+          "score": 68.0,
+          "strict": 68.0
+        },
+        "Type safety": {
+          "score": 72.0,
+          "strict": 72.0
+        }
+      }
     }
   ],
   "lang_capabilities": {
@@ -14562,8 +14784,8 @@
       "orphaned": 20,
       "facade": 20,
       "coupling": 0,
-      "uncalled_functions": 32,
-      "test_coverage": 234,
+      "uncalled_functions": 35,
+      "test_coverage": 235,
       "smells": 20,
       "global_mutable_config": 20,
       "security": 33,
@@ -14572,14 +14794,14 @@
       "unused_enums": 20,
       "subjective_review": 17,
       "boilerplate_duplication": 0,
-      "dupes": 128,
+      "dupes": 131,
       "stale_wontfix": 0
     }
   },
   "codebase_metrics": {
     "python": {
       "total_files": 32,
-      "total_loc": 4620,
+      "total_loc": 4695,
       "total_directories": 7
     }
   },
@@ -14684,12 +14906,12 @@
       "score": 100.0,
       "strict": 99.0,
       "verified_strict_score": 100.0,
-      "checks": 128,
+      "checks": 131,
       "failing": 0,
       "tier": 3,
       "detectors": {
         "dupes": {
-          "potential": 128,
+          "potential": 131,
           "pass_rate": 1.0,
           "failing": 0,
           "weighted_failures": 0.0
@@ -14697,18 +14919,18 @@
       }
     },
     "Test health": {
-      "score": 24.1,
+      "score": 24.0,
       "strict": 0.0,
-      "verified_strict_score": 24.1,
-      "checks": 251,
+      "verified_strict_score": 24.0,
+      "checks": 252,
       "failing": 29,
       "tier": 4,
       "detectors": {
         "test_coverage": {
-          "potential": 234,
-          "pass_rate": 0.23151774980646853,
+          "potential": 235,
+          "pass_rate": 0.2301355808755989,
           "failing": 12,
-          "weighted_failures": 179.82484654528636
+          "weighted_failures": 180.91813849423426
         },
         "subjective_review": {
           "potential": 17,
@@ -14744,13 +14966,13 @@
       "strict": 88.0,
       "verified_strict_score": 88.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
           "pass_rate": 0.88,
-          "failing": 1,
+          "failing": 0,
           "weighted_failures": 1.2,
           "assessment_score": 88.0,
           "placeholder": false,
@@ -14765,13 +14987,13 @@
       "strict": 75.0,
       "verified_strict_score": 75.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
           "pass_rate": 0.75,
-          "failing": 2,
+          "failing": 1,
           "weighted_failures": 2.5,
           "assessment_score": 75.0,
           "placeholder": false,
@@ -14828,13 +15050,13 @@
       "strict": 82.0,
       "verified_strict_score": 82.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
           "pass_rate": 0.82,
-          "failing": 1,
+          "failing": 0,
           "weighted_failures": 1.8,
           "assessment_score": 82.0,
           "placeholder": false,
@@ -15141,11 +15363,11 @@
   },
   "reminder_history": {
     "zone_classification": 3,
-    "report_scores": 4,
+    "report_scores": 5,
     "stagnant_nudge": 3,
     "wontfix_growing": 3,
     "feedback_nudge": 3,
-    "review_issues_pending": 2
+    "review_issues_pending": 3
   },
   "review_cache": {
     "files": {

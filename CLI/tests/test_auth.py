@@ -1,5 +1,4 @@
 """Tests for authorization logic in auth.py and auth_middleware.py."""
-import pytest
 from multivol.api_server.auth_middleware import _PUBLIC_PATHS
 
 

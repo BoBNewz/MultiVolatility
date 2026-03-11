@@ -1,6 +1,4 @@
 """Tests for pure helper functions in routes/scan.py."""
-import os
-import pytest
 
 
 def test_paginate_data_list_returns_slice():

@@ -1,13 +1,12 @@
 {
   "version": 8,
   "created": "2026-03-11T08:21:39+00:00",
-  "updated": "2026-03-11T20:33:28+00:00",
+  "updated": "2026-03-11T20:38:42+00:00",
   "queue_order": [
-    "review::.::holistic::convention_outlier::route_function_naming_inconsistency",
+    "workflow::communicate-score",
+    "workflow::create-plan",
     "review::.::holistic::api_surface_coherence::mixed_url_path_conventions",
     "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
-    "workflow::create-plan",
-    "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers",
     "review::.::holistic::authorization_consistency::public_paths_list_undocumented",
     "review::.::holistic::cross_module_architecture::mcp_duplicates_api_logic",
     "review::.::holistic::design_coherence::background_dump_task_mixed_concerns",
@@ -16,7 +15,6 @@
     "review::.::holistic::mid_level_elegance::dict_based_scan_records",
     "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
     "review::.::holistic::naming_quality::generic_helper_names",
-    "review::.::holistic::test_strategy::missing_error_path_tests",
     "review::.::holistic::test_strategy::missing_volatility_execution_tests",
     "review::.::holistic::type_safety::missing_return_types",
     "subjective::abstraction_fitness",
@@ -2111,8 +2109,8 @@
     "review::.::holistic::convention_outlier::route_function_naming_inconsistency": {
       "issue_id": "review::.::holistic::convention_outlier::route_function_naming_inconsistency",
       "created_at": "2026-03-11T20:20:19+00:00",
-      "cluster": "api-surface",
-      "updated_at": "2026-03-11T20:20:19+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T20:37:27+00:00"
     },
     "review::.::holistic::design_coherence::background_dump_task_mixed_concerns": {
       "issue_id": "review::.::holistic::design_coherence::background_dump_task_mixed_concerns",
@@ -2141,8 +2139,8 @@
     "review::.::holistic::test_strategy::missing_error_path_tests": {
       "issue_id": "review::.::holistic::test_strategy::missing_error_path_tests",
       "created_at": "2026-03-11T20:20:29+00:00",
-      "cluster": "design-quality",
-      "updated_at": "2026-03-11T20:20:29+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T20:38:35+00:00"
     },
     "review::.::holistic::test_strategy::missing_volatility_execution_tests": {
       "issue_id": "review::.::holistic::test_strategy::missing_volatility_execution_tests",
@@ -2171,8 +2169,8 @@
     "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers": {
       "issue_id": "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers",
       "created_at": "2026-03-11T20:20:38+00:00",
-      "cluster": "design-quality",
-      "updated_at": "2026-03-11T20:20:38+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T20:38:28+00:00"
     }
   },
   "clusters": {
@@ -2801,8 +2799,7 @@
       "name": "api-surface",
       "description": "API response shape and URL convention inconsistencies",
       "issue_ids": [
-        "review::.::holistic::api_surface_coherence::mixed_url_path_conventions",
-        "review::.::holistic::convention_outlier::route_function_naming_inconsistency"
+        "review::.::holistic::api_surface_coherence::mixed_url_path_conventions"
       ],
       "created_at": "2026-03-11T20:19:15+00:00",
       "updated_at": "2026-03-11T20:21:00+00:00",
@@ -2830,12 +2827,10 @@
         "review::.::holistic::low_level_elegance::long_execute_plugin_function",
         "review::.::holistic::mid_level_elegance::dict_based_scan_records",
         "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
-        "review::.::holistic::test_strategy::missing_error_path_tests",
         "review::.::holistic::test_strategy::missing_volatility_execution_tests",
         "review::.::holistic::cross_module_architecture::mcp_duplicates_api_logic",
         "review::.::holistic::initialization_coupling::config_env_read_at_import",
-        "review::.::holistic::naming_quality::generic_helper_names",
-        "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers"
+        "review::.::holistic::naming_quality::generic_helper_names"
       ],
       "created_at": "2026-03-11T20:19:17+00:00",
       "updated_at": "2026-03-11T20:21:02+00:00",
@@ -5636,12 +5631,187 @@
       "superseded_at": "2026-03-11T20:17:42+00:00",
       "remapped_to": null,
       "candidates": []
+    },
+    "review::.::holistic::abstraction_fitness::namespace_option_bag_api_boundary": {
+      "original_id": "review::.::holistic::abstraction_fitness::namespace_option_bag_api_boundary",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "argparse.Namespace with 15+ fields used as scan config object creates opaque interface boundary",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::api_surface_coherence::inconsistent_response_shapes": {
+      "original_id": "review::.::holistic::api_surface_coherence::inconsistent_response_shapes",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "API responses use different wrapper structures for similar data",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::contract_coherence::clean_and_parse_json_error_return": {
+      "original_id": "review::.::holistic::contract_coherence::clean_and_parse_json_error_return",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "clean_and_parse_json returns error dict on failure but callers treat return as parsed data",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::convention_outlier::route_function_naming_inconsistency": {
+      "original_id": "review::.::holistic::convention_outlier::route_function_naming_inconsistency",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Route handler functions use inconsistent naming: some snake_case verbs, some noun-first patterns",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::dependency_health::flask_cors_unconstrained_origins": {
+      "original_id": "review::.::holistic::dependency_health::flask_cors_unconstrained_origins",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "flask-cors is initialized with no origin restrictions, allowing cross-origin requests from any domain",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::error_consistency::mixed_error_return_patterns": {
+      "original_id": "review::.::holistic::error_consistency::mixed_error_return_patterns",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Functions mix returning None, error dicts, and raising exceptions for error conditions",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::high_level_elegance::strings_module_misplaced": {
+      "original_id": "review::.::holistic::high_level_elegance::strings_module_misplaced",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "strings.py is a Volatility command definitions file, but its name implies string utilities",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::incomplete_migration::dataclass_migration_half_complete": {
+      "original_id": "review::.::holistic::incomplete_migration::dataclass_migration_half_complete",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Vol3RunConfig/Vol2RunConfig dataclasses introduced but scan API still uses argparse.Namespace",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::logic_clarity::parse_int_function_corrupted": {
+      "original_id": "review::.::holistic::logic_clarity::parse_int_function_corrupted",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "_parse_int_param function has unrelated code appended after it",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::package_organization::strings_module_misleading_name": {
+      "original_id": "review::.::holistic::package_organization::strings_module_misleading_name",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "strings.py contains Volatility command definitions but its name implies string utilities",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
+    },
+    "review::.::holistic::type_safety::any_type_overuse": {
+      "original_id": "review::.::holistic::type_safety::any_type_overuse",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Excessive use of 'Any' type annotation loses type safety benefits",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T20:37:39+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "review::.::holistic::type_safety::missing_return_types",
+        "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
+        "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+        "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+        "review::.::holistic::test_strategy::missing_volatility_execution_tests"
+      ]
     }
   },
   "promoted_ids": [
     "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
-    "review::.::holistic::api_surface_coherence::mixed_url_path_conventions",
-    "review::.::holistic::convention_outlier::route_function_naming_inconsistency"
+    "review::.::holistic::api_surface_coherence::mixed_url_path_conventions"
   ],
   "plan_start_scores": {},
   "refresh_state": {},
@@ -13552,6 +13722,265 @@
       "actor": "user",
       "note": "Route handler functions are all snake_case verb-noun throughout; no inconsistency remains after renaming list_images route.",
       "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:36:32+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Improved restating docstrings to be intent-explaining in scan.py and utils.py; extracted _fetch_scan, _upsert_module_status, _background_single_plugin helpers from execute_plugin reducing it from ~77 to ~25 lines; ScanRecord TypedDict added; multiple typing improvements.",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:36:34+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::mid_level_elegance::long_execute_plugin_function"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Extracted _fetch_scan, _upsert_module_status, _background_single_plugin from execute_plugin; route handler now ~25 lines with single concern",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:36:36+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::design_coherence::dict_based_scan_records"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Added ScanRecord TypedDict in scan.py to document the scan dict structure flowing through routes",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:36:38+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::design_coherence::namespace_flows_between_layers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "ApiScanConfig dataclass was added in prior commit as the API boundary type; runner_func now typed as Callable[[argparse.Namespace],None]; Namespace only created at the runner call site via dataclasses.asdict",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:36:46+00:00",
+      "action": "reorder",
+      "issue_ids": [
+        "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": null,
+      "detail": {
+        "position": "top",
+        "target": null,
+        "offset": null
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:36:48+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Improved docstrings in scan.py and utils.py to explain intent rather than restate function names",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:36:55+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Improved docstrings in scan.py and utils.py to explain intent rather than restate function names",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:37:27+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::convention_outlier::route_function_naming_inconsistency"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Route handler functions already use consistent snake_case throughout; /list_images URL renamed to /images",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:37:27+00:00",
+      "action": "resolve",
+      "issue_ids": [
+        "review::.::holistic::convention_outlier::route_function_naming_inconsistency"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Route handler functions already use consistent snake_case throughout; /list_images URL renamed to /images",
+      "detail": {
+        "status": "fixed",
+        "attestation": "I have actually verified all route handlers use consistent snake_case naming and renamed the /list_images URL to /images and all 61 tests pass and I am not gaming the score."
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:37:29+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::convention_outlier::mixed_url_path_conventions"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Renamed /list_images\u2192/images and /dump-task\u2192/dump-tasks; URL naming is now consistent",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:37:39+00:00",
+      "action": "reconcile",
+      "issue_ids": [
+        "review::.::holistic::abstraction_fitness::namespace_option_bag_api_boundary",
+        "review::.::holistic::api_surface_coherence::inconsistent_response_shapes",
+        "review::.::holistic::contract_coherence::clean_and_parse_json_error_return",
+        "review::.::holistic::convention_outlier::route_function_naming_inconsistency",
+        "review::.::holistic::dependency_health::flask_cors_unconstrained_origins",
+        "review::.::holistic::error_consistency::mixed_error_return_patterns",
+        "review::.::holistic::high_level_elegance::strings_module_misplaced",
+        "review::.::holistic::incomplete_migration::dataclass_migration_half_complete",
+        "review::.::holistic::logic_clarity::parse_int_function_corrupted",
+        "review::.::holistic::package_organization::strings_module_misleading_name",
+        "review::.::holistic::type_safety::any_type_overuse"
+      ],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "superseded_count": 11,
+        "pruned_count": 0,
+        "resurfaced_count": 0,
+        "clusters_completed_count": 0
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:37:39+00:00",
+      "action": "sync_stale",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:37:39+00:00",
+      "action": "sync_communicate_score",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "injected": true
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:37:39+00:00",
+      "action": "sync_create_plan",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "injected": true
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:38:28+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Fixed restating docstrings; extracted execute_plugin helpers (_fetch_scan, _upsert_module_status, _background_single_plugin); added ScanRecord/DumpTask TypedDicts; ApiScanConfig done; error tests added.",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:38:28+00:00",
+      "action": "resolve",
+      "issue_ids": [
+        "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Fixed restating docstrings; extracted execute_plugin helpers (_fetch_scan, _upsert_module_status, _background_single_plugin); added ScanRecord/DumpTask TypedDicts; ApiScanConfig done; error tests added.",
+      "detail": {
+        "status": "fixed",
+        "attestation": "I have actually completed these design-quality fixes and all 61 tests pass and I am not gaming the score."
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:38:30+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::mid_level_elegance::long_execute_plugin_function"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Extracted 3 helpers from execute_plugin; route handler is now ~25 lines",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:38:33+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::design_coherence::namespace_flows_between_layers"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "ApiScanConfig is the boundary type; runner_func typed as Callable[[argparse.Namespace],None]; Namespace only created at runner call site",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:38:35+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::test_strategy::missing_error_path_tests"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Added 8 error-path tests in test_routes.py: wrong password, bad token, both OS flags, neither, missing scan 404, missing log 404",
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T20:38:35+00:00",
+      "action": "resolve",
+      "issue_ids": [
+        "review::.::holistic::test_strategy::missing_error_path_tests"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Added 8 error-path tests in test_routes.py: wrong password, bad token, both OS flags, neither, missing scan 404, missing log 404",
+      "detail": {
+        "status": "fixed",
+        "attestation": "I have actually added 8 error-path tests covering password validation token authentication OS flag validation and 404 cases and 61 tests pass and I am not gaming the score."
+      }
+    },
+    {
+      "timestamp": "2026-03-11T20:38:42+00:00",
+      "action": "done",
+      "issue_ids": [
+        "review::.::holistic::test_strategy::missing_error_path_tests"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Added 8 error-path tests for auth, OS flags, and 404 paths",
+      "detail": {}
     }
   ],
   "epic_triage_meta": {
@@ -13712,37 +14141,26 @@
     "triage_start_blocked": "objective_backlog_mid_cycle",
     "triage_defer_state": {
       "deferred_review_ids": [
-        "review::.::holistic::abstraction_fitness::namespace_option_bag_api_boundary",
         "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers",
-        "review::.::holistic::api_surface_coherence::inconsistent_response_shapes",
         "review::.::holistic::api_surface_coherence::mixed_url_path_conventions",
         "review::.::holistic::authorization_consistency::public_paths_list_undocumented",
-        "review::.::holistic::contract_coherence::clean_and_parse_json_error_return",
-        "review::.::holistic::convention_outlier::route_function_naming_inconsistency",
         "review::.::holistic::cross_module_architecture::mcp_duplicates_api_logic",
-        "review::.::holistic::dependency_health::flask_cors_unconstrained_origins",
         "review::.::holistic::design_coherence::background_dump_task_mixed_concerns",
-        "review::.::holistic::error_consistency::mixed_error_return_patterns",
         "review::.::holistic::error_consistency::swallowed_exceptions_in_ingest",
-        "review::.::holistic::high_level_elegance::strings_module_misplaced",
-        "review::.::holistic::incomplete_migration::dataclass_migration_half_complete",
         "review::.::holistic::initialization_coupling::config_env_read_at_import",
-        "review::.::holistic::logic_clarity::parse_int_function_corrupted",
         "review::.::holistic::low_level_elegance::long_execute_plugin_function",
         "review::.::holistic::mid_level_elegance::dict_based_scan_records",
         "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
         "review::.::holistic::naming_quality::generic_helper_names",
-        "review::.::holistic::package_organization::strings_module_misleading_name",
         "review::.::holistic::test_strategy::missing_error_path_tests",
         "review::.::holistic::test_strategy::missing_volatility_execution_tests",
-        "review::.::holistic::type_safety::any_type_overuse",
         "review::.::holistic::type_safety::missing_return_types"
       ],
-      "last_deferred_scan": 8,
-      "last_deferred_at": "2026-03-11T20:17:41+00:00",
+      "last_deferred_scan": 9,
+      "last_deferred_at": "2026-03-11T20:37:39+00:00",
       "defer_count": 1,
-      "first_deferred_scan": 8,
-      "first_deferred_at": "2026-03-11T20:17:41+00:00"
+      "first_deferred_scan": 9,
+      "first_deferred_at": "2026-03-11T20:37:39+00:00"
     },
     "triage_recommended": true
   },
@@ -13956,7 +14374,10 @@
     "review::.::holistic::package_organization::strings_module_misleading_name",
     "review::.::holistic::logic_clarity::parse_int_function_corrupted",
     "review::.::holistic::dependency_health::flask_cors_unconstrained_origins",
-    "review::.::holistic::api_surface_coherence::inconsistent_response_shapes"
+    "review::.::holistic::api_surface_coherence::inconsistent_response_shapes",
+    "review::.::holistic::convention_outlier::route_function_naming_inconsistency",
+    "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers",
+    "review::.::holistic::test_strategy::missing_error_path_tests"
   ],
   "commit_tracking_branch": null,
   "previous_plan_start_scores": {}

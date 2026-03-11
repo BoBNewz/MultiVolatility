@@ -14,12 +14,11 @@ import sqlite3
 import threading
 import docker
 import logging
-from typing import Any, Optional
+from typing import Optional
 from flask import Blueprint, request, jsonify, Response
 import requests as http_requests
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import resolve_host_path
-from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 
 SIDECAR_PORT: int = 5002  # Port the memprocfs sidecar container listens on
 

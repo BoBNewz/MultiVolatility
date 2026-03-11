@@ -1,6 +1,5 @@
 """Tests for dump routes (multivol/api_server/routes/dump.py)."""
-import pytest
-from multivol.api_server.routes.dump import dump_tasks, dump_tasks_lock, DumpTask
+from multivol.api_server.routes.dump import dump_tasks, DumpTask
 
 
 class TestDumpFileFromMemory:

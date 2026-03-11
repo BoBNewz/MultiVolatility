@@ -20,7 +20,7 @@ from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 from multivol.multi_volatility_base import ApiScanConfig
 
 if TYPE_CHECKING:
-    import docker as docker_types
+    pass
 
 scan_bp = Blueprint('scan_bp', __name__)
 
@@ -148,7 +148,7 @@ def ingest_results_to_db(scan_id: str, output_dir: str) -> None:
                     """,
                     (time.time(), scan_id, module_name)
                 )
-        except Exception as e:
+        except Exception:
             logging.exception("Failed to ingest %s", f)
             
     conn.commit()
@@ -573,7 +573,7 @@ def get_scan_modules_status(uuid: str) -> Response:
         return jsonify(status_list)
 
     except Exception as e:
-        logging.exception("Failed to fetch module status for scan %s", scan_id)
+        logging.exception("Failed to fetch module status for scan %s", uuid)
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
@@ -636,7 +636,8 @@ def get_scan_results(uuid: str) -> Response:
 
     limit = _parse_int_param(request.args.get('limit'), 0)
     offset = _parse_int_param(request.args.get('offset'), 0)
-    paginate = lambda data: _paginate_data(data, limit, offset)
+    def paginate(data: list[Any] | dict[str, Any]) -> list[Any] | dict[str, Any]:
+        return _paginate_data(data, limit, offset)
 
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
@@ -777,7 +778,7 @@ def download_scan_zip(uuid: str) -> Response:
                      
         return send_file(zip_filepath, as_attachment=True, download_name=zip_filename)
     except Exception:
-        logging.exception("ZIP creation failed for scan %s", scan_id)
+        logging.exception("ZIP creation failed for scan %s", uuid)
         return jsonify({"error": "Failed to generate ZIP archive"}), 500
 
 def _store_plugin_result(scan_id: str, module: str, output_dir: str) -> None:

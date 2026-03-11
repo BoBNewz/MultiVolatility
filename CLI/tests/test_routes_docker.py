@@ -1,6 +1,4 @@
 """Tests for docker routes (multivol/api_server/routes/docker.py)."""
-import pytest
-from multivol.api_server.routes.docker import docker_bp
 
 
 class TestListImages:
