@@ -29,11 +29,17 @@ def upload_file() -> Response:
         filename = secure_filename(file.filename)
         save_path = os.path.join(STORAGE_DIR, filename)
 
-        # Check if file already exists to avoid overwrite or just overwrite?
-        # For simplicity, we overwrite.
         try:
-            logging.debug("Saving file to %s", save_path)
-            file.save(save_path)
+            logging.debug("Streaming file to %s", save_path)
+            # Stream directly from the request to disk — avoids Werkzeug's
+            # internal temp-file copy, so large dumps are written only once.
+            chunk_size = 1024 * 1024  # 1 MiB chunks
+            with open(save_path, "wb") as dst:
+                while True:
+                    chunk = file.stream.read(chunk_size)
+                    if not chunk:
+                        break
+                    dst.write(chunk)
             logging.debug("File saved successfully")
 
             # Hash computation can take minutes for large dumps — do it in the

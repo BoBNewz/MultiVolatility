@@ -25,6 +25,11 @@ from multivol.api_server.routes.memprocfs import memprocfs_bp
 from multivol.api_server.routes.auth import auth_bp
 
 app = Flask(__name__)
+# Large dump uploads — set limit to 50 GB and stream to disk quickly.
+# Werkzeug will spool uploads > 500 KiB directly to a temp file rather than
+# keeping them in memory, which prevents the "stuck at 100%" appearance.
+app.config["MAX_CONTENT_LENGTH"] = 53_687_091_200  # 50 GB
+app.config["MAX_FORM_MEMORY_SIZE"] = 500 * 1024  # spool to disk after 500 KiB
 # Enable CORS — allow origins from CORS_ORIGINS env var (comma-separated),
 # default open for local dev
 _cors_origins = os.environ.get("CORS_ORIGINS", "*")
