@@ -5,6 +5,7 @@ import sqlite3
 import time
 import shutil
 import logging
+import threading
 from typing import Any
 from flask import Blueprint, request, jsonify, send_from_directory, Response
 from werkzeug.utils import secure_filename
@@ -33,12 +34,12 @@ def upload_file() -> Response:
         try:
             logging.debug("Saving file to %s", save_path)
             file.save(save_path)
-
-            # Calculate and cache hash immediately
-            logging.debug("Calculating hash for %s", save_path)
-            get_file_hash(save_path)
-
             logging.debug("File saved successfully")
+
+            # Hash computation can take minutes for large dumps — do it in the
+            # background so the upload response is returned immediately.
+            threading.Thread(target=get_file_hash, args=(save_path,), daemon=True).start()
+
             return jsonify({"status": "success", "path": save_path, "server_path": save_path})
         except OSError as e:
             logging.exception("Failed to save file")
