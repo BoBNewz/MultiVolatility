@@ -204,11 +204,9 @@ def start_memprocfs(uuid):
                             conn2.close()
                             logging.info(f"MemProcFS sidecar ready for {uuid}")
                             return
-                except Exception:
-                    pass
+                except Exception as poll_err:
+                    logging.debug(f"Sidecar health check not ready yet: {poll_err}")
                 time.sleep(3)
-
-            logging.error(f"MemProcFS sidecar timeout for {uuid}")
             # Mark as failed
             conn2 = get_db_connection()
             c2 = conn2.cursor()
@@ -392,7 +390,5 @@ def memprocfs_status(uuid):
                 "vmm_ready": health.get('vmm_active', False),
                 "files_cached": health.get('files_cached', False)
             })
-    except Exception:
-        pass
-
-    return jsonify({"active": False})
+    except Exception as health_err:
+        logging.debug(f"MemProcFS health check failed: {health_err}")

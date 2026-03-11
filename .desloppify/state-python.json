@@ -1,18 +1,18 @@
 {
   "version": 1,
   "created": "2026-03-11T08:21:23+00:00",
-  "last_scan": "2026-03-11T16:16:19+00:00",
-  "scan_count": 3,
-  "overall_score": 48.2,
-  "objective_score": 52.4,
-  "strict_score": 47.8,
-  "verified_strict_score": 52.4,
+  "last_scan": "2026-03-11T17:08:26+00:00",
+  "scan_count": 4,
+  "overall_score": 49.9,
+  "objective_score": 56.9,
+  "strict_score": 46.4,
+  "verified_strict_score": 56.9,
   "stats": {
-    "total": 247,
-    "auto_resolved": 18,
+    "total": 308,
+    "auto_resolved": 60,
     "false_positive": 0,
     "fixed": 76,
-    "open": 153,
+    "open": 172,
     "wontfix": 0,
     "by_tier": {
       "1": {
@@ -23,24 +23,24 @@
         "wontfix": 0
       },
       "2": {
-        "auto_resolved": 0,
+        "auto_resolved": 22,
         "false_positive": 0,
         "fixed": 7,
-        "open": 52,
+        "open": 41,
         "wontfix": 0
       },
       "3": {
-        "auto_resolved": 0,
+        "auto_resolved": 20,
         "false_positive": 0,
         "fixed": 0,
-        "open": 87,
+        "open": 100,
         "wontfix": 0
       },
       "4": {
         "auto_resolved": 18,
         "false_positive": 0,
         "fixed": 0,
-        "open": 14,
+        "open": 31,
         "wontfix": 0
       }
     }
@@ -52,9 +52,9 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Large file: large (981 LOC) / complexity score 254",
+      "summary": "Large file: large (982 LOC) / complexity score 254",
       "detail": {
-        "loc": 981,
+        "loc": 982,
         "complexity_score": 254,
         "complexity_signals": [
           "nesting depth 58",
@@ -64,7 +64,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -79,20 +79,19 @@
       "file": "CLI/multivol/multivol.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Large file: complexity score 190",
+      "summary": "Large file: complexity score 177",
       "detail": {
-        "complexity_score": 190,
+        "complexity_score": 177,
         "complexity_signals": [
-          "nesting depth 17",
-          "long function (runner: 229 LOC)",
-          "1 TODOs"
+          "nesting depth 7",
+          "long function (run_analysis: 248 LOC)"
         ],
-        "loc": 341
+        "loc": 362
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -107,20 +106,19 @@
       "file": "CLI/multivol/multi_volatility3.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Large file: complexity score 179",
+      "summary": "Large file: complexity score 135",
       "detail": {
-        "complexity_score": 179,
+        "complexity_score": 135,
         "complexity_signals": [
-          "function with 17 params",
-          "nesting depth 29",
-          "long function (execute_command_volatility3: 164 LOC)"
+          "nesting depth 25",
+          "long function (execute_command_volatility3: 152 LOC)"
         ],
-        "loc": 222
+        "loc": 182
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -135,19 +133,19 @@
       "file": "CLI/multivol/api_server/routes/files.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Large file: complexity score 143",
+      "summary": "Large file: complexity score 144",
       "detail": {
-        "complexity_score": 143,
+        "complexity_score": 144,
         "complexity_signals": [
           "nesting depth 29",
-          "long function (list_evidences: 148 LOC)"
+          "long function (list_evidences: 149 LOC)"
         ],
-        "loc": 275
+        "loc": 279
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -169,12 +167,12 @@
           "nesting depth 31",
           "long function (process_recover_fs: 113 LOC)"
         ],
-        "loc": 235
+        "loc": 232
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -196,12 +194,12 @@
           "nesting depth 8",
           "long function (start_memprocfs: 163 LOC)"
         ],
-        "loc": 397
+        "loc": 398
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -216,19 +214,19 @@
       "file": "CLI/multivol/api_server/routes/dump.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Large file: complexity score 80",
+      "summary": "Large file: complexity score 83",
       "detail": {
-        "complexity_score": 80,
+        "complexity_score": 83,
         "complexity_signals": [
           "nesting depth 17",
-          "long function (background_dump_task: 121 LOC)"
+          "long function (background_dump_task: 124 LOC)"
         ],
-        "loc": 215
+        "loc": 219
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -243,20 +241,18 @@
       "file": "CLI/multivol/multi_volatility2.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Large file: complexity score 73",
+      "summary": "Large file: complexity score 60",
       "detail": {
-        "complexity_score": 73,
+        "complexity_score": 60,
         "complexity_signals": [
-          "function with 12 params",
-          "nesting depth 24",
-          "long function (execute_command_volatility2: 83 LOC)"
+          "nesting depth 24"
         ],
-        "loc": 137
+        "loc": 108
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -283,7 +279,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -300,7 +296,7 @@
       "confidence": "medium",
       "summary": "Mixed responsibilities: 20 top-level funcs across 18 disconnected clusters (2, 2, 1, 1, 1, +13 more)",
       "detail": {
-        "loc": 981,
+        "loc": 982,
         "function_count": 20,
         "component_count": 18,
         "component_sizes": [
@@ -339,7 +335,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -354,14 +350,14 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (981 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (982 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 981
+        "loc": 982
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -376,14 +372,14 @@
       "file": "CLI/multivol/api_server/routes/memprocfs.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (397 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (398 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 397
+        "loc": 398
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -398,14 +394,14 @@
       "file": "MCP/multivol_mcp.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (342 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (341 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 342
+        "loc": 341
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -420,14 +416,14 @@
       "file": "CLI/multivol/multivol.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (341 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (362 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 341
+        "loc": 362
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -449,7 +445,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -464,14 +460,14 @@
       "file": "CLI/multivol/api_server/routes/files.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (275 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (279 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 275
+        "loc": 279
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -486,14 +482,14 @@
       "file": "CLI/multivol/api_server/utils.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (235 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (232 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 235
+        "loc": 232
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -508,14 +504,14 @@
       "file": "CLI/multivol/api_server/routes/dump.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Orphaned file (215 LOC): zero importers, not an entry point",
+      "summary": "Orphaned file (219 LOC): zero importers, not an entry point",
       "detail": {
-        "loc": 215
+        "loc": 219
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -537,7 +533,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -559,7 +555,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -578,17 +574,23 @@
       "detail": {
         "loc": 87
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "orphaned::CLI/multivol/api_server/auth.py": {
       "id": "orphaned::CLI/multivol/api_server/auth.py",
@@ -603,7 +605,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -625,7 +627,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -652,7 +654,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -675,17 +677,23 @@
         "loc_weight": 31.32091952673165,
         "complexity_score": 254
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/routes/memprocfs.py": {
       "id": "test_coverage::CLI/multivol/api_server/routes/memprocfs.py",
@@ -701,17 +709,23 @@
         "loc_weight": 19.924858845171276,
         "complexity_score": 95
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::MCP/multivol_mcp.py": {
       "id": "test_coverage::MCP/multivol_mcp.py",
@@ -726,17 +740,23 @@
         "importer_count": 0,
         "loc_weight": 18.49324200890693
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/multivol.py": {
       "id": "test_coverage::CLI/multivol/multivol.py",
@@ -752,17 +772,23 @@
         "loc_weight": 18.466185312619388,
         "complexity_score": 190
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py": {
       "id": "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py",
@@ -777,17 +803,23 @@
         "importer_count": 0,
         "loc_weight": 18.0
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/routes/files.py": {
       "id": "test_coverage::CLI/multivol/api_server/routes/files.py",
@@ -803,17 +835,23 @@
         "loc_weight": 16.583123951777,
         "complexity_score": 143
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/utils.py": {
       "id": "test_coverage::CLI/multivol/api_server/utils.py",
@@ -829,17 +867,23 @@
         "loc_weight": 15.329709716755891,
         "complexity_score": 114
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/multi_volatility3.py": {
       "id": "test_coverage::CLI/multivol/multi_volatility3.py",
@@ -855,17 +899,23 @@
         "loc_weight": 14.89966442575134,
         "complexity_score": 179
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/routes/dump.py": {
       "id": "test_coverage::CLI/multivol/api_server/routes/dump.py",
@@ -881,17 +931,23 @@
         "loc_weight": 14.66287829861518,
         "complexity_score": 80
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/multi_volatility2.py": {
       "id": "test_coverage::CLI/multivol/multi_volatility2.py",
@@ -907,17 +963,23 @@
         "loc_weight": 11.704699910719626,
         "complexity_score": 73
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/routes/docker.py": {
       "id": "test_coverage::CLI/multivol/api_server/routes/docker.py",
@@ -933,17 +995,23 @@
         "loc_weight": 10.535653752852738,
         "complexity_score": 64
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/database.py": {
       "id": "test_coverage::CLI/multivol/api_server/database.py",
@@ -959,17 +1027,23 @@
         "loc_weight": 10.488088481701515,
         "complexity_score": 47
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_strings_extension.py": {
       "id": "test_coverage::CLI/multivol/api_strings_extension.py",
@@ -984,17 +1058,23 @@
         "importer_count": 0,
         "loc_weight": 9.327379053088816
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/app.py": {
       "id": "test_coverage::CLI/multivol/api_server/app.py",
@@ -1009,17 +1089,23 @@
         "importer_count": 1,
         "loc_weight": 8.246211251235321
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/strings.py": {
       "id": "test_coverage::CLI/multivol/strings.py",
@@ -1034,17 +1120,23 @@
         "importer_count": 1,
         "loc_weight": 7.937253933193772
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/auth.py": {
       "id": "test_coverage::CLI/multivol/api_server/auth.py",
@@ -1059,17 +1151,23 @@
         "importer_count": 0,
         "loc_weight": 5.291502622129181
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "test_coverage::CLI/multivol/api_server/routes/auth.py": {
       "id": "test_coverage::CLI/multivol/api_server/routes/auth.py",
@@ -1084,17 +1182,23 @@
         "importer_count": 0,
         "loc_weight": 4.795831523312719
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/database.py::silent_except": {
       "id": "smells::CLI/multivol/api_server/database.py::silent_except",
@@ -1111,17 +1215,23 @@
           101
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/routes/dump.py::silent_except": {
       "id": "smells::CLI/multivol/api_server/routes/dump.py::silent_except",
@@ -1138,17 +1248,23 @@
           39
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/routes/files.py::silent_except": {
       "id": "smells::CLI/multivol/api_server/routes/files.py::silent_except",
@@ -1165,17 +1281,23 @@
           123
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/routes/memprocfs.py::silent_except": {
       "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::silent_except",
@@ -1189,15 +1311,15 @@
         "severity": "high",
         "count": 3,
         "lines": [
-          65,
-          206,
-          394
+          66,
+          207,
+          395
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1218,14 +1340,14 @@
         "severity": "high",
         "count": 2,
         "lines": [
-          388,
-          423
+          389,
+          424
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1240,22 +1362,20 @@
       "file": "CLI/multivol/api_server/utils.py",
       "tier": 2,
       "confidence": "medium",
-      "summary": "4x Except handler silently suppresses error (pass/continue, no log)",
+      "summary": "2x Except handler silently suppresses error (pass/continue, no log)",
       "detail": {
         "smell_id": "silent_except",
         "severity": "high",
-        "count": 4,
+        "count": 2,
         "lines": [
-          32,
-          51,
-          83,
-          91
+          80,
+          88
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1270,20 +1390,19 @@
       "file": "CLI/multivol/multi_volatility2.py",
       "tier": 2,
       "confidence": "medium",
-      "summary": "2x Except handler silently suppresses error (pass/continue, no log)",
+      "summary": "1x Except handler silently suppresses error (pass/continue, no log)",
       "detail": {
         "smell_id": "silent_except",
         "severity": "high",
-        "count": 2,
+        "count": 1,
         "lines": [
-          78,
-          108
+          56
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1298,20 +1417,19 @@
       "file": "CLI/multivol/multi_volatility3.py",
       "tier": 2,
       "confidence": "medium",
-      "summary": "2x Except handler silently suppresses error (pass/continue, no log)",
+      "summary": "1x Except handler silently suppresses error (pass/continue, no log)",
       "detail": {
         "smell_id": "silent_except",
         "severity": "high",
-        "count": 2,
+        "count": 1,
         "lines": [
-          123,
-          157
+          100
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1340,7 +1458,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1364,17 +1482,23 @@
           101
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/routes/dump.py::empty_except": {
       "id": "smells::CLI/multivol/api_server/routes/dump.py::empty_except",
@@ -1391,17 +1515,23 @@
           39
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/routes/files.py::empty_except": {
       "id": "smells::CLI/multivol/api_server/routes/files.py::empty_except",
@@ -1418,17 +1548,23 @@
           123
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/routes/memprocfs.py::empty_except": {
       "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::empty_except",
@@ -1442,14 +1578,14 @@
         "severity": "high",
         "count": 2,
         "lines": [
-          206,
-          394
+          207,
+          395
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1464,20 +1600,19 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 2,
       "confidence": "medium",
-      "summary": "2x Empty except block (except: pass)",
+      "summary": "1x Empty except block (except: pass)",
       "detail": {
         "smell_id": "empty_except",
         "severity": "high",
-        "count": 2,
+        "count": 1,
         "lines": [
-          388,
-          423
+          424
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1503,17 +1638,23 @@
           91
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/multi_volatility2.py::empty_except": {
       "id": "smells::CLI/multivol/multi_volatility2.py::empty_except",
@@ -1531,17 +1672,23 @@
           108
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/multi_volatility3.py::empty_except": {
       "id": "smells::CLI/multivol/multi_volatility3.py::empty_except",
@@ -1558,17 +1705,23 @@
           157
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::Dockerfiles/memprocfs/memprocfs_server.py::empty_except": {
       "id": "smells::Dockerfiles/memprocfs/memprocfs_server.py::empty_except",
@@ -1590,7 +1743,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1614,17 +1767,23 @@
           50
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_server/database.py::swallowed_error": {
       "id": "smells::CLI/multivol/api_server/database.py::swallowed_error",
@@ -1632,19 +1791,20 @@
       "file": "CLI/multivol/api_server/database.py",
       "tier": 2,
       "confidence": "medium",
-      "summary": "1x Catch block that only logs (swallowed error)",
+      "summary": "2x Catch block that only logs (swallowed error)",
       "detail": {
         "smell_id": "swallowed_error",
         "severity": "high",
-        "count": 1,
+        "count": 2,
         "lines": [
-          95
+          95,
+          101
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1659,19 +1819,20 @@
       "file": "CLI/multivol/api_server/routes/files.py",
       "tier": 2,
       "confidence": "medium",
-      "summary": "1x Catch block that only logs (swallowed error)",
+      "summary": "2x Catch block that only logs (swallowed error)",
       "detail": {
         "smell_id": "swallowed_error",
         "severity": "high",
-        "count": 1,
+        "count": 2,
         "lines": [
-          155
+          126,
+          158
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1692,15 +1853,15 @@
         "severity": "high",
         "count": 3,
         "lines": [
-          67,
-          133,
-          291
+          68,
+          134,
+          292
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1721,16 +1882,16 @@
         "severity": "high",
         "count": 4,
         "lines": [
-          110,
-          606,
-          727,
-          741
+          111,
+          607,
+          728,
+          742
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1745,20 +1906,23 @@
       "file": "CLI/multivol/api_server/utils.py",
       "tier": 2,
       "confidence": "medium",
-      "summary": "2x Catch block that only logs (swallowed error)",
+      "summary": "5x Catch block that only logs (swallowed error)",
       "detail": {
         "smell_id": "swallowed_error",
         "severity": "high",
-        "count": 2,
+        "count": 5,
         "lines": [
-          126,
-          234
+          30,
+          49,
+          57,
+          123,
+          231
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1779,18 +1943,18 @@
         "severity": "high",
         "count": 6,
         "lines": [
-          843,
-          851,
-          859,
-          934,
-          942,
-          950
+          844,
+          852,
+          860,
+          935,
+          943,
+          951
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1811,13 +1975,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          125
+          122
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1843,17 +2007,23 @@
           56
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/multivol.py::sys_exit_in_library": {
       "id": "smells::CLI/multivol/multivol.py::sys_exit_in_library",
@@ -1867,18 +2037,18 @@
         "severity": "high",
         "count": 6,
         "lines": [
-          313,
-          317,
-          322,
-          326,
-          330,
-          335
+          334,
+          338,
+          343,
+          347,
+          351,
+          356
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1905,7 +2075,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1926,13 +2096,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          76
+          77
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1953,13 +2123,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          118
+          119
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -1980,13 +2150,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          38
+          17
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2007,13 +2177,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          30
+          32
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2034,13 +2204,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          235
+          236
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2061,13 +2231,13 @@
         "severity": "high",
         "count": 1,
         "lines": [
-          415
+          416
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2095,7 +2265,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2116,13 +2286,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          54
+          60
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2149,7 +2319,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2176,7 +2346,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2203,7 +2373,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2231,7 +2401,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2252,16 +2422,16 @@
         "severity": "medium",
         "count": 4,
         "lines": [
-          20,
-          142,
-          179,
-          193
+          21,
+          146,
+          183,
+          197
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2276,22 +2446,23 @@
       "file": "CLI/multivol/api_server/routes/files.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "4x Loose type annotation \u2014 use specific types",
+      "summary": "5x Loose type annotation \u2014 use specific types",
       "detail": {
         "smell_id": "annotation_quality",
         "severity": "medium",
-        "count": 4,
+        "count": 5,
         "lines": [
           15,
-          43,
-          92,
-          241
+          54,
+          74,
+          95,
+          245
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2312,19 +2483,19 @@
         "severity": "medium",
         "count": 7,
         "lines": [
-          57,
-          76,
-          183,
-          240,
-          323,
-          366,
-          379
+          58,
+          77,
+          184,
+          241,
+          324,
+          367,
+          380
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2345,22 +2516,22 @@
         "severity": "medium",
         "count": 21,
         "lines": [
-          19,
-          69,
-          118,
-          252,
-          291,
-          304,
-          322,
-          353,
-          471,
-          551
+          20,
+          70,
+          119,
+          251,
+          292,
+          305,
+          323,
+          354,
+          472,
+          552
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2388,17 +2559,23 @@
           217
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/api_strings_extension.py::annotation_quality": {
       "id": "smells::CLI/multivol/api_strings_extension.py::annotation_quality",
@@ -2416,17 +2593,23 @@
           70
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/multi_volatility2.py::annotation_quality": {
       "id": "smells::CLI/multivol/multi_volatility2.py::annotation_quality",
@@ -2440,13 +2623,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          15
+          95
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2467,13 +2650,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          20
+          21
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2494,13 +2677,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          92
+          95
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2521,14 +2704,14 @@
         "severity": "medium",
         "count": 2,
         "lines": [
-          76,
-          240
+          77,
+          241
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2549,15 +2732,15 @@
         "severity": "medium",
         "count": 3,
         "lines": [
-          118,
-          353,
-          471
+          119,
+          354,
+          472
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2578,13 +2761,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          104
+          101
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2605,13 +2788,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          38
+          17
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2632,13 +2815,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          30
+          32
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2659,13 +2842,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          49
+          48
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2692,7 +2875,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2713,14 +2896,14 @@
         "severity": "medium",
         "count": 2,
         "lines": [
-          44,
-          187
+          45,
+          188
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2747,7 +2930,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2768,13 +2951,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          22
+          23
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2795,13 +2978,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          11
+          13
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2822,13 +3005,13 @@
         "severity": "medium",
         "count": 1,
         "lines": [
-          13
+          14
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2855,7 +3038,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2876,14 +3059,14 @@
         "severity": "low",
         "count": 2,
         "lines": [
-          32,
-          65
+          37,
+          69
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2904,13 +3087,13 @@
         "severity": "low",
         "count": 1,
         "lines": [
-          249
+          253
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2931,13 +3114,13 @@
         "severity": "low",
         "count": 1,
         "lines": [
-          234
+          235
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2958,16 +3141,16 @@
         "severity": "low",
         "count": 4,
         "lines": [
-          220,
-          375,
-          603,
-          635
+          219,
+          376,
+          604,
+          636
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -2988,14 +3171,14 @@
         "severity": "low",
         "count": 2,
         "lines": [
-          20,
-          110
+          18,
+          107
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3019,17 +3202,23 @@
           27
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/multi_volatility2.py::deferred_import": {
       "id": "smells::CLI/multivol/multi_volatility2.py::deferred_import",
@@ -3047,17 +3236,23 @@
           67
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/multi_volatility3.py::deferred_import": {
       "id": "smells::CLI/multivol/multi_volatility3.py::deferred_import",
@@ -3074,17 +3269,23 @@
           27
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "smells::CLI/multivol/multivol.py::deferred_import": {
       "id": "smells::CLI/multivol/multivol.py::deferred_import",
@@ -3098,13 +3299,13 @@
         "severity": "low",
         "count": 1,
         "lines": [
-          309
+          330
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3133,7 +3334,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3154,14 +3355,14 @@
         "severity": "low",
         "count": 2,
         "lines": [
-          300,
-          324
+          299,
+          323
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3182,13 +3383,13 @@
         "severity": "low",
         "count": 1,
         "lines": [
-          55
+          37
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3209,21 +3410,21 @@
         "severity": "low",
         "count": 9,
         "lines": [
-          56,
+          35,
+          36,
           57,
-          78,
+          62,
+          80,
+          81,
+          82,
           83,
-          102,
-          103,
-          105,
-          106,
-          121
+          98
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3244,13 +3445,13 @@
         "severity": "low",
         "count": 1,
         "lines": [
-          222
+          219
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3274,17 +3475,23 @@
           158
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:24+00:00",
       "last_seen": "2026-03-11T08:21:24+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "global_mutable_config::CLI/multivol/api_server/routes/dump.py::dump_tasks": {
       "id": "global_mutable_config::CLI/multivol/api_server/routes/dump.py::dump_tasks",
@@ -3302,7 +3509,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3317,18 +3524,18 @@
       "file": "CLI/multivol/api_server/routes/memprocfs.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Module-level mutable 'active_sessions' (line 29) modified from 2 site(s)",
+      "summary": "Module-level mutable 'active_sessions' (line 30) modified from 2 site(s)",
       "detail": {
         "mutation_count": 2,
         "mutation_lines": [
-          177,
-          369
+          178,
+          370
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3343,17 +3550,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Module-level mutable 'runner_func' (line 64) modified from 1 site(s)",
+      "summary": "Module-level mutable 'runner_func' (line 65) modified from 1 site(s)",
       "detail": {
         "mutation_count": 1,
         "mutation_lines": [
-          67
+          68
         ]
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3379,7 +3586,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3406,7 +3613,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3426,13 +3633,13 @@
         "kind": "log_sensitive",
         "severity": "medium",
         "line": 22,
-        "content": "    logging.warning(f\"Failed login attempt with password: {password}\")",
+        "content": "    logging.warning(\"Failed login attempt with invalid password.\")",
         "remediation": "Remove sensitive data from log statements"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:24+00:00",
-      "last_seen": "2026-03-11T08:21:24+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "zone": "production",
@@ -3457,7 +3664,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T08:21:25+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3472,17 +3679,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 2,
       "confidence": "high",
-      "summary": "Dict key \"module\" read at line 372 but never written to `mod_dict`",
+      "summary": "Dict key \"module\" read at line 373 but never written to `mod_dict`",
       "detail": {
         "kind": "phantom_read",
         "key": "module",
-        "line": 372,
-        "info": "Created at line 371 in get_scan_modules_status() \u2014 will raise KeyError or return None via .get()"
+        "line": 373,
+        "info": "Created at line 372 in get_scan_modules_status() \u2014 will raise KeyError or return None via .get()"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T08:21:25+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3497,17 +3704,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Dict key \"status\" overwritten on `mod_dict` at line 417 (previously set at line 395, never read between)",
+      "summary": "Dict key \"status\" overwritten on `mod_dict` at line 418 (previously set at line 396, never read between)",
       "detail": {
         "kind": "overwritten_key",
         "key": "status",
-        "line": 417,
+        "line": 418,
         "info": "in get_scan_modules_status()"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T08:21:25+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3522,17 +3729,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 2,
       "confidence": "high",
-      "summary": "Dict key \"uuid\" read at line 561 but never written to `scan_dict`",
+      "summary": "Dict key \"uuid\" read at line 562 but never written to `scan_dict`",
       "detail": {
         "kind": "phantom_read",
         "key": "uuid",
-        "line": 561,
-        "info": "Created at line 560 in list_scans() \u2014 will raise KeyError or return None via .get()"
+        "line": 562,
+        "info": "Created at line 561 in list_scans() \u2014 will raise KeyError or return None via .get()"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T08:21:25+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3547,17 +3754,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Dict key \"linux\" overwritten on `default_args` at line 699 (previously set at line 675, never read between)",
+      "summary": "Dict key \"linux\" overwritten on `default_args` at line 700 (previously set at line 676, never read between)",
       "detail": {
         "kind": "overwritten_key",
         "key": "linux",
-        "line": 699,
+        "line": 700,
         "info": "in execute_plugin()"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T08:21:25+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3572,17 +3779,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Dict key \"windows\" overwritten on `default_args` at line 702 (previously set at line 675, never read between)",
+      "summary": "Dict key \"windows\" overwritten on `default_args` at line 703 (previously set at line 676, never read between)",
       "detail": {
         "kind": "overwritten_key",
         "key": "windows",
-        "line": 702,
+        "line": 703,
         "info": "in execute_plugin()"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T08:21:25+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -3597,17 +3804,17 @@
       "file": "CLI/multivol/api_server/routes/scan.py",
       "tier": 3,
       "confidence": "medium",
-      "summary": "Dict key \"fetch_symbol\" overwritten on `default_args` at line 700 (previously set at line 675, never read between)",
+      "summary": "Dict key \"fetch_symbol\" overwritten on `default_args` at line 701 (previously set at line 676, never read between)",
       "detail": {
         "kind": "overwritten_key",
         "key": "fetch_symbol",
-        "line": 700,
+        "line": 701,
         "info": "in execute_plugin()"
       },
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:25+00:00",
-      "last_seen": "2026-03-11T08:21:25+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4164,17 +4371,23 @@
           "                 # Map /storage -> {host_path}/storage/data"
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:39+00:00",
       "last_seen": "2026-03-11T08:21:39+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "boilerplate_duplication::CLI/multivol/api_server/routes/scan.py::348e57dcbe0a3438": {
       "id": "boilerplate_duplication::CLI/multivol/api_server/routes/scan.py::348e57dcbe0a3438",
@@ -4203,17 +4416,23 @@
           "    c.execute(\"SELECT output_dir FROM scans WHERE uuid = ?\", (uuid,))"
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:39+00:00",
       "last_seen": "2026-03-11T08:21:39+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "boilerplate_duplication::CLI/multivol/api_server/routes/scan.py::56776835cb648ced": {
       "id": "boilerplate_duplication::CLI/multivol/api_server/routes/scan.py::56776835cb648ced",
@@ -4242,17 +4461,23 @@
           "            sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', strings_file]"
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:39+00:00",
       "last_seen": "2026-03-11T08:21:39+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "boilerplate_duplication::CLI/multivol/multi_volatility2.py::841836a511733d09": {
       "id": "boilerplate_duplication::CLI/multivol/multi_volatility2.py::841836a511733d09",
@@ -4281,17 +4506,23 @@
           "                rprint(message)"
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:39+00:00",
       "last_seen": "2026-03-11T08:21:39+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "boilerplate_duplication::CLI/multivol/api_server/routes/scan.py::97955e820d214383": {
       "id": "boilerplate_duplication::CLI/multivol/api_server/routes/scan.py::97955e820d214383",
@@ -4320,17 +4551,23 @@
           "    limit = request.args.get('limit', 1000, type=int)"
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:39+00:00",
       "last_seen": "2026-03-11T08:21:39+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "dupes::CLI/multivol/multi_volatility2.py::resolve_path::CLI/multivol/multi_volatility3.py::resolve_path": {
       "id": "dupes::CLI/multivol/multi_volatility2.py::resolve_path::CLI/multivol/multi_volatility3.py::resolve_path",
@@ -4370,17 +4607,23 @@
           }
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:39+00:00",
       "last_seen": "2026-03-11T08:21:39+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "dupes::CLI/multivol/api_server/routes/scan.py::download_strings::CLI/multivol/api_strings_extension.py::download_strings": {
       "id": "dupes::CLI/multivol/api_server/routes/scan.py::download_strings::CLI/multivol/api_strings_extension.py::download_strings",
@@ -4420,17 +4663,23 @@
           }
         ]
       },
-      "status": "open",
-      "note": null,
+      "status": "auto_resolved",
+      "note": "Disappeared from scan \u2014 likely fixed",
       "first_seen": "2026-03-11T08:21:39+00:00",
       "last_seen": "2026-03-11T08:21:39+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-11T17:08:26+00:00",
       "reopen_count": 0,
       "lang": "python",
       "zone": "production",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "scan_verified",
+        "text": "Disappeared from detector output",
+        "attested_at": "2026-03-11T17:08:26+00:00",
+        "scan_verified": true
+      }
     },
     "stale_exclude::CLI/build::CLI/build": {
       "id": "stale_exclude::CLI/build::CLI/build",
@@ -4446,7 +4695,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4468,7 +4717,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4490,7 +4739,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4512,7 +4761,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4534,7 +4783,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4556,7 +4805,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4578,7 +4827,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4600,7 +4849,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4622,7 +4871,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4644,7 +4893,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4666,7 +4915,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4688,7 +4937,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4710,7 +4959,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -4732,7 +4981,7 @@
       "status": "open",
       "note": null,
       "first_seen": "2026-03-11T08:21:39+00:00",
-      "last_seen": "2026-03-11T08:21:39+00:00",
+      "last_seen": "2026-03-11T17:08:26+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "lang": "python",
@@ -7730,61 +7979,1636 @@
         "attested_at": "2026-03-11T17:07:51+00:00",
         "scan_verified": false
       }
+    },
+    "test_coverage::CLI/multivol/strings.py::transitive_only": {
+      "id": "test_coverage::CLI/multivol/strings.py::transitive_only",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/strings.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (43 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 43,
+        "importer_count": 1,
+        "loc_weight": 6.557438524302
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/database.py::untested_critical": {
+      "id": "test_coverage::CLI/multivol/api_server/database.py::untested_critical",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/database.py",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Untested critical module (110 LOC, 0 importers) \u2014 high blast radius",
+      "detail": {
+        "kind": "untested_critical",
+        "loc": 110,
+        "importer_count": 0,
+        "loc_weight": 10.488088481701515,
+        "complexity_score": 47
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/routes/dump.py::untested_critical": {
+      "id": "test_coverage::CLI/multivol/api_server/routes/dump.py::untested_critical",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/routes/dump.py",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Untested critical module (219 LOC, 0 importers) \u2014 high blast radius",
+      "detail": {
+        "kind": "untested_critical",
+        "loc": 219,
+        "importer_count": 0,
+        "loc_weight": 14.798648586948742,
+        "complexity_score": 83
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py::untested_module": {
+      "id": "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py::untested_module",
+      "detector": "test_coverage",
+      "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "tier": 3,
+      "confidence": "high",
+      "summary": "Untested module (324 LOC, 0 importers)",
+      "detail": {
+        "kind": "untested_module",
+        "loc": 324,
+        "importer_count": 0,
+        "loc_weight": 18.0
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/multi_volatility_base.py::transitive_only": {
+      "id": "test_coverage::CLI/multivol/multi_volatility_base.py::transitive_only",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/multi_volatility_base.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (66 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 66,
+        "importer_count": 1,
+        "loc_weight": 8.12403840463596
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/routes/memprocfs.py::untested_critical": {
+      "id": "test_coverage::CLI/multivol/api_server/routes/memprocfs.py::untested_critical",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/routes/memprocfs.py",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Untested critical module (398 LOC, 0 importers) \u2014 high blast radius",
+      "detail": {
+        "kind": "untested_critical",
+        "loc": 398,
+        "importer_count": 0,
+        "loc_weight": 19.949937343260004,
+        "complexity_score": 95
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/multi_volatility2.py::transitive_only": {
+      "id": "test_coverage::CLI/multivol/multi_volatility2.py::transitive_only",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/multi_volatility2.py",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "No direct tests (108 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 108,
+        "importer_count": 1,
+        "loc_weight": 10.392304845413264,
+        "complexity_score": 60
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/routes/docker.py::untested_critical": {
+      "id": "test_coverage::CLI/multivol/api_server/routes/docker.py::untested_critical",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/routes/docker.py",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Untested critical module (111 LOC, 0 importers) \u2014 high blast radius",
+      "detail": {
+        "kind": "untested_critical",
+        "loc": 111,
+        "importer_count": 0,
+        "loc_weight": 10.535653752852738,
+        "complexity_score": 64
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/routes/files.py::untested_critical": {
+      "id": "test_coverage::CLI/multivol/api_server/routes/files.py::untested_critical",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/routes/files.py",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Untested critical module (279 LOC, 0 importers) \u2014 high blast radius",
+      "detail": {
+        "kind": "untested_critical",
+        "loc": 279,
+        "importer_count": 0,
+        "loc_weight": 16.703293088490067,
+        "complexity_score": 144
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/app.py::transitive_only": {
+      "id": "test_coverage::CLI/multivol/api_server/app.py::transitive_only",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/app.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (72 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 72,
+        "importer_count": 1,
+        "loc_weight": 8.48528137423857
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::MCP/multivol_mcp.py::untested_module": {
+      "id": "test_coverage::MCP/multivol_mcp.py::untested_module",
+      "detector": "test_coverage",
+      "file": "MCP/multivol_mcp.py",
+      "tier": 3,
+      "confidence": "high",
+      "summary": "Untested module (341 LOC, 0 importers)",
+      "detail": {
+        "kind": "untested_module",
+        "loc": 341,
+        "importer_count": 0,
+        "loc_weight": 18.466185312619388
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/routes/scan.py::untested_critical": {
+      "id": "test_coverage::CLI/multivol/api_server/routes/scan.py::untested_critical",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Untested critical module (982 LOC, 0 importers) \u2014 high blast radius",
+      "detail": {
+        "kind": "untested_critical",
+        "loc": 982,
+        "importer_count": 0,
+        "loc_weight": 31.336879231984796,
+        "complexity_score": 254
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/multi_volatility3.py::transitive_only": {
+      "id": "test_coverage::CLI/multivol/multi_volatility3.py::transitive_only",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/multi_volatility3.py",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "No direct tests (182 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 182,
+        "importer_count": 1,
+        "loc_weight": 13.490737563232042,
+        "complexity_score": 135
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::CLI/multivol/api_server/auth.py::untested_module": {
+      "id": "test_coverage::CLI/multivol/api_server/auth.py::untested_module",
+      "detector": "test_coverage",
+      "file": "CLI/multivol/api_server/auth.py",
+      "tier": 3,
+      "confidence": "high",
+      "summary": "Untested module (28 LOC, 0 importers)",
+      "detail": {
+        "kind": "untested_module",
+        "loc": 28,
+        "importer_count": 0,
+        "loc_weight": 5.291502622129181
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:21+00:00",
+      "last_seen": "2026-03-11T17:08:21+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/api_server/routes/dump.py::swallowed_error": {
+      "id": "smells::CLI/multivol/api_server/routes/dump.py::swallowed_error",
+      "detector": "smells",
+      "file": "CLI/multivol/api_server/routes/dump.py",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "1x Catch block that only logs (swallowed error)",
+      "detail": {
+        "smell_id": "swallowed_error",
+        "severity": "high",
+        "count": 1,
+        "lines": [
+          39
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/multi_volatility2.py::swallowed_error": {
+      "id": "smells::CLI/multivol/multi_volatility2.py::swallowed_error",
+      "detector": "smells",
+      "file": "CLI/multivol/multi_volatility2.py",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "1x Catch block that only logs (swallowed error)",
+      "detail": {
+        "smell_id": "swallowed_error",
+        "severity": "high",
+        "count": 1,
+        "lines": [
+          88
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/multi_volatility3.py::swallowed_error": {
+      "id": "smells::CLI/multivol/multi_volatility3.py::swallowed_error",
+      "detector": "smells",
+      "file": "CLI/multivol/multi_volatility3.py",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "1x Catch block that only logs (swallowed error)",
+      "detail": {
+        "smell_id": "swallowed_error",
+        "severity": "high",
+        "count": 1,
+        "lines": [
+          134
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/multi_volatility3.py::annotation_quality": {
+      "id": "smells::CLI/multivol/multi_volatility3.py::annotation_quality",
+      "detector": "smells",
+      "file": "CLI/multivol/multi_volatility3.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Loose type annotation \u2014 use specific types",
+      "detail": {
+        "smell_id": "annotation_quality",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          169
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/multivol.py::annotation_quality": {
+      "id": "smells::CLI/multivol/multivol.py::annotation_quality",
+      "detector": "smells",
+      "file": "CLI/multivol/multivol.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "2x Loose type annotation \u2014 use specific types",
+      "detail": {
+        "smell_id": "annotation_quality",
+        "severity": "medium",
+        "count": 2,
+        "lines": [
+          32,
+          280
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/strings.py::annotation_quality": {
+      "id": "smells::CLI/multivol/strings.py::annotation_quality",
+      "detector": "smells",
+      "file": "CLI/multivol/strings.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Loose type annotation \u2014 use specific types",
+      "detail": {
+        "smell_id": "annotation_quality",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          8
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::Dockerfiles/memprocfs/memprocfs_server.py::annotation_quality": {
+      "id": "smells::Dockerfiles/memprocfs/memprocfs_server.py::annotation_quality",
+      "detector": "smells",
+      "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "2x Loose type annotation \u2014 use specific types",
+      "detail": {
+        "smell_id": "annotation_quality",
+        "severity": "medium",
+        "count": 2,
+        "lines": [
+          37,
+          51
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/multi_volatility2.py::high_cyclomatic_complexity": {
+      "id": "smells::CLI/multivol/multi_volatility2.py::high_cyclomatic_complexity",
+      "detector": "smells",
+      "file": "CLI/multivol/multi_volatility2.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x High cyclomatic complexity (>12 decision points)",
+      "detail": {
+        "smell_id": "high_cyclomatic_complexity",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          16
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::CLI/multivol/multi_volatility_base.py::deferred_import": {
+      "id": "smells::CLI/multivol/multi_volatility_base.py::deferred_import",
+      "detector": "smells",
+      "file": "CLI/multivol/multi_volatility_base.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x Function-level import (possible circular import workaround)",
+      "detail": {
+        "smell_id": "deferred_import",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          50
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:22+00:00",
+      "last_seen": "2026-03-11T17:08:22+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/app.py::security::B201::CLI/multivol/api_server/app.py::67": {
+      "id": "security::CLI/multivol/api_server/app.py::security::B201::CLI/multivol/api_server/app.py::67",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/app.py",
+      "tier": 4,
+      "confidence": "high",
+      "summary": "[B201] A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.",
+      "detail": {
+        "kind": "B201",
+        "severity": "high",
+        "line": 67,
+        "content": "66         logging.info(\"Starting Flask in DEBUG mode...\")\n67         app.run(host='0.0.0.0', port=5001, debug=True)\n68     else:\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b201_flask_debug_true.html",
+        "test_name": "flask_debug_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::67": {
+      "id": "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::67",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/app.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "[B104] Possible binding to all interfaces.",
+      "detail": {
+        "kind": "B104",
+        "severity": "medium",
+        "line": 67,
+        "content": "66         logging.info(\"Starting Flask in DEBUG mode...\")\n67         app.run(host='0.0.0.0', port=5001, debug=True)\n68     else:\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+        "test_name": "hardcoded_bind_all_interfaces",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::71": {
+      "id": "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::71",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/app.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "[B104] Possible binding to all interfaces.",
+      "detail": {
+        "kind": "B104",
+        "severity": "medium",
+        "line": 71,
+        "content": "70         logging.info(\"Starting production server (waitress) on port 5001 with 50GB and 24h timeout...\")\n71         serve(app, host='0.0.0.0', port=5001, threads=10, max_request_body_size=5368709120",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+        "test_name": "hardcoded_bind_all_interfaces",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::207": {
+      "id": "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::207",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/memprocfs.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B110] Try, Except, Pass detected.",
+      "detail": {
+        "kind": "B110",
+        "severity": "low",
+        "line": 207,
+        "content": "206                             return\n207                 except Exception:\n208                     pass\n209                 time.sleep(3)\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+        "test_name": "try_except_pass",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::395": {
+      "id": "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::395",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/memprocfs.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B110] Try, Except, Pass detected.",
+      "detail": {
+        "kind": "B110",
+        "severity": "low",
+        "line": 395,
+        "content": "394             })\n395     except Exception:\n396         pass\n397 \n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+        "test_name": "try_except_pass",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B404::CLI/multivol/api_server/routes/scan.py::7": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B404::CLI/multivol/api_server/routes/scan.py::7",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B404] Consider possible security implications associated with the subprocess module.",
+      "detail": {
+        "kind": "B404",
+        "severity": "low",
+        "line": 7,
+        "content": "6 import threading\n7 import subprocess\n8 import uuid\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+        "test_name": "blacklist",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B110::CLI/multivol/api_server/routes/scan.py::424": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B110::CLI/multivol/api_server/routes/scan.py::424",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B110] Try, Except, Pass detected.",
+      "detail": {
+        "kind": "B110",
+        "severity": "low",
+        "line": 424,
+        "content": "423                                     container.remove()\n424                                 except Exception as rm_err:\n425                                     pass\n426                             ",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+        "test_name": "try_except_pass",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::844": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::844",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 844,
+        "content": "843             cmd = ['grep', '-i', '-n', '-m', str(limit), query, safe_path]\n844             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace')",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::852": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::852",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 852,
+        "content": "851             wc_cmd = ['wc', '-l', safe_path]\n852             wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, errors='replace')\n853             if wc_res.returncode == 0 and wc_r",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::860": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::860",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 860,
+        "content": "859             sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', safe_path]\n860             sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace')\n861             c",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::935": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::935",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 935,
+        "content": "934             cmd += ['-m', str(limit), query, strings_file]\n935             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n936             content = result.",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::943": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::943",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 943,
+        "content": "942             wc_cmd = ['wc', '-l', strings_file]\n943             wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True)\n944             if wc_res.returncode == 0 and wc_res.stdout:\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::951": {
+      "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::951",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 951,
+        "content": "950             sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', strings_file]\n951             sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace')\n952           ",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/utils.py::security::B404::CLI/multivol/api_server/utils.py::121": {
+      "id": "security::CLI/multivol/api_server/utils.py::security::B404::CLI/multivol/api_server/utils.py::121",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/utils.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B404] Consider possible security implications associated with the subprocess module.",
+      "detail": {
+        "kind": "B404",
+        "severity": "low",
+        "line": 121,
+        "content": "120             # We use the system's robust tar binary which handles `tar: Removing leading /` automatically\n121             import subprocess\n122             subprocess.run([\"tar\", \"-xzf\", tar_path,",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+        "test_name": "blacklist",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/utils.py::security::B607::CLI/multivol/api_server/utils.py::122": {
+      "id": "security::CLI/multivol/api_server/utils.py::security::B607::CLI/multivol/api_server/utils.py::122",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/utils.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B607] Starting a process with a partial executable path",
+      "detail": {
+        "kind": "B607",
+        "severity": "low",
+        "line": 122,
+        "content": "121             import subprocess\n122             subprocess.run([\"tar\", \"-xzf\", tar_path, \"-C\", extract_dir], check=True)\n123         except Exception as e:\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
+        "test_name": "start_process_with_partial_path",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::CLI/multivol/api_server/utils.py::security::B603::CLI/multivol/api_server/utils.py::122": {
+      "id": "security::CLI/multivol/api_server/utils.py::security::B603::CLI/multivol/api_server/utils.py::122",
+      "detector": "security",
+      "file": "CLI/multivol/api_server/utils.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B603] subprocess call - check for execution of untrusted input.",
+      "detail": {
+        "kind": "B603",
+        "severity": "low",
+        "line": 122,
+        "content": "121             import subprocess\n122             subprocess.run([\"tar\", \"-xzf\", tar_path, \"-C\", extract_dir], check=True)\n123         except Exception as e:\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+        "test_name": "subprocess_without_shell_equals_true",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B110::Dockerfiles/memprocfs/memprocfs_server.py::45": {
+      "id": "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B110::Dockerfiles/memprocfs/memprocfs_server.py::45",
+      "detector": "security",
+      "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B110] Try, Except, Pass detected.",
+      "detail": {
+        "kind": "B110",
+        "severity": "low",
+        "line": 45,
+        "content": "44                 return True\n45         except Exception:\n46             pass\n47         time.sleep(poll_interval)\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+        "test_name": "try_except_pass",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B110::Dockerfiles/memprocfs/memprocfs_server.py::80": {
+      "id": "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B110::Dockerfiles/memprocfs/memprocfs_server.py::80",
+      "detector": "security",
+      "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B110] Try, Except, Pass detected.",
+      "detail": {
+        "kind": "B110",
+        "severity": "low",
+        "line": 80,
+        "content": "79                         size = 0\n80                 except Exception:\n81                     pass\n82             file_list.append((vfs_path, size))\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+        "test_name": "try_except_pass",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B110::Dockerfiles/memprocfs/memprocfs_server.py::281": {
+      "id": "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B110::Dockerfiles/memprocfs/memprocfs_server.py::281",
+      "detector": "security",
+      "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "[B110] Try, Except, Pass detected.",
+      "detail": {
+        "kind": "B110",
+        "severity": "low",
+        "line": 281,
+        "content": "280             return data\n281     except Exception:\n282         pass\n283     return None\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+        "test_name": "try_except_pass",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B104::Dockerfiles/memprocfs/memprocfs_server.py::324": {
+      "id": "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B104::Dockerfiles/memprocfs/memprocfs_server.py::324",
+      "detector": "security",
+      "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "[B104] Possible binding to all interfaces.",
+      "detail": {
+        "kind": "B104",
+        "severity": "medium",
+        "line": 324,
+        "content": "323     # Use threaded=False to avoid threading conflicts with native VMM code\n324     app.run(host='0.0.0.0', port=5002, threaded=False)\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+        "test_name": "hardcoded_bind_all_interfaces",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::MCP/multivol_mcp.py::security::B104::MCP/multivol_mcp.py::341": {
+      "id": "security::MCP/multivol_mcp.py::security::B104::MCP/multivol_mcp.py::341",
+      "detector": "security",
+      "file": "MCP/multivol_mcp.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "[B104] Possible binding to all interfaces.",
+      "detail": {
+        "kind": "B104",
+        "severity": "medium",
+        "line": 341,
+        "content": "340 if __name__ == \"__main__\":\n341     mcp.run(transport=\"http\", host=\"0.0.0.0\", port=8000)\n",
+        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+        "test_name": "hardcoded_bind_all_interfaces",
+        "source": "bandit"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "zone": "production",
+      "lang": "python",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/app.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/app.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/app.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 72
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/database.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/database.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/database.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 110
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/routes/auth.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/routes/auth.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/routes/auth.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 23
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/routes/docker.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/routes/docker.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/routes/docker.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 111
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/routes/dump.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/routes/dump.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/routes/dump.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 219
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/routes/files.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/routes/files.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/routes/files.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 279
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/routes/memprocfs.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 398
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/routes/scan.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/routes/scan.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/routes/scan.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 982
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/api_server/utils.py::changed": {
+      "id": "subjective_review::CLI/multivol/api_server/utils.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/api_server/utils.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 232
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/multi_volatility2.py::changed": {
+      "id": "subjective_review::CLI/multivol/multi_volatility2.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/multi_volatility2.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 108
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/multi_volatility3.py::changed": {
+      "id": "subjective_review::CLI/multivol/multi_volatility3.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/multi_volatility3.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 182
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/multi_volatility_base.py::unreviewed": {
+      "id": "subjective_review::CLI/multivol/multi_volatility_base.py::unreviewed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/multi_volatility_base.py",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unreviewed",
+        "loc": 66
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/multivol.py::changed": {
+      "id": "subjective_review::CLI/multivol/multivol.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/multivol.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 362
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::CLI/multivol/strings.py::changed": {
+      "id": "subjective_review::CLI/multivol/strings.py::changed",
+      "detector": "subjective_review",
+      "file": "CLI/multivol/strings.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 43
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::MCP/multivol_mcp.py::changed": {
+      "id": "subjective_review::MCP/multivol_mcp.py::changed",
+      "detector": "subjective_review",
+      "file": "MCP/multivol_mcp.py",
+      "tier": 4,
+      "confidence": "medium",
+      "summary": "File changed since last review \u2014 re-review recommended",
+      "detail": {
+        "reason": "changed",
+        "loc": 341
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::holistic_stale": {
+      "id": "subjective_review::.::holistic_stale",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Codebase changed significantly since holistic review (20\u219226 files) \u2014 re-review recommended",
+      "detail": {
+        "reason": "drift",
+        "old_files": 20,
+        "new_files": 26
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:23+00:00",
+      "last_seen": "2026-03-11T17:08:23+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "boilerplate_duplication::CLI/multivol/multi_volatility2.py::90121f2de5604e46": {
+      "id": "boilerplate_duplication::CLI/multivol/multi_volatility2.py::90121f2de5604e46",
+      "detector": "boilerplate_duplication",
+      "file": "CLI/multivol/multi_volatility2.py",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "Boilerplate block repeated across 2 files (window 11 lines): CLI/multivol/multi_volatility2.py:77, CLI/multivol/multi_volatility3.py:123",
+      "detail": {
+        "distinct_files": 2,
+        "window_size": 11,
+        "locations": [
+          {
+            "file": "CLI/multivol/multi_volatility2.py",
+            "line": 77
+          },
+          {
+            "file": "CLI/multivol/multi_volatility3.py",
+            "line": 123
+          }
+        ],
+        "sample": [
+          ")",
+          "             return (command, False)",
+          "",
+          "        time.sleep(0.5)"
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-11T17:08:25+00:00",
+      "last_seen": "2026-03-11T17:08:25+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "lang": "python",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
     }
   },
   "scan_coverage": {
     "python": {
-      "status": "reduced",
-      "confidence": 0.6,
+      "status": "full",
+      "confidence": 1.0,
       "detectors": {
         "security": {
           "detector": "security",
-          "status": "reduced",
-          "confidence": 0.6,
-          "summary": "bandit is not installed \u2014 Python-specific security checks will be skipped. | bandit is not installed \u2014 Python-specific security checks were skipped.",
-          "impact": "Python-specific security coverage is reduced; clean security output may miss shell injection, unsafe deserialization, and risky SQL/subprocess patterns. | Python-specific security checks were skipped; this can miss shell injection, unsafe deserialization, and risky SQL/subprocess patterns.",
-          "remediation": "Install Bandit: pip install bandit",
-          "tool": "bandit",
-          "reason": "missing_dependency"
+          "status": "full",
+          "confidence": 1.0,
+          "summary": "Security coverage complete for enabled detectors.",
+          "impact": "",
+          "remediation": "",
+          "tool": "",
+          "reason": ""
         }
       },
-      "warnings": [
-        {
-          "detector": "security",
-          "status": "reduced",
-          "confidence": 0.6,
-          "summary": "bandit is not installed \u2014 Python-specific security checks will be skipped.",
-          "impact": "Python-specific security coverage is reduced; clean security output may miss shell injection, unsafe deserialization, and risky SQL/subprocess patterns.",
-          "remediation": "Install Bandit: pip install bandit",
-          "tool": "bandit",
-          "reason": "missing_dependency"
-        }
-      ],
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "warnings": [],
+      "updated_at": "2026-03-11T17:08:26+00:00"
     }
   },
   "score_confidence": {
-    "status": "reduced",
-    "confidence": 0.6,
-    "detectors": [
-      {
-        "detector": "security",
-        "status": "reduced",
-        "confidence": 0.6,
-        "summary": "bandit is not installed \u2014 Python-specific security checks will be skipped. | bandit is not installed \u2014 Python-specific security checks were skipped.",
-        "impact": "Python-specific security coverage is reduced; clean security output may miss shell injection, unsafe deserialization, and risky SQL/subprocess patterns. | Python-specific security checks were skipped; this can miss shell injection, unsafe deserialization, and risky SQL/subprocess patterns.",
-        "remediation": "Install Bandit: pip install bandit",
-        "tool": "bandit",
-        "reason": "missing_dependency"
-      }
-    ],
-    "dimensions": [
-      "Security"
-    ]
+    "status": "full",
+    "confidence": 1.0,
+    "detectors": [],
+    "dimensions": []
   },
   "subjective_integrity": {
-    "status": "disabled",
-    "target_score": null,
+    "status": "pass",
+    "target_score": 95.0,
     "matched_count": 0,
     "matched_dimensions": [],
     "reset_dimensions": []
@@ -8354,6 +10178,135 @@
           "strict": 19.0
         }
       }
+    },
+    {
+      "timestamp": "2026-03-11T17:08:26+00:00",
+      "lang": "python",
+      "strict_score": 46.4,
+      "verified_strict_score": 56.9,
+      "objective_score": 56.9,
+      "overall_score": 49.9,
+      "open": 172,
+      "diff_new": 61,
+      "diff_resolved": 42,
+      "ignored": 0,
+      "raw_issues": 172,
+      "suppressed_pct": 0.0,
+      "ignore_patterns": 0,
+      "subjective_integrity": {
+        "status": "pass",
+        "matched_count": 0,
+        "reset_count": 0,
+        "target_score": 95.0
+      },
+      "score_confidence": {
+        "status": "full",
+        "confidence": 1.0,
+        "detector_count": 0,
+        "dimension_count": 0
+      },
+      "dimension_scores": {
+        "Code quality": {
+          "score": 73.5,
+          "strict": 70.7
+        },
+        "Security": {
+          "score": 83.2,
+          "strict": 83.2
+        },
+        "File health": {
+          "score": 68.5,
+          "strict": 68.5
+        },
+        "Duplication": {
+          "score": 99.2,
+          "strict": 93.4
+        },
+        "Test health": {
+          "score": 18.5,
+          "strict": 0.0
+        },
+        "Abstraction fit": {
+          "score": 55.0,
+          "strict": 55.0
+        },
+        "AI generated debt": {
+          "score": 59.9,
+          "strict": 59.9
+        },
+        "API coherence": {
+          "score": 42.7,
+          "strict": 42.7
+        },
+        "Auth consistency": {
+          "score": 75.4,
+          "strict": 75.4
+        },
+        "Contracts": {
+          "score": 48.0,
+          "strict": 48.0
+        },
+        "Convention drift": {
+          "score": 65.8,
+          "strict": 65.8
+        },
+        "Cross-module arch": {
+          "score": 49.7,
+          "strict": 49.7
+        },
+        "Dep health": {
+          "score": 66.0,
+          "strict": 66.0
+        },
+        "Design coherence": {
+          "score": 37.7,
+          "strict": 37.7
+        },
+        "Error consistency": {
+          "score": 38.6,
+          "strict": 38.6
+        },
+        "High elegance": {
+          "score": 52.2,
+          "strict": 52.2
+        },
+        "Stale migration": {
+          "score": 63.8,
+          "strict": 63.8
+        },
+        "Init coupling": {
+          "score": 44.1,
+          "strict": 44.1
+        },
+        "Logic clarity": {
+          "score": 62.1,
+          "strict": 62.1
+        },
+        "Low elegance": {
+          "score": 43.0,
+          "strict": 43.0
+        },
+        "Mid elegance": {
+          "score": 40.9,
+          "strict": 40.9
+        },
+        "Naming quality": {
+          "score": 55.6,
+          "strict": 55.6
+        },
+        "Structure nav": {
+          "score": 63.8,
+          "strict": 63.8
+        },
+        "Test strategy": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Type safety": {
+          "score": 19.0,
+          "strict": 19.0
+        }
+      }
     }
   ],
   "lang_capabilities": {
@@ -8364,10 +10317,11 @@
   },
   "zone_distribution": {
     "production": 20,
-    "config": 2
+    "config": 2,
+    "test": 4
   },
   "tool_hash": "18d10939aa40",
-  "scan_path": null,
+  "scan_path": ".",
   "scan_completeness": {
     "python": "full"
   },
@@ -8375,43 +10329,42 @@
     "python": {
       "unused": 20,
       "structural": 20,
-      "flat_dirs": 7,
+      "flat_dirs": 8,
       "props": 0,
-      "responsibility_cohesion": 1,
-      "single_use": 2,
+      "responsibility_cohesion": 0,
+      "single_use": 0,
       "cycles": 20,
       "orphaned": 20,
       "facade": 20,
       "coupling": 0,
       "uncalled_functions": 0,
-      "test_coverage": 236,
+      "test_coverage": 232,
       "smells": 20,
       "global_mutable_config": 20,
-      "security": 20,
+      "security": 27,
       "private_imports": 20,
       "dict_keys": 20,
       "unused_enums": 20,
       "subjective_review": 17,
-      "boilerplate_duplication": 4,
-      "dupes": 84,
-      "stale_wontfix": 0,
-      "review": 10
+      "boilerplate_duplication": 2,
+      "dupes": 81,
+      "stale_wontfix": 0
     }
   },
   "codebase_metrics": {
     "python": {
-      "total_files": 22,
-      "total_loc": 4031,
-      "total_directories": 6
+      "total_files": 26,
+      "total_loc": 4061,
+      "total_directories": 7
     }
   },
   "dimension_scores": {
     "Code quality": {
-      "score": 72.3,
-      "strict": 72.3,
-      "verified_strict_score": 72.3,
-      "checks": 150,
-      "failing": 104,
+      "score": 73.5,
+      "strict": 70.7,
+      "verified_strict_score": 73.5,
+      "checks": 148,
+      "failing": 94,
       "tier": 3,
       "detectors": {
         "unused": {
@@ -8423,23 +10376,17 @@
         "smells": {
           "potential": 20,
           "pass_rate": 0.0,
-          "failing": 77,
-          "weighted_failures": 24.6
+          "failing": 69,
+          "weighted_failures": 23.6
         },
         "orphaned": {
           "potential": 20,
-          "pass_rate": 0.545,
-          "failing": 13,
-          "weighted_failures": 9.1
+          "pass_rate": 0.58,
+          "failing": 12,
+          "weighted_failures": 8.4
         },
         "flat_dirs": {
-          "potential": 7,
-          "pass_rate": 1.0,
-          "failing": 0,
-          "weighted_failures": 0.0
-        },
-        "single_use": {
-          "potential": 2,
+          "potential": 8,
           "pass_rate": 1.0,
           "failing": 0,
           "weighted_failures": 0.0
@@ -8467,21 +10414,15 @@
           "pass_rate": 1.0,
           "failing": 0,
           "weighted_failures": 0.0
-        },
-        "responsibility_cohesion": {
-          "potential": 1,
-          "pass_rate": 0.30000000000000004,
-          "failing": 1,
-          "weighted_failures": 0.7
         }
       }
     },
     "Security": {
-      "score": 98.2,
-      "strict": 98.2,
-      "verified_strict_score": 98.2,
-      "checks": 40,
-      "failing": 1,
+      "score": 83.2,
+      "strict": 83.2,
+      "verified_strict_score": 83.2,
+      "checks": 47,
+      "failing": 22,
       "tier": 4,
       "detectors": {
         "cycles": {
@@ -8491,25 +10432,12 @@
           "weighted_failures": 0.0
         },
         "security": {
-          "potential": 20,
-          "pass_rate": 0.9650000000000001,
-          "failing": 1,
-          "weighted_failures": 0.7,
-          "coverage_status": "reduced",
-          "coverage_confidence": 0.6,
-          "coverage_summary": "bandit is not installed \u2014 Python-specific security checks will be skipped. | bandit is not installed \u2014 Python-specific security checks were skipped."
+          "potential": 27,
+          "pass_rate": 0.7074074074074075,
+          "failing": 22,
+          "weighted_failures": 7.8999999999999995
         }
-      },
-      "coverage_status": "reduced",
-      "coverage_confidence": 0.6,
-      "coverage_impacts": [
-        {
-          "detector": "security",
-          "status": "reduced",
-          "confidence": 0.6,
-          "summary": "bandit is not installed \u2014 Python-specific security checks will be skipped. | bandit is not installed \u2014 Python-specific security checks were skipped."
-        }
-      ]
+      }
     },
     "File health": {
       "score": 68.5,
@@ -8528,46 +10456,46 @@
       }
     },
     "Duplication": {
-      "score": 94.5,
-      "strict": 94.5,
-      "verified_strict_score": 94.5,
-      "checks": 88,
-      "failing": 7,
+      "score": 99.2,
+      "strict": 93.4,
+      "verified_strict_score": 99.2,
+      "checks": 83,
+      "failing": 1,
       "tier": 3,
       "detectors": {
         "dupes": {
-          "potential": 84,
-          "pass_rate": 0.9845238095238096,
-          "failing": 2,
-          "weighted_failures": 1.3
+          "potential": 81,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
         },
         "boilerplate_duplication": {
-          "potential": 4,
-          "pass_rate": 0.125,
-          "failing": 5,
-          "weighted_failures": 3.5
+          "potential": 2,
+          "pass_rate": 0.65,
+          "failing": 1,
+          "weighted_failures": 0.7
         }
       }
     },
     "Test health": {
-      "score": 6.7,
-      "strict": 4.6,
-      "verified_strict_score": 6.7,
-      "checks": 253,
-      "failing": 17,
+      "score": 18.5,
+      "strict": 0.0,
+      "verified_strict_score": 18.5,
+      "checks": 249,
+      "failing": 30,
       "tier": 4,
       "detectors": {
         "test_coverage": {
-          "potential": 236,
-          "pass_rate": 0.0,
-          "failing": 17,
-          "weighted_failures": 236.00720261456235
+          "potential": 232,
+          "pass_rate": 0.16974142615599885,
+          "failing": 14,
+          "weighted_failures": 192.61998913180827
         },
         "subjective_review": {
           "potential": 17,
-          "pass_rate": 1.0,
-          "failing": 0,
-          "weighted_failures": 0.0
+          "pass_rate": 0.3882352941176471,
+          "failing": 16,
+          "weighted_failures": 10.399999999999999
         }
       }
     },
@@ -9008,8 +10936,11 @@
     }
   },
   "reminder_history": {
-    "zone_classification": 1,
-    "report_scores": 1
+    "zone_classification": 2,
+    "report_scores": 2,
+    "stagnant_nudge": 2,
+    "wontfix_growing": 1,
+    "feedback_nudge": 1
   },
   "review_cache": {
     "files": {

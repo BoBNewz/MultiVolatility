@@ -1,12 +1,30 @@
 {
   "version": 8,
   "created": "2026-03-11T08:21:39+00:00",
-  "updated": "2026-03-11T17:07:51+00:00",
+  "updated": "2026-03-11T17:08:26+00:00",
   "queue_order": [
+    "workflow::communicate-score",
     "workflow::create-plan",
-    "triage::enrich",
-    "triage::sense-check",
-    "triage::commit"
+    "subjective::abstraction_fitness",
+    "subjective::ai_generated_debt",
+    "subjective::api_surface_coherence",
+    "subjective::authorization_consistency",
+    "subjective::contract_coherence",
+    "subjective::convention_outlier",
+    "subjective::cross_module_architecture",
+    "subjective::dependency_health",
+    "subjective::design_coherence",
+    "subjective::error_consistency",
+    "subjective::high_level_elegance",
+    "subjective::incomplete_migration",
+    "subjective::initialization_coupling",
+    "subjective::logic_clarity",
+    "subjective::low_level_elegance",
+    "subjective::mid_level_elegance",
+    "subjective::naming_quality",
+    "subjective::package_organization",
+    "subjective::test_strategy",
+    "subjective::type_safety"
   ],
   "deferred": [],
   "skipped": {},
@@ -75,8 +93,8 @@
     "orphaned::CLI/multivol/api_strings_extension.py": {
       "issue_id": "orphaned::CLI/multivol/api_strings_extension.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/orphaned",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "orphaned::CLI/multivol/api_server/auth.py": {
       "issue_id": "orphaned::CLI/multivol/api_server/auth.py",
@@ -93,122 +111,122 @@
     "test_coverage::CLI/multivol/api_server/routes/scan.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/routes/scan.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/routes/memprocfs.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/routes/memprocfs.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::MCP/multivol_mcp.py": {
       "issue_id": "test_coverage::MCP/multivol_mcp.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/multivol.py": {
       "issue_id": "test_coverage::CLI/multivol/multivol.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py": {
       "issue_id": "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/routes/files.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/routes/files.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/utils.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/utils.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/multi_volatility3.py": {
       "issue_id": "test_coverage::CLI/multivol/multi_volatility3.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/routes/dump.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/routes/dump.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/multi_volatility2.py": {
       "issue_id": "test_coverage::CLI/multivol/multi_volatility2.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/routes/docker.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/routes/docker.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/database.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/database.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_strings_extension.py": {
       "issue_id": "test_coverage::CLI/multivol/api_strings_extension.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/app.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/app.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/strings.py": {
       "issue_id": "test_coverage::CLI/multivol/strings.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/auth.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/auth.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "test_coverage::CLI/multivol/api_server/routes/auth.py": {
       "issue_id": "test_coverage::CLI/multivol/api_server/routes/auth.py",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/test_coverage",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/database.py::silent_except": {
       "issue_id": "smells::CLI/multivol/api_server/database.py::silent_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-silent_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/routes/dump.py::silent_except": {
       "issue_id": "smells::CLI/multivol/api_server/routes/dump.py::silent_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-silent_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/routes/files.py::silent_except": {
       "issue_id": "smells::CLI/multivol/api_server/routes/files.py::silent_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-silent_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/routes/memprocfs.py::silent_except": {
       "issue_id": "smells::CLI/multivol/api_server/routes/memprocfs.py::silent_except",
@@ -249,20 +267,20 @@
     "smells::CLI/multivol/api_server/database.py::empty_except": {
       "issue_id": "smells::CLI/multivol/api_server/database.py::empty_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-empty_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/routes/dump.py::empty_except": {
       "issue_id": "smells::CLI/multivol/api_server/routes/dump.py::empty_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-empty_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/routes/files.py::empty_except": {
       "issue_id": "smells::CLI/multivol/api_server/routes/files.py::empty_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-empty_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/routes/memprocfs.py::empty_except": {
       "issue_id": "smells::CLI/multivol/api_server/routes/memprocfs.py::empty_except",
@@ -279,20 +297,20 @@
     "smells::CLI/multivol/api_server/utils.py::empty_except": {
       "issue_id": "smells::CLI/multivol/api_server/utils.py::empty_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-empty_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/multi_volatility2.py::empty_except": {
       "issue_id": "smells::CLI/multivol/multi_volatility2.py::empty_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-empty_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/multi_volatility3.py::empty_except": {
       "issue_id": "smells::CLI/multivol/multi_volatility3.py::empty_except",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-empty_except",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::Dockerfiles/memprocfs/memprocfs_server.py::empty_except": {
       "issue_id": "smells::Dockerfiles/memprocfs/memprocfs_server.py::empty_except",
@@ -303,8 +321,8 @@
     "smells::CLI/multivol/api_server/app.py::swallowed_error": {
       "issue_id": "smells::CLI/multivol/api_server/app.py::swallowed_error",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-swallowed_error",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_server/database.py::swallowed_error": {
       "issue_id": "smells::CLI/multivol/api_server/database.py::swallowed_error",
@@ -351,8 +369,8 @@
     "smells::CLI/multivol/api_strings_extension.py::subprocess_no_timeout": {
       "issue_id": "smells::CLI/multivol/api_strings_extension.py::subprocess_no_timeout",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-subprocess_no_timeout",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/multivol.py::sys_exit_in_library": {
       "issue_id": "smells::CLI/multivol/multivol.py::sys_exit_in_library",
@@ -465,14 +483,14 @@
     "smells::CLI/multivol/api_server/utils.py::annotation_quality": {
       "issue_id": "smells::CLI/multivol/api_server/utils.py::annotation_quality",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-annotation_quality",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/api_strings_extension.py::annotation_quality": {
       "issue_id": "smells::CLI/multivol/api_strings_extension.py::annotation_quality",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-annotation_quality",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/multi_volatility2.py::annotation_quality": {
       "issue_id": "smells::CLI/multivol/multi_volatility2.py::annotation_quality",
@@ -597,20 +615,20 @@
     "smells::CLI/multivol/api_strings_extension.py::deferred_import": {
       "issue_id": "smells::CLI/multivol/api_strings_extension.py::deferred_import",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-deferred_import",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/multi_volatility2.py::deferred_import": {
       "issue_id": "smells::CLI/multivol/multi_volatility2.py::deferred_import",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-deferred_import",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/multi_volatility3.py::deferred_import": {
       "issue_id": "smells::CLI/multivol/multi_volatility3.py::deferred_import",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/smells-deferred_import",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "smells::CLI/multivol/multivol.py::deferred_import": {
       "issue_id": "smells::CLI/multivol/multivol.py::deferred_import",
@@ -687,110 +705,110 @@
     "subjective_review::CLI/multivol/api_server/app.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/app.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/auth.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/auth.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/database.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/database.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/routes/auth.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/routes/auth.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/routes/docker.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/routes/docker.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/routes/dump.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/routes/dump.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/routes/files.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/routes/files.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/routes/scan.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/routes/scan.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_server/utils.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_server/utils.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/api_strings_extension.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/api_strings_extension.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/multi_volatility2.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/multi_volatility2.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/multi_volatility3.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/multi_volatility3.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/multivol.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/multivol.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::CLI/multivol/strings.py::unreviewed": {
       "issue_id": "subjective_review::CLI/multivol/strings.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::Dockerfiles/memprocfs/memprocfs_server.py::unreviewed": {
       "issue_id": "subjective_review::Dockerfiles/memprocfs/memprocfs_server.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::MCP/multivol_mcp.py::unreviewed": {
       "issue_id": "subjective_review::MCP/multivol_mcp.py::unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "subjective_review::.::holistic_unreviewed": {
       "issue_id": "subjective_review::.::holistic_unreviewed",
       "created_at": "2026-03-11T08:21:39+00:00",
-      "cluster": "auto/subjective_review",
-      "updated_at": "2026-03-11T08:21:39+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:08:26+00:00"
     },
     "stale_exclude::CLI/build::CLI/build": {
       "issue_id": "stale_exclude::CLI/build::CLI/build",
@@ -1462,7 +1480,6 @@
         "orphaned::CLI/multivol/api_server/routes/dump.py",
         "orphaned::CLI/multivol/api_server/routes/docker.py",
         "orphaned::CLI/multivol/api_server/database.py",
-        "orphaned::CLI/multivol/api_strings_extension.py",
         "orphaned::CLI/multivol/api_server/auth.py",
         "orphaned::CLI/multivol/api_server/routes/auth.py"
       ],
@@ -1476,25 +1493,7 @@
     "auto/test_coverage": {
       "name": "auto/test_coverage",
       "description": "Fix 17 test coverage issues",
-      "issue_ids": [
-        "test_coverage::CLI/multivol/api_server/routes/scan.py",
-        "test_coverage::CLI/multivol/api_server/routes/memprocfs.py",
-        "test_coverage::MCP/multivol_mcp.py",
-        "test_coverage::CLI/multivol/multivol.py",
-        "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py",
-        "test_coverage::CLI/multivol/api_server/routes/files.py",
-        "test_coverage::CLI/multivol/api_server/utils.py",
-        "test_coverage::CLI/multivol/multi_volatility3.py",
-        "test_coverage::CLI/multivol/api_server/routes/dump.py",
-        "test_coverage::CLI/multivol/multi_volatility2.py",
-        "test_coverage::CLI/multivol/api_server/routes/docker.py",
-        "test_coverage::CLI/multivol/api_server/database.py",
-        "test_coverage::CLI/multivol/api_strings_extension.py",
-        "test_coverage::CLI/multivol/api_server/app.py",
-        "test_coverage::CLI/multivol/strings.py",
-        "test_coverage::CLI/multivol/api_server/auth.py",
-        "test_coverage::CLI/multivol/api_server/routes/auth.py"
-      ],
+      "issue_ids": [],
       "created_at": "2026-03-11T08:21:39+00:00",
       "updated_at": "2026-03-11T08:21:39+00:00",
       "auto": true,
@@ -1506,9 +1505,6 @@
       "name": "auto/smells-silent_except",
       "description": "Fix 9 silent except issues",
       "issue_ids": [
-        "smells::CLI/multivol/api_server/database.py::silent_except",
-        "smells::CLI/multivol/api_server/routes/dump.py::silent_except",
-        "smells::CLI/multivol/api_server/routes/files.py::silent_except",
         "smells::CLI/multivol/api_server/routes/memprocfs.py::silent_except",
         "smells::CLI/multivol/api_server/routes/scan.py::silent_except",
         "smells::CLI/multivol/api_server/utils.py::silent_except",
@@ -1527,14 +1523,8 @@
       "name": "auto/smells-empty_except",
       "description": "Fix 9 empty except issues",
       "issue_ids": [
-        "smells::CLI/multivol/api_server/database.py::empty_except",
-        "smells::CLI/multivol/api_server/routes/dump.py::empty_except",
-        "smells::CLI/multivol/api_server/routes/files.py::empty_except",
         "smells::CLI/multivol/api_server/routes/memprocfs.py::empty_except",
         "smells::CLI/multivol/api_server/routes/scan.py::empty_except",
-        "smells::CLI/multivol/api_server/utils.py::empty_except",
-        "smells::CLI/multivol/multi_volatility2.py::empty_except",
-        "smells::CLI/multivol/multi_volatility3.py::empty_except",
         "smells::Dockerfiles/memprocfs/memprocfs_server.py::empty_except"
       ],
       "created_at": "2026-03-11T08:21:39+00:00",
@@ -1548,7 +1538,6 @@
       "name": "auto/smells-swallowed_error",
       "description": "Fix 6 swallowed error issues",
       "issue_ids": [
-        "smells::CLI/multivol/api_server/app.py::swallowed_error",
         "smells::CLI/multivol/api_server/database.py::swallowed_error",
         "smells::CLI/multivol/api_server/routes/files.py::swallowed_error",
         "smells::CLI/multivol/api_server/routes/memprocfs.py::swallowed_error",
@@ -1567,8 +1556,7 @@
       "description": "Fix 3 subprocess no timeout issues",
       "issue_ids": [
         "smells::CLI/multivol/api_server/routes/scan.py::subprocess_no_timeout",
-        "smells::CLI/multivol/api_server/utils.py::subprocess_no_timeout",
-        "smells::CLI/multivol/api_strings_extension.py::subprocess_no_timeout"
+        "smells::CLI/multivol/api_server/utils.py::subprocess_no_timeout"
       ],
       "created_at": "2026-03-11T08:21:39+00:00",
       "updated_at": "2026-03-11T08:21:39+00:00",
@@ -1635,8 +1623,6 @@
         "smells::CLI/multivol/api_server/routes/files.py::annotation_quality",
         "smells::CLI/multivol/api_server/routes/memprocfs.py::annotation_quality",
         "smells::CLI/multivol/api_server/routes/scan.py::annotation_quality",
-        "smells::CLI/multivol/api_server/utils.py::annotation_quality",
-        "smells::CLI/multivol/api_strings_extension.py::annotation_quality",
         "smells::CLI/multivol/multi_volatility2.py::annotation_quality"
       ],
       "created_at": "2026-03-11T08:21:39+00:00",
@@ -1705,9 +1691,6 @@
         "smells::CLI/multivol/api_server/routes/memprocfs.py::deferred_import",
         "smells::CLI/multivol/api_server/routes/scan.py::deferred_import",
         "smells::CLI/multivol/api_server/utils.py::deferred_import",
-        "smells::CLI/multivol/api_strings_extension.py::deferred_import",
-        "smells::CLI/multivol/multi_volatility2.py::deferred_import",
-        "smells::CLI/multivol/multi_volatility3.py::deferred_import",
         "smells::CLI/multivol/multivol.py::deferred_import",
         "smells::Dockerfiles/memprocfs/memprocfs_server.py::deferred_import",
         "smells::MCP/multivol_mcp.py::deferred_import"
@@ -1767,26 +1750,7 @@
     "auto/subjective_review": {
       "name": "auto/subjective_review",
       "description": "Address 18 subjective_review review issues",
-      "issue_ids": [
-        "subjective_review::CLI/multivol/api_server/app.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/auth.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/database.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/routes/auth.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/routes/docker.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/routes/dump.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/routes/files.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/routes/scan.py::unreviewed",
-        "subjective_review::CLI/multivol/api_server/utils.py::unreviewed",
-        "subjective_review::CLI/multivol/api_strings_extension.py::unreviewed",
-        "subjective_review::CLI/multivol/multi_volatility2.py::unreviewed",
-        "subjective_review::CLI/multivol/multi_volatility3.py::unreviewed",
-        "subjective_review::CLI/multivol/multivol.py::unreviewed",
-        "subjective_review::CLI/multivol/strings.py::unreviewed",
-        "subjective_review::Dockerfiles/memprocfs/memprocfs_server.py::unreviewed",
-        "subjective_review::MCP/multivol_mcp.py::unreviewed",
-        "subjective_review::.::holistic_unreviewed"
-      ],
+      "issue_ids": [],
       "created_at": "2026-03-11T08:21:39+00:00",
       "updated_at": "2026-03-11T08:21:39+00:00",
       "auto": true,
@@ -2011,14 +1975,1402 @@
       ]
     }
   },
-  "superseded": {},
-  "promoted_ids": [],
-  "plan_start_scores": {
-    "strict": 47.8,
-    "overall": 48.2,
-    "objective": 52.4,
-    "verified": 52.4
+  "superseded": {
+    "orphaned::CLI/multivol/api_strings_extension.py": {
+      "original_id": "orphaned::CLI/multivol/api_strings_extension.py",
+      "original_detector": "orphaned",
+      "original_file": "CLI/multivol/api_strings_extension.py",
+      "original_summary": "Orphaned file (87 LOC): zero importers, not an entry point",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag": {
+      "original_id": "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "execute_command_volatility3 takes 17 positional parameters forming an implicit execution-config bag",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::abstraction_fitness::orphaned_api_blueprint": {
+      "original_id": "review::.::holistic::abstraction_fitness::orphaned_api_blueprint",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "routes/__init__.py defines api_blueprint that is never registered, making it dead structural indirection",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::abstraction_fitness::resolve_path_triplicated": {
+      "original_id": "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "resolve_path() is copy-pasted into strings.py, multi_volatility2, and multi_volatility3 with identical logic",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::abstraction_fitness::safe_print_triplicated": {
+      "original_id": "review::.::holistic::abstraction_fitness::safe_print_triplicated",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "safe_print() is independently defined in strings.py, multi_volatility2, and multi_volatility3 with identical bodies",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::ai_generated_debt::bare_except_suppression": {
+      "original_id": "review::.::holistic::ai_generated_debt::bare_except_suppression",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Bare 'except: pass' around non-I/O logic silently swallows errors that callers cannot distinguish from legitimate empty results",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::ai_generated_debt::build_url_passthrough": {
+      "original_id": "review::.::holistic::ai_generated_debt::build_url_passthrough",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "build_url() in the MCP module is a trivial one-line pass-through with no added logic",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::ai_generated_debt::echo_docstrings": {
+      "original_id": "review::.::holistic::ai_generated_debt::echo_docstrings",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Several docstrings restate the function name without adding insight",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::ai_generated_debt::restating_comments_multivol": {
+      "original_id": "review::.::holistic::ai_generated_debt::restating_comments_multivol",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Restating section comments in multivol.py echo the if-branch conditions rather than explaining intent",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text": {
+      "original_id": "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "GET /scans/<uuid>/log returns raw plain text instead of JSON, breaking the API's content-type contract",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface": {
+      "original_id": "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "manage_symbols() bundles GET/POST/DELETE into one function with fully divergent code paths per method",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation": {
+      "original_id": "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Mutation endpoints return four distinct success shapes: {status}, {success}, {message}, and {status: success}",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence": {
+      "original_id": "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Same scan resource addressed inconsistently via /scan, /scans, /results, and /status prefixes",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::authorization_consistency::default_token_baked_into_frontend": {
+      "original_id": "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "API auth token compiled into frontend JS bundle via VITE_API_TOKEN build arg, exposing it to all browser users",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::contract_coherence::api_blueprint_dead_export": {
+      "original_id": "review::.::holistic::contract_coherence::api_blueprint_dead_export",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "routes/__init__.py exports api_blueprint that is never populated with routes and never consumed",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation": {
+      "original_id": "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "execute_command_volatility3 and execute_command_volatility2 mutate self.output_file as a side effect of execution",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::contract_coherence::get_file_hash_error_sentinel": {
+      "original_id": "review::.::holistic::contract_coherence::get_file_hash_error_sentinel",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "get_file_hash returns literal string 'Error' on failure instead of raising or returning None",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite": {
+      "original_id": "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "process_recover_fs silently overwrites the original Volatility JSON output file in-place",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::convention_outlier::snake_case_class_names": {
+      "original_id": "review::.::holistic::convention_outlier::snake_case_class_names",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Classes multi_volatility2 and multi_volatility3 use snake_case names, violating Python's PascalCase class convention",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::convention_outlier::strings_extension_style_island": {
+      "original_id": "review::.::holistic::convention_outlier::strings_extension_style_island",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_strings_extension.py registers routes via @app.route and bypasses get_db_connection(), breaking the Blueprint pattern used everywhere else",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::cross_module_architecture::cli_workers_import_api_config": {
+      "original_id": "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "multi_volatility2 and multi_volatility3 import from api_server.config inside CLI execution workers, inverting the layer boundary",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim": {
+      "original_id": "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_strings_extension.py references app and DB_PATH from old monolithic architecture \u2014 never imported, unrunnable, blurs migration boundary",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth": {
+      "original_id": "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "dump.py maintains dual state (in-memory dict + DB table) for task tracking; memprocfs.py stores live session state at module scope without DB persistence",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::cross_module_architecture::routes_init_redundant_reexport": {
+      "original_id": "review::.::holistic::cross_module_architecture::routes_init_redundant_reexport",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "routes/__init__.py re-exports all blueprints that app.py already imports independently, creating a dead re-export layer with no consumers",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::dependency_health::mcp_unused_requests_dep": {
+      "original_id": "review::.::holistic::dependency_health::mcp_unused_requests_dep",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "'requests' listed in MCP/requirements.txt but only 'httpx' is used \u2014 unused dependency",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::dependency_health::no_version_pinning": {
+      "original_id": "review::.::holistic::dependency_health::no_version_pinning",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "No version pinning in any requirements file \u2014 upgrade-time breakage risk across all components",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::dependency_health::stale_toplevel_requirements": {
+      "original_id": "review::.::holistic::dependency_health::stale_toplevel_requirements",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Root-level requirements.txt is a confusing artifact listing only a partial subset of CLI dependencies",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier": {
+      "original_id": "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "scan() uses argparse.Namespace as a data-transfer object, leaking CLI-layer abstractions into the API dispatch layer",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities": {
+      "original_id": "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "execute_command_volatility3 has 17 parameters and collapses six distinct responsibilities into one body",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::design_coherence::inline_script_written_to_disk": {
+      "original_id": "review::.::holistic::design_coherence::inline_script_written_to_disk",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "list_volatility_plugins() writes a Python script string to disk at request time as part of handler logic",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::design_coherence::orphaned_strings_extension_fragment": {
+      "original_id": "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_strings_extension.py is a dead code fragment using the old monolithic-app pattern, never integrated into the blueprint architecture",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::design_coherence::runner_mega_function": {
+      "original_id": "review::.::holistic::design_coherence::runner_mega_function",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "runner() in multivol.py is a 220-line function mixing six distinct phases with duplicated vol2/vol3 branching",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::error_consistency::bare_except_utility_layer": {
+      "original_id": "review::.::holistic::error_consistency::bare_except_utility_layer",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Bare `except:` clauses throughout utils.py silently swallow all exceptions including KeyboardInterrupt and SystemExit",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::error_consistency::database_schema_migration_silent_failure": {
+      "original_id": "review::.::holistic::error_consistency::database_schema_migration_silent_failure",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "database.py schema migration swallows ADD COLUMN failure silently, leaving schema state unknown to callers",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::error_consistency::execute_command_volatility2_swallows_docker_errors": {
+      "original_id": "review::.::holistic::error_consistency::execute_command_volatility2_swallows_docker_errors",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "execute_command_volatility2 catches Docker exceptions and only prints them \u2014 callers cannot detect that the command failed",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::error_consistency::files_route_db_bare_except_silent": {
+      "original_id": "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "list_evidences silently drops DB errors with bare `except: pass`, causing evidence items to render with no case names and no log trace",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string": {
+      "original_id": "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "get_file_hash() returns the string 'Error' on failure, mixing an error sentinel into a value callers treat as a hex hash",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::high_level_elegance::api_strings_extension_orphan": {
+      "original_id": "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_strings_extension.py contains inert Flask routes at the wrong layer with undefined symbols",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::high_level_elegance::phantom_api_blueprint": {
+      "original_id": "review::.::holistic::high_level_elegance::phantom_api_blueprint",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_server/__init__.py creates an api_blueprint that is never registered and double-imports all route blueprints",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::high_level_elegance::resolve_path_triplicated": {
+      "original_id": "review::.::holistic::high_level_elegance::resolve_path_triplicated",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Docker host-path translation logic is duplicated identically in three places with no shared owner",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema": {
+      "original_id": "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "CREATE TABLE still declares deprecated `filepath` column alongside its replacement `dump_path`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::incomplete_migration::old_storage_path_shim": {
+      "original_id": "review::.::holistic::incomplete_migration::old_storage_path_shim",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "resolve_host_path contains labeled 'old storage hack' fallback for a deprecated path layout",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::incomplete_migration::orphaned_strings_extension": {
+      "original_id": "review::.::holistic::incomplete_migration::orphaned_strings_extension",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_strings_extension.py is a pre-Blueprint migration fragment, unreachable and referencing undefined names",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect": {
+      "original_id": "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "config.py creates six filesystem directories as a side effect of being imported",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race": {
+      "original_id": "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "dump_tasks dict accessed from background thread and request handlers without a threading.Lock",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton": {
+      "original_id": "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "httpx.AsyncClient with frozen API_TOKEN constructed at MCP module scope",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou": {
+      "original_id": "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "file_cache global read outside vmm_lock in /list endpoint creating a TOCTOU window",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::initialization_coupling::runner_func_silent_noop": {
+      "original_id": "review::.::holistic::initialization_coupling::runner_func_silent_noop",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "runner_func = None global silently swallows scan requests if init_runner() was never called",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::logic_clarity::dead_else_in_page_calc": {
+      "original_id": "review::.::holistic::logic_clarity::dead_else_in_page_calc",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Dead `else 1` branch in page calculation after limit is already guaranteed positive",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::logic_clarity::dead_except_cpu_count": {
+      "original_id": "review::.::holistic::logic_clarity::dead_except_cpu_count",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "os.cpu_count() wrapped in try/except whose except branch is unreachable dead code",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::logic_clarity::memprocfs_session_stale_leak": {
+      "original_id": "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Missing else-branch when container exists but is not running leaves stale session in active_sessions",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::logic_clarity::redundant_success_false_assignment": {
+      "original_id": "review::.::holistic::logic_clarity::redundant_success_false_assignment",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "`if exit_code != 0: success = False` is a no-op because success is already False at that point",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::low_level_elegance::duplicate_resolve_path": {
+      "original_id": "review::.::holistic::low_level_elegance::duplicate_resolve_path",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "resolve_path() method body is duplicated verbatim in multi_volatility2 and multi_volatility3 classes",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::low_level_elegance::inline_closure_pattern": {
+      "original_id": "review::.::holistic::low_level_elegance::inline_closure_pattern",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Multiple route handlers define substantial background-task closures inline (background_scan, background_single_run, wait_and_update_status) instead of extracting them",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::low_level_elegance::pervasive_bare_except": {
+      "original_id": "review::.::holistic::low_level_elegance::pervasive_bare_except",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "12 bare `except:` blocks across seed files silently swallow all exceptions including SystemExit and KeyboardInterrupt",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::low_level_elegance::process_recover_fs_monolith": {
+      "original_id": "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "process_recover_fs() is a 113-line function combining tarball extraction, inode mapping, tree construction, and file write-back",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::low_level_elegance::scan_route_monolith": {
+      "original_id": "review::.::holistic::low_level_elegance::scan_route_monolith",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "scan() route handler is a 173-line monolith mixing argument setup, validation, YAML loading, DB writes, and thread spawning",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam": {
+      "original_id": "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_strings_extension.py extends Flask app directly via @app.route instead of Blueprint, and is never imported \u2014 a dead seam artifact",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto": {
+      "original_id": "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "scan() route hands off an argparse.Namespace to the runner, coupling the API seam to CLI argument shapes",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation": {
+      "original_id": "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Docker host-path translation logic is implemented independently in utils.py and multi_volatility2.py with divergent fallback behavior",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub": {
+      "original_id": "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "routes/__init__.py creates api_blueprint which is never registered; all blueprints are registered directly in app.py, making this seam stub dead scaffolding",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection": {
+      "original_id": "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "runner_func global starts as None; if init_runner() is not called, scans appear to succeed but never execute",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::naming_quality::dump_dir_parameter_misnaming": {
+      "original_id": "review::.::holistic::naming_quality::dump_dir_parameter_misnaming",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "dump_dir parameter in execute_command_volatility2 holds a full file path, not a directory",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::naming_quality::get_commands_camel_case_outlier": {
+      "original_id": "review::.::holistic::naming_quality::get_commands_camel_case_outlier",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "getCommands() uses camelCase in a codebase where all other functions use snake_case",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::naming_quality::hash_field_holds_filename": {
+      "original_id": "review::.::holistic::naming_quality::hash_field_holds_filename",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "'hash' key in evidence API response holds a filename string, not a hash value",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::naming_quality::manage_symbols_generic_verb": {
+      "original_id": "review::.::holistic::naming_quality::manage_symbols_generic_verb",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "manage_symbols() hides three-way HTTP dispatch behind an opaque 'manage' verb",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::naming_quality::runner_generic_orchestration_name": {
+      "original_id": "review::.::holistic::naming_quality::runner_generic_orchestration_name",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "runner() in multivol.py is a generic name for the top-level analysis orchestration function",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::package_organization::dead_api_blueprint_aggregator": {
+      "original_id": "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "routes/__init__.py creates an api_blueprint aggregator that is never registered and implies a false indirection layer",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::package_organization::orphaned_strings_route_in_core_package": {
+      "original_id": "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "api_strings_extension.py is a Flask route handler stranded in the multivol core package root and never imported",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::test_strategy::auth_middleware_untested": {
+      "original_id": "review::.::holistic::test_strategy::auth_middleware_untested",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "check_authorization() \u2014 the sole API security gate \u2014 has no automated tests",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::test_strategy::no_test_infrastructure": {
+      "original_id": "review::.::holistic::test_strategy::no_test_infrastructure",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Zero test infrastructure: no test files, no test runner, no test dependencies across the entire Python codebase",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::test_strategy::process_recover_fs_untested": {
+      "original_id": "review::.::holistic::test_strategy::process_recover_fs_untested",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "process_recover_fs() \u2014 100+ line tree-building function with fallback paths and inode mapping \u2014 has no tests",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::test_strategy::schema_migration_untested": {
+      "original_id": "review::.::holistic::test_strategy::schema_migration_untested",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "init_db() schema migration logic (ALTER TABLE, RENAME COLUMN, fallback branches) is untested",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api": {
+      "original_id": "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "All public API functions in the CLI subsystem (utils.py, auth.py, multi_volatility2.py, multi_volatility3.py) have zero type annotations",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::type_safety::runner_func_untyped_callable_slot": {
+      "original_id": "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "Module-level `runner_func = None` is used as a callable but has no `Optional[Callable]` annotation",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "review::.::holistic::type_safety::safe_request_return_type_lie": {
+      "original_id": "review::.::holistic::type_safety::safe_request_return_type_lie",
+      "original_detector": "review",
+      "original_file": ".",
+      "original_summary": "`safe_request` annotated as `-> dict` but returns `list | dict` at runtime; callers add isinstance guards proving the annotation",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "smells::CLI/multivol/api_server/app.py::swallowed_error": {
+      "original_id": "smells::CLI/multivol/api_server/app.py::swallowed_error",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/app.py",
+      "original_summary": "1x Catch block that only logs (swallowed error)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/app.py::annotation_quality",
+        "smells::CLI/multivol/api_server/app.py::import_runtime_init",
+        "smells::CLI/multivol/api_server/app.py::deferred_import"
+      ]
+    },
+    "smells::CLI/multivol/api_server/database.py::empty_except": {
+      "original_id": "smells::CLI/multivol/api_server/database.py::empty_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/database.py",
+      "original_summary": "1x Empty except block (except: pass)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/database.py::swallowed_error",
+        "smells::CLI/multivol/api_server/database.py::annotation_quality"
+      ]
+    },
+    "smells::CLI/multivol/api_server/database.py::silent_except": {
+      "original_id": "smells::CLI/multivol/api_server/database.py::silent_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/database.py",
+      "original_summary": "1x Except handler silently suppresses error (pass/continue, no log)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/database.py::swallowed_error",
+        "smells::CLI/multivol/api_server/database.py::annotation_quality"
+      ]
+    },
+    "smells::CLI/multivol/api_server/routes/dump.py::empty_except": {
+      "original_id": "smells::CLI/multivol/api_server/routes/dump.py::empty_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/routes/dump.py",
+      "original_summary": "1x Empty except block (except: pass)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/routes/dump.py::annotation_quality",
+        "smells::CLI/multivol/api_server/routes/dump.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/api_server/routes/dump.py::hardcoded_url",
+        "smells::CLI/multivol/api_server/routes/dump.py::swallowed_error"
+      ]
+    },
+    "smells::CLI/multivol/api_server/routes/dump.py::silent_except": {
+      "original_id": "smells::CLI/multivol/api_server/routes/dump.py::silent_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/routes/dump.py",
+      "original_summary": "1x Except handler silently suppresses error (pass/continue, no log)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/routes/dump.py::annotation_quality",
+        "smells::CLI/multivol/api_server/routes/dump.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/api_server/routes/dump.py::hardcoded_url",
+        "smells::CLI/multivol/api_server/routes/dump.py::swallowed_error"
+      ]
+    },
+    "smells::CLI/multivol/api_server/routes/files.py::empty_except": {
+      "original_id": "smells::CLI/multivol/api_server/routes/files.py::empty_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/routes/files.py",
+      "original_summary": "1x Empty except block (except: pass)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/routes/files.py::swallowed_error",
+        "smells::CLI/multivol/api_server/routes/files.py::annotation_quality",
+        "smells::CLI/multivol/api_server/routes/files.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/api_server/routes/files.py::deferred_import"
+      ]
+    },
+    "smells::CLI/multivol/api_server/routes/files.py::silent_except": {
+      "original_id": "smells::CLI/multivol/api_server/routes/files.py::silent_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/routes/files.py",
+      "original_summary": "1x Except handler silently suppresses error (pass/continue, no log)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/routes/files.py::swallowed_error",
+        "smells::CLI/multivol/api_server/routes/files.py::annotation_quality",
+        "smells::CLI/multivol/api_server/routes/files.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/api_server/routes/files.py::deferred_import"
+      ]
+    },
+    "smells::CLI/multivol/api_server/utils.py::annotation_quality": {
+      "original_id": "smells::CLI/multivol/api_server/utils.py::annotation_quality",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/utils.py",
+      "original_summary": "5x Loose type annotation \u2014 use specific types",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/utils.py::silent_except",
+        "smells::CLI/multivol/api_server/utils.py::swallowed_error",
+        "smells::CLI/multivol/api_server/utils.py::subprocess_no_timeout",
+        "smells::CLI/multivol/api_server/utils.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/api_server/utils.py::deferred_import"
+      ]
+    },
+    "smells::CLI/multivol/api_server/utils.py::empty_except": {
+      "original_id": "smells::CLI/multivol/api_server/utils.py::empty_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_server/utils.py",
+      "original_summary": "3x Empty except block (except: pass)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/api_server/utils.py::silent_except",
+        "smells::CLI/multivol/api_server/utils.py::swallowed_error",
+        "smells::CLI/multivol/api_server/utils.py::subprocess_no_timeout",
+        "smells::CLI/multivol/api_server/utils.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/api_server/utils.py::deferred_import"
+      ]
+    },
+    "smells::CLI/multivol/api_strings_extension.py::annotation_quality": {
+      "original_id": "smells::CLI/multivol/api_strings_extension.py::annotation_quality",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_strings_extension.py",
+      "original_summary": "2x Loose type annotation \u2014 use specific types",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "smells::CLI/multivol/api_strings_extension.py::deferred_import": {
+      "original_id": "smells::CLI/multivol/api_strings_extension.py::deferred_import",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_strings_extension.py",
+      "original_summary": "1x Function-level import (possible circular import workaround)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "smells::CLI/multivol/api_strings_extension.py::subprocess_no_timeout": {
+      "original_id": "smells::CLI/multivol/api_strings_extension.py::subprocess_no_timeout",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/api_strings_extension.py",
+      "original_summary": "3x subprocess call without timeout (can hang forever)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "smells::CLI/multivol/multi_volatility2.py::deferred_import": {
+      "original_id": "smells::CLI/multivol/multi_volatility2.py::deferred_import",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/multi_volatility2.py",
+      "original_summary": "2x Function-level import (possible circular import workaround)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/multi_volatility2.py::silent_except",
+        "smells::CLI/multivol/multi_volatility2.py::annotation_quality",
+        "smells::CLI/multivol/multi_volatility2.py::dead_function",
+        "smells::CLI/multivol/multi_volatility2.py::debug_tag",
+        "smells::CLI/multivol/multi_volatility2.py::swallowed_error"
+      ]
+    },
+    "smells::CLI/multivol/multi_volatility2.py::empty_except": {
+      "original_id": "smells::CLI/multivol/multi_volatility2.py::empty_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/multi_volatility2.py",
+      "original_summary": "2x Empty except block (except: pass)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/multi_volatility2.py::silent_except",
+        "smells::CLI/multivol/multi_volatility2.py::annotation_quality",
+        "smells::CLI/multivol/multi_volatility2.py::dead_function",
+        "smells::CLI/multivol/multi_volatility2.py::debug_tag",
+        "smells::CLI/multivol/multi_volatility2.py::swallowed_error"
+      ]
+    },
+    "smells::CLI/multivol/multi_volatility3.py::deferred_import": {
+      "original_id": "smells::CLI/multivol/multi_volatility3.py::deferred_import",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/multi_volatility3.py",
+      "original_summary": "1x Function-level import (possible circular import workaround)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/multi_volatility3.py::silent_except",
+        "smells::CLI/multivol/multi_volatility3.py::monster_function",
+        "smells::CLI/multivol/multi_volatility3.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/multi_volatility3.py::dead_function",
+        "smells::CLI/multivol/multi_volatility3.py::debug_tag"
+      ]
+    },
+    "smells::CLI/multivol/multi_volatility3.py::empty_except": {
+      "original_id": "smells::CLI/multivol/multi_volatility3.py::empty_except",
+      "original_detector": "smells",
+      "original_file": "CLI/multivol/multi_volatility3.py",
+      "original_summary": "1x Empty except block (except: pass)",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "smells::CLI/multivol/multi_volatility3.py::silent_except",
+        "smells::CLI/multivol/multi_volatility3.py::monster_function",
+        "smells::CLI/multivol/multi_volatility3.py::high_cyclomatic_complexity",
+        "smells::CLI/multivol/multi_volatility3.py::dead_function",
+        "smells::CLI/multivol/multi_volatility3.py::debug_tag"
+      ]
+    },
+    "subjective_review::.::holistic_unreviewed": {
+      "original_id": "subjective_review::.::holistic_unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": ".",
+      "original_summary": "No holistic codebase review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::.::holistic_stale"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/app.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/app.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/app.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/app.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/auth.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/auth.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/auth.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "subjective_review::CLI/multivol/api_server/database.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/database.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/database.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/database.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/routes/auth.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/routes/auth.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/routes/auth.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/routes/auth.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/routes/docker.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/routes/docker.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/routes/docker.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/routes/docker.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/routes/dump.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/routes/dump.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/routes/dump.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/routes/dump.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/routes/files.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/routes/files.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/routes/files.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/routes/files.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/routes/memprocfs.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/routes/scan.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/routes/scan.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/routes/scan.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/routes/scan.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_server/utils.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_server/utils.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_server/utils.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/api_server/utils.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/api_strings_extension.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/api_strings_extension.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/api_strings_extension.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "subjective_review::CLI/multivol/multi_volatility2.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/multi_volatility2.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/multi_volatility2.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/multi_volatility2.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/multi_volatility3.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/multi_volatility3.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/multi_volatility3.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/multi_volatility3.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/multivol.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/multivol.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/multivol.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/multivol.py::changed"
+      ]
+    },
+    "subjective_review::CLI/multivol/strings.py::unreviewed": {
+      "original_id": "subjective_review::CLI/multivol/strings.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "CLI/multivol/strings.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::CLI/multivol/strings.py::changed"
+      ]
+    },
+    "subjective_review::Dockerfiles/memprocfs/memprocfs_server.py::unreviewed": {
+      "original_id": "subjective_review::Dockerfiles/memprocfs/memprocfs_server.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "subjective_review::MCP/multivol_mcp.py::unreviewed": {
+      "original_id": "subjective_review::MCP/multivol_mcp.py::unreviewed",
+      "original_detector": "subjective_review",
+      "original_file": "MCP/multivol_mcp.py",
+      "original_summary": "No design review on record \u2014 run `desloppify review --prepare`",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "subjective_review::MCP/multivol_mcp.py::changed"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/app.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/app.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/app.py",
+      "original_summary": "Untested module (68 LOC, 1 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/app.py::transitive_only"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/auth.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/auth.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/auth.py",
+      "original_summary": "Untested module (28 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/auth.py::untested_module"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/database.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/database.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/database.py",
+      "original_summary": "Untested module (110 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/database.py::untested_critical"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/routes/auth.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/routes/auth.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/routes/auth.py",
+      "original_summary": "Untested module (23 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "test_coverage::CLI/multivol/api_server/routes/docker.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/routes/docker.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/routes/docker.py",
+      "original_summary": "Untested module (111 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/routes/docker.py::untested_critical"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/routes/dump.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/routes/dump.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/routes/dump.py",
+      "original_summary": "Untested module (215 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/routes/dump.py::untested_critical"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/routes/files.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/routes/files.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/routes/files.py",
+      "original_summary": "Untested module (275 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/routes/files.py::untested_critical"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/routes/memprocfs.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/routes/memprocfs.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/routes/memprocfs.py",
+      "original_summary": "Untested module (397 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/routes/memprocfs.py::untested_critical"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/routes/scan.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/routes/scan.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/routes/scan.py",
+      "original_summary": "Untested module (981 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/api_server/routes/scan.py::untested_critical"
+      ]
+    },
+    "test_coverage::CLI/multivol/api_server/utils.py": {
+      "original_id": "test_coverage::CLI/multivol/api_server/utils.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_server/utils.py",
+      "original_summary": "Untested module (235 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "test_coverage::CLI/multivol/api_strings_extension.py": {
+      "original_id": "test_coverage::CLI/multivol/api_strings_extension.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/api_strings_extension.py",
+      "original_summary": "Untested module (87 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "test_coverage::CLI/multivol/multi_volatility2.py": {
+      "original_id": "test_coverage::CLI/multivol/multi_volatility2.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/multi_volatility2.py",
+      "original_summary": "Untested module (137 LOC, 1 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/multi_volatility2.py::transitive_only"
+      ]
+    },
+    "test_coverage::CLI/multivol/multi_volatility3.py": {
+      "original_id": "test_coverage::CLI/multivol/multi_volatility3.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/multi_volatility3.py",
+      "original_summary": "Untested module (222 LOC, 1 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/multi_volatility3.py::transitive_only"
+      ]
+    },
+    "test_coverage::CLI/multivol/multivol.py": {
+      "original_id": "test_coverage::CLI/multivol/multivol.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/multivol.py",
+      "original_summary": "Untested module (341 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": []
+    },
+    "test_coverage::CLI/multivol/strings.py": {
+      "original_id": "test_coverage::CLI/multivol/strings.py",
+      "original_detector": "test_coverage",
+      "original_file": "CLI/multivol/strings.py",
+      "original_summary": "Untested module (63 LOC, 1 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::CLI/multivol/strings.py::transitive_only"
+      ]
+    },
+    "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py": {
+      "original_id": "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py",
+      "original_detector": "test_coverage",
+      "original_file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "original_summary": "Untested module (324 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py::untested_module"
+      ]
+    },
+    "test_coverage::MCP/multivol_mcp.py": {
+      "original_id": "test_coverage::MCP/multivol_mcp.py",
+      "original_detector": "test_coverage",
+      "original_file": "MCP/multivol_mcp.py",
+      "original_summary": "Untested module (342 LOC, 0 importers) \u2014 no test files found",
+      "status": "superseded",
+      "superseded_at": "2026-03-11T17:08:26+00:00",
+      "remapped_to": null,
+      "candidates": [
+        "test_coverage::MCP/multivol_mcp.py::untested_module"
+      ]
+    }
   },
+  "promoted_ids": [],
+  "plan_start_scores": {},
   "refresh_state": {},
   "execution_log": [
     {
@@ -4145,6 +5497,203 @@
       "actor": "user",
       "note": null,
       "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T17:08:26+00:00",
+      "action": "cluster_done",
+      "issue_ids": [],
+      "cluster_name": "auto/test_coverage",
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "reason": "all issues resolved by scan"
+      }
+    },
+    {
+      "timestamp": "2026-03-11T17:08:26+00:00",
+      "action": "cluster_done",
+      "issue_ids": [],
+      "cluster_name": "auto/subjective_review",
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "reason": "all issues resolved by scan"
+      }
+    },
+    {
+      "timestamp": "2026-03-11T17:08:26+00:00",
+      "action": "reconcile",
+      "issue_ids": [
+        "orphaned::CLI/multivol/api_strings_extension.py",
+        "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
+        "review::.::holistic::abstraction_fitness::orphaned_api_blueprint",
+        "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
+        "review::.::holistic::abstraction_fitness::safe_print_triplicated",
+        "review::.::holistic::ai_generated_debt::bare_except_suppression",
+        "review::.::holistic::ai_generated_debt::build_url_passthrough",
+        "review::.::holistic::ai_generated_debt::echo_docstrings",
+        "review::.::holistic::ai_generated_debt::restating_comments_multivol",
+        "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
+        "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
+        "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
+        "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
+        "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
+        "review::.::holistic::contract_coherence::api_blueprint_dead_export",
+        "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
+        "review::.::holistic::contract_coherence::get_file_hash_error_sentinel",
+        "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
+        "review::.::holistic::convention_outlier::snake_case_class_names",
+        "review::.::holistic::convention_outlier::strings_extension_style_island",
+        "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
+        "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
+        "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
+        "review::.::holistic::cross_module_architecture::routes_init_redundant_reexport",
+        "review::.::holistic::dependency_health::mcp_unused_requests_dep",
+        "review::.::holistic::dependency_health::no_version_pinning",
+        "review::.::holistic::dependency_health::stale_toplevel_requirements",
+        "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
+        "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
+        "review::.::holistic::design_coherence::inline_script_written_to_disk",
+        "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
+        "review::.::holistic::design_coherence::runner_mega_function",
+        "review::.::holistic::error_consistency::bare_except_utility_layer",
+        "review::.::holistic::error_consistency::database_schema_migration_silent_failure",
+        "review::.::holistic::error_consistency::execute_command_volatility2_swallows_docker_errors",
+        "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
+        "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
+        "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
+        "review::.::holistic::high_level_elegance::phantom_api_blueprint",
+        "review::.::holistic::high_level_elegance::resolve_path_triplicated",
+        "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
+        "review::.::holistic::incomplete_migration::old_storage_path_shim",
+        "review::.::holistic::incomplete_migration::orphaned_strings_extension",
+        "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
+        "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
+        "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
+        "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
+        "review::.::holistic::initialization_coupling::runner_func_silent_noop",
+        "review::.::holistic::logic_clarity::dead_else_in_page_calc",
+        "review::.::holistic::logic_clarity::dead_except_cpu_count",
+        "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
+        "review::.::holistic::logic_clarity::redundant_success_false_assignment",
+        "review::.::holistic::low_level_elegance::duplicate_resolve_path",
+        "review::.::holistic::low_level_elegance::inline_closure_pattern",
+        "review::.::holistic::low_level_elegance::pervasive_bare_except",
+        "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
+        "review::.::holistic::low_level_elegance::scan_route_monolith",
+        "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
+        "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
+        "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
+        "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
+        "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
+        "review::.::holistic::naming_quality::dump_dir_parameter_misnaming",
+        "review::.::holistic::naming_quality::get_commands_camel_case_outlier",
+        "review::.::holistic::naming_quality::hash_field_holds_filename",
+        "review::.::holistic::naming_quality::manage_symbols_generic_verb",
+        "review::.::holistic::naming_quality::runner_generic_orchestration_name",
+        "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
+        "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
+        "review::.::holistic::test_strategy::auth_middleware_untested",
+        "review::.::holistic::test_strategy::no_test_infrastructure",
+        "review::.::holistic::test_strategy::process_recover_fs_untested",
+        "review::.::holistic::test_strategy::schema_migration_untested",
+        "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
+        "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
+        "review::.::holistic::type_safety::safe_request_return_type_lie",
+        "smells::CLI/multivol/api_server/app.py::swallowed_error",
+        "smells::CLI/multivol/api_server/database.py::empty_except",
+        "smells::CLI/multivol/api_server/database.py::silent_except",
+        "smells::CLI/multivol/api_server/routes/dump.py::empty_except",
+        "smells::CLI/multivol/api_server/routes/dump.py::silent_except",
+        "smells::CLI/multivol/api_server/routes/files.py::empty_except",
+        "smells::CLI/multivol/api_server/routes/files.py::silent_except",
+        "smells::CLI/multivol/api_server/utils.py::annotation_quality",
+        "smells::CLI/multivol/api_server/utils.py::empty_except",
+        "smells::CLI/multivol/api_strings_extension.py::annotation_quality",
+        "smells::CLI/multivol/api_strings_extension.py::deferred_import",
+        "smells::CLI/multivol/api_strings_extension.py::subprocess_no_timeout",
+        "smells::CLI/multivol/multi_volatility2.py::deferred_import",
+        "smells::CLI/multivol/multi_volatility2.py::empty_except",
+        "smells::CLI/multivol/multi_volatility3.py::deferred_import",
+        "smells::CLI/multivol/multi_volatility3.py::empty_except",
+        "subjective_review::.::holistic_unreviewed",
+        "subjective_review::CLI/multivol/api_server/app.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/auth.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/database.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/routes/auth.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/routes/docker.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/routes/dump.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/routes/files.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/routes/scan.py::unreviewed",
+        "subjective_review::CLI/multivol/api_server/utils.py::unreviewed",
+        "subjective_review::CLI/multivol/api_strings_extension.py::unreviewed",
+        "subjective_review::CLI/multivol/multi_volatility2.py::unreviewed",
+        "subjective_review::CLI/multivol/multi_volatility3.py::unreviewed",
+        "subjective_review::CLI/multivol/multivol.py::unreviewed",
+        "subjective_review::CLI/multivol/strings.py::unreviewed",
+        "subjective_review::Dockerfiles/memprocfs/memprocfs_server.py::unreviewed",
+        "subjective_review::MCP/multivol_mcp.py::unreviewed",
+        "test_coverage::CLI/multivol/api_server/app.py",
+        "test_coverage::CLI/multivol/api_server/auth.py",
+        "test_coverage::CLI/multivol/api_server/database.py",
+        "test_coverage::CLI/multivol/api_server/routes/auth.py",
+        "test_coverage::CLI/multivol/api_server/routes/docker.py",
+        "test_coverage::CLI/multivol/api_server/routes/dump.py",
+        "test_coverage::CLI/multivol/api_server/routes/files.py",
+        "test_coverage::CLI/multivol/api_server/routes/memprocfs.py",
+        "test_coverage::CLI/multivol/api_server/routes/scan.py",
+        "test_coverage::CLI/multivol/api_server/utils.py",
+        "test_coverage::CLI/multivol/api_strings_extension.py",
+        "test_coverage::CLI/multivol/multi_volatility2.py",
+        "test_coverage::CLI/multivol/multi_volatility3.py",
+        "test_coverage::CLI/multivol/multivol.py",
+        "test_coverage::CLI/multivol/strings.py",
+        "test_coverage::Dockerfiles/memprocfs/memprocfs_server.py",
+        "test_coverage::MCP/multivol_mcp.py"
+      ],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "superseded_count": 127,
+        "pruned_count": 0,
+        "resurfaced_count": 0,
+        "clusters_completed_count": 2
+      }
+    },
+    {
+      "timestamp": "2026-03-11T17:08:26+00:00",
+      "action": "sync_stale",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-03-11T17:08:26+00:00",
+      "action": "sync_communicate_score",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "injected": true
+      }
+    },
+    {
+      "timestamp": "2026-03-11T17:08:26+00:00",
+      "action": "sync_create_plan",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "injected": true
+      }
     }
   ],
   "epic_triage_meta": {
@@ -4233,7 +5782,6 @@
       "first_deferred_scan": 2,
       "first_deferred_at": "2026-03-11T08:28:11+00:00"
     },
-    "triage_recommended": true,
     "triage_stages": {
       "observe": {
         "stage": "observe",
@@ -4418,11 +5966,5 @@
     "review::.::holistic::test_strategy::process_recover_fs_untested"
   ],
   "commit_tracking_branch": null,
-  "scan_count_at_plan_start": 1,
-  "previous_plan_start_scores": {
-    "strict": 20.7,
-    "overall": 20.7,
-    "objective": 51.6,
-    "verified": 51.6
-  }
+  "previous_plan_start_scores": {}
 }

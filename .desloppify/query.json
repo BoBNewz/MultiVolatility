@@ -1,87 +1,200 @@
 {
-  "command": "resolve",
-  "patterns": [
-    "architecture"
-  ],
-  "status": "fixed",
-  "resolved": [
-    "review::.::holistic::high_level_elegance::resolve_path_triplicated",
-    "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
-    "review::.::holistic::abstraction_fitness::safe_print_triplicated",
-    "review::.::holistic::ai_generated_debt::restating_comments_multivol",
-    "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
-    "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
-    "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
-    "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
-    "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
-    "review::.::holistic::convention_outlier::strings_extension_style_island",
-    "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
-    "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
-    "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
-    "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
-    "review::.::holistic::design_coherence::inline_script_written_to_disk",
-    "review::.::holistic::design_coherence::runner_mega_function",
-    "review::.::holistic::ai_generated_debt::bare_except_suppression",
-    "review::.::holistic::error_consistency::bare_except_utility_layer",
-    "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
-    "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
-    "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
-    "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
-    "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
-    "review::.::holistic::initialization_coupling::runner_func_silent_noop",
-    "review::.::holistic::logic_clarity::dead_else_in_page_calc",
-    "review::.::holistic::logic_clarity::dead_except_cpu_count",
-    "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
-    "review::.::holistic::logic_clarity::redundant_success_false_assignment",
-    "review::.::holistic::low_level_elegance::duplicate_resolve_path",
-    "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
-    "review::.::holistic::low_level_elegance::scan_route_monolith",
-    "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
-    "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
-    "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
-    "review::.::holistic::naming_quality::manage_symbols_generic_verb",
-    "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
-    "review::.::holistic::ai_generated_debt::build_url_passthrough",
-    "review::.::holistic::incomplete_migration::old_storage_path_shim",
-    "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
-    "review::.::holistic::low_level_elegance::inline_closure_pattern",
-    "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
-    "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
-    "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
-    "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
-    "review::.::holistic::dependency_health::mcp_unused_requests_dep",
-    "review::.::holistic::dependency_health::stale_toplevel_requirements",
-    "review::.::holistic::dependency_health::no_version_pinning",
-    "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
-    "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
-    "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
-    "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
-    "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
-    "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
-    "review::.::holistic::type_safety::safe_request_return_type_lie",
-    "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
-    "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
-    "review::.::holistic::test_strategy::no_test_infrastructure",
-    "review::.::holistic::test_strategy::auth_middleware_untested",
-    "review::.::holistic::test_strategy::schema_migration_untested",
-    "review::.::holistic::test_strategy::process_recover_fs_untested"
-  ],
-  "count": 60,
-  "next_command": "desloppify next",
-  "overall_score": 48.2,
-  "objective_score": 52.4,
-  "strict_score": 47.8,
-  "verified_strict_score": 52.4,
-  "prev_overall_score": 48.2,
-  "prev_objective_score": 52.4,
-  "prev_strict_score": 47.8,
-  "prev_verified_strict_score": 52.4,
-  "attestation": "I have actually Route prefixes standardized; manage_symbols split; execute_command refactored to dataclasses; build_url removed; mutation responses standardized and I am not gaming the score.",
+  "command": "show",
+  "query": "Security",
+  "status_filter": "open",
+  "total": 10,
+  "summary": {
+    "by_tier": {
+      "T2": 1,
+      "T3": 9
+    },
+    "by_detector": {
+      "security": 10
+    },
+    "files": 6
+  },
+  "by_file": {
+    "CLI/multivol/api_server/routes/scan.py": [
+      {
+        "id": "security::CLI/multivol/api_server/routes/scan.py::security::B110::CLI/multivol/api_server/routes/scan.py::424",
+        "tier": 3,
+        "confidence": "low",
+        "summary": "[B110] Try, Except, Pass detected.",
+        "detail": {
+          "kind": "B110",
+          "severity": "low",
+          "line": 424,
+          "content": "423                                     container.remove()\n424                                 except Exception as rm_err:\n425                                     pass\n426                             ",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+          "test_name": "try_except_pass",
+          "source": "bandit"
+        }
+      },
+      {
+        "id": "security::CLI/multivol/api_server/routes/scan.py::security::B404::CLI/multivol/api_server/routes/scan.py::7",
+        "tier": 3,
+        "confidence": "low",
+        "summary": "[B404] Consider possible security implications associated with the subprocess module.",
+        "detail": {
+          "kind": "B404",
+          "severity": "low",
+          "line": 7,
+          "content": "6 import threading\n7 import subprocess\n8 import uuid\n",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+          "test_name": "blacklist",
+          "source": "bandit"
+        }
+      },
+      {
+        "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::844",
+        "tier": 3,
+        "confidence": "low",
+        "summary": "[B603] subprocess call - check for execution of untrusted input.",
+        "detail": {
+          "kind": "B603",
+          "severity": "low",
+          "line": 844,
+          "content": "843             cmd = ['grep', '-i', '-n', '-m', str(limit), query, safe_path]\n844             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace')",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+          "test_name": "subprocess_without_shell_equals_true",
+          "source": "bandit"
+        }
+      }
+    ],
+    "CLI/multivol/api_server/app.py": [
+      {
+        "id": "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::67",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "[B104] Possible binding to all interfaces.",
+        "detail": {
+          "kind": "B104",
+          "severity": "medium",
+          "line": 67,
+          "content": "66         logging.info(\"Starting Flask in DEBUG mode...\")\n67         app.run(host='0.0.0.0', port=5001, debug=True)\n68     else:\n",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+          "test_name": "hardcoded_bind_all_interfaces",
+          "source": "bandit"
+        }
+      },
+      {
+        "id": "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::71",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "[B104] Possible binding to all interfaces.",
+        "detail": {
+          "kind": "B104",
+          "severity": "medium",
+          "line": 71,
+          "content": "70         logging.info(\"Starting production server (waitress) on port 5001 with 50GB and 24h timeout...\")\n71         serve(app, host='0.0.0.0', port=5001, threads=10, max_request_body_size=5368709120",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+          "test_name": "hardcoded_bind_all_interfaces",
+          "source": "bandit"
+        }
+      }
+    ],
+    "CLI/multivol/api_server/routes/memprocfs.py": [
+      {
+        "id": "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::207",
+        "tier": 3,
+        "confidence": "low",
+        "summary": "[B110] Try, Except, Pass detected.",
+        "detail": {
+          "kind": "B110",
+          "severity": "low",
+          "line": 207,
+          "content": "206                             return\n207                 except Exception:\n208                     pass\n209                 time.sleep(3)\n",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+          "test_name": "try_except_pass",
+          "source": "bandit"
+        }
+      },
+      {
+        "id": "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::395",
+        "tier": 3,
+        "confidence": "low",
+        "summary": "[B110] Try, Except, Pass detected.",
+        "detail": {
+          "kind": "B110",
+          "severity": "low",
+          "line": 395,
+          "content": "394             })\n395     except Exception:\n396         pass\n397 \n",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+          "test_name": "try_except_pass",
+          "source": "bandit"
+        }
+      }
+    ],
+    "CLI/multivol/api_server/routes/auth.py": [
+      {
+        "id": "security::CLI/multivol/api_server/routes/auth.py::security::log_sensitive::CLI/multivol/api_server/routes/auth.py::22",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "Sensitive data may be logged",
+        "detail": {
+          "kind": "log_sensitive",
+          "severity": "medium",
+          "line": 22,
+          "content": "    logging.warning(\"Failed login attempt with invalid password.\")",
+          "remediation": "Remove sensitive data from log statements"
+        }
+      }
+    ],
+    "Dockerfiles/memprocfs/memprocfs_server.py": [
+      {
+        "id": "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B104::Dockerfiles/memprocfs/memprocfs_server.py::324",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "[B104] Possible binding to all interfaces.",
+        "detail": {
+          "kind": "B104",
+          "severity": "medium",
+          "line": 324,
+          "content": "323     # Use threaded=False to avoid threading conflicts with native VMM code\n324     app.run(host='0.0.0.0', port=5002, threaded=False)\n",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+          "test_name": "hardcoded_bind_all_interfaces",
+          "source": "bandit"
+        }
+      }
+    ],
+    "MCP/multivol_mcp.py": [
+      {
+        "id": "security::MCP/multivol_mcp.py::security::B104::MCP/multivol_mcp.py::341",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "[B104] Possible binding to all interfaces.",
+        "detail": {
+          "kind": "B104",
+          "severity": "medium",
+          "line": 341,
+          "content": "340 if __name__ == \"__main__\":\n341     mcp.run(transport=\"http\", host=\"0.0.0.0\", port=8000)\n",
+          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
+          "test_name": "hardcoded_bind_all_interfaces",
+          "source": "bandit"
+        }
+      }
+    ]
+  },
+  "total_matching": 22,
+  "hidden": {
+    "by_detector": {
+      "security": 12
+    },
+    "total": 12
+  },
+  "noise_budget": 10,
+  "noise_global_budget": 0,
   "narrative": {
-    "phase": "early_momentum",
-    "headline": "\u26a0 1 security issue \u2014 review before other cleanup. All T1 items cleared!",
+    "phase": "regression",
+    "headline": "\u26a0 22 security issues \u2014 review before other cleanup. All T1 items cleared!",
     "dimensions": {
       "lowest_dimensions": [
+        {
+          "name": "Test health",
+          "strict": 0.0,
+          "failing": 30,
+          "impact": 0.0
+        },
         {
           "name": "Test strategy",
           "strict": 0.0,
@@ -89,12 +202,6 @@
           "impact": 0.0,
           "subjective": true,
           "impact_description": "re-review to improve"
-        },
-        {
-          "name": "Test health",
-          "strict": 4.6,
-          "failing": 17,
-          "impact": 0.0
         },
         {
           "name": "Type safety",
@@ -108,42 +215,36 @@
       "biggest_gap_dimensions": [
         {
           "name": "Test health",
-          "lenient": 6.7,
-          "strict": 4.6,
-          "gap": 2.1,
+          "lenient": 18.5,
+          "strict": 0.0,
+          "gap": 18.5,
+          "wontfix_count": 0
+        },
+        {
+          "name": "Duplication",
+          "lenient": 99.2,
+          "strict": 93.4,
+          "gap": 5.8,
+          "wontfix_count": 0
+        },
+        {
+          "name": "Code quality",
+          "lenient": 73.5,
+          "strict": 70.7,
+          "gap": 2.8,
           "wontfix_count": 0
         }
       ],
       "stagnant_dimensions": [
         {
-          "name": "Code quality",
-          "strict": 72.3,
-          "stuck_scans": 3
-        },
-        {
-          "name": "Security",
-          "strict": 98.2,
-          "stuck_scans": 3
-        },
-        {
           "name": "File health",
           "strict": 68.5,
-          "stuck_scans": 3
-        },
-        {
-          "name": "Duplication",
-          "strict": 94.5,
-          "stuck_scans": 3
-        },
-        {
-          "name": "Test health",
-          "strict": 4.6,
-          "stuck_scans": 3
+          "stuck_scans": 4
         },
         {
           "name": "Test strategy",
           "strict": 0.0,
-          "stuck_scans": 3
+          "stuck_scans": 4
         }
       ]
     },
@@ -151,8 +252,8 @@
       {
         "type": "reorganize",
         "detector": "orphaned",
-        "count": 13,
-        "description": "13 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
+        "count": 12,
+        "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
         "command": "desloppify show orphaned --status open",
         "impact": 0.0,
         "dimension": "Code quality",
@@ -183,35 +284,24 @@
       },
       {
         "type": "refactor",
-        "detector": "dupes",
-        "count": 2,
-        "description": "2 dupes issues \u2014 extract shared utility or consolidate duplicates",
-        "command": "desloppify show dupes --status open",
-        "impact": 0.0,
-        "dimension": "Duplication",
-        "priority": 4,
-        "lane": "refactor_0"
-      },
-      {
-        "type": "refactor",
         "detector": "dict_keys",
         "count": 7,
         "description": "7 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
         "command": "desloppify show dict_keys --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 5,
+        "priority": 4,
         "lane": "refactor_0"
       },
       {
         "type": "refactor",
         "detector": "test_coverage",
-        "count": 17,
-        "description": "17 test_coverage issues \u2014 add tests for untested production modules \u2014 prioritize by import count",
+        "count": 14,
+        "description": "14 test_coverage issues \u2014 add tests for untested production modules \u2014 prioritize by import count",
         "command": "desloppify show test_coverage --status open",
         "impact": 0.0,
         "dimension": "Test health",
-        "priority": 6,
+        "priority": 5,
         "lane": "test_coverage"
       },
       {
@@ -222,29 +312,29 @@
         "command": "desloppify show responsibility_cohesion --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 7,
+        "priority": 6,
         "lane": "refactor_0"
       },
       {
         "type": "refactor",
         "detector": "boilerplate_duplication",
-        "count": 5,
-        "description": "5 boilerplate_duplication issues \u2014 extract shared boilerplate into reusable helpers or base classes",
+        "count": 1,
+        "description": "1 boilerplate_duplication issues \u2014 extract shared boilerplate into reusable helpers or base classes",
         "command": "desloppify show boilerplate_duplication --status open",
         "impact": 0.0,
         "dimension": "Duplication",
-        "priority": 8,
+        "priority": 7,
         "lane": "refactor_0"
       },
       {
         "type": "manual_fix",
         "detector": "smells",
-        "count": 78,
-        "description": "78 smells issues \u2014 inspect with `desloppify next` and fix manually",
+        "count": 70,
+        "description": "70 smells issues \u2014 inspect with `desloppify next` and fix manually",
         "command": "desloppify show smells --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 9,
+        "priority": 8,
         "lane": "refactor_0"
       },
       {
@@ -255,7 +345,7 @@
         "command": "desloppify show global_mutable_config --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 10,
+        "priority": 9,
         "lane": "refactor_0"
       },
       {
@@ -266,17 +356,28 @@
         "command": "desloppify show stale_exclude --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 11,
+        "priority": 10,
         "lane": "refactor_1"
       },
       {
         "type": "manual_fix",
         "detector": "security",
-        "count": 1,
-        "description": "1 security issues \u2014 review and fix security issues \u2014 prioritize by severity",
+        "count": 22,
+        "description": "22 security issues \u2014 review and fix security issues \u2014 prioritize by severity",
         "command": "desloppify show security --status open",
         "impact": 0.0,
         "dimension": "Security",
+        "priority": 11,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "subjective_review",
+        "count": 16,
+        "description": "16 files need design review \u2014 run holistic review to refresh subjective scores",
+        "command": "desloppify review --prepare",
+        "impact": 0.0,
+        "dimension": "Test health",
         "priority": 12,
         "lane": "refactor_0"
       }
@@ -284,7 +385,7 @@
     "strategy": {
       "fixer_leverage": {
         "auto_fixable_count": 0,
-        "total_count": 153,
+        "total_count": 172,
         "coverage": 0.0,
         "impact_ratio": 0.0,
         "recommendation": "none"
@@ -295,7 +396,7 @@
             1,
             2
           ],
-          "file_count": 14,
+          "file_count": 13,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
@@ -304,21 +405,21 @@
           "actions": [
             3,
             4,
-            5,
+            6,
             7,
             8,
             9,
-            10,
+            11,
             12
           ],
-          "file_count": 17,
+          "file_count": 19,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         },
         "refactor_1": {
           "actions": [
-            11
+            10
           ],
           "file_count": 14,
           "total_impact": 0.0,
@@ -327,9 +428,9 @@
         },
         "test_coverage": {
           "actions": [
-            6
+            5
           ],
-          "file_count": 17,
+          "file_count": 14,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
@@ -343,7 +444,7 @@
       "move": {
         "available": true,
         "relevant": true,
-        "reason": "13 orphaned files",
+        "reason": "12 orphaned files",
         "usage": "desloppify move <source> <dest> [--dry-run]"
       },
       "plan": {
@@ -358,101 +459,72 @@
       }
     },
     "debt": {
-      "overall_gap": 0.1,
+      "overall_gap": 1.0,
       "wontfix_count": 0,
       "worst_dimension": "Test health",
-      "worst_gap": 2.1,
-      "trend": "stable"
+      "worst_gap": 18.5,
+      "trend": "growing"
     },
     "milestone": "All T1 items cleared!",
     "primary_action": {
       "command": "desloppify show orphaned --status open",
-      "description": "13 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
+      "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
     },
     "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify.",
     "verification_step": {
       "command": "desloppify scan",
       "reason": "revalidate after changes"
     },
-    "risk_flags": [],
+    "risk_flags": [
+      {
+        "type": "wontfix_gap",
+        "severity": "medium",
+        "message": "Strict/lenient gap is 1.0 pts with 0 wontfix issues"
+      }
+    ],
     "strict_target": {
       "target": 95.0,
-      "current": 47.8,
-      "gap": 47.2,
+      "current": 46.4,
+      "gap": 48.6,
       "state": "below",
       "warning": null
     },
     "reminders": [
       {
-        "type": "rereview_needed",
-        "message": "Subjective results may be stale after resolve. Re-run `desloppify review --prepare` to refresh, or reset with `desloppify scan --reset-subjective` before a clean rerun.",
-        "command": "desloppify review --prepare",
-        "priority": 1,
-        "severity": "high"
-      },
-      {
-        "type": "rescan_needed",
-        "message": "Rescan to verify \u2014 cascading effects may create new issues.",
-        "command": "desloppify scan",
-        "priority": 1,
-        "severity": "high"
-      },
-      {
         "type": "stagnant_nudge",
-        "message": "Code quality has been stuck at 72.3% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "message": "File health has been stuck at 68.5% for 4 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
         "command": null,
         "priority": 2,
         "severity": "medium"
       },
       {
         "type": "stagnant_nudge",
-        "message": "Security has been stuck at 98.2% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "message": "Test strategy has been stuck at 0.0% for 4 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
         "command": null,
         "priority": 2,
         "severity": "medium"
       },
       {
-        "type": "stagnant_nudge",
-        "message": "File health has been stuck at 68.5% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
-        "command": null,
-        "priority": 2,
-        "severity": "medium"
-      },
-      {
-        "type": "stagnant_nudge",
-        "message": "Duplication has been stuck at 94.5% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
-        "command": null,
-        "priority": 2,
-        "severity": "medium"
-      },
-      {
-        "type": "stagnant_nudge",
-        "message": "Test health has been stuck at 4.6% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
-        "command": null,
-        "priority": 2,
-        "severity": "medium"
-      },
-      {
-        "type": "stagnant_nudge",
-        "message": "Test strategy has been stuck at 0.0% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
-        "command": null,
+        "type": "wontfix_growing",
+        "message": "Wontfix debt is growing. Review stale decisions: `desloppify show --status wontfix`.",
+        "command": "desloppify show --status wontfix",
         "priority": 2,
         "severity": "medium"
       },
       {
         "type": "zone_classification",
-        "message": "2 of 22 files classified as non-production (2 config). Override with `desloppify zone set <file> production` if any are misclassified.",
+        "message": "6 of 26 files classified as non-production (2 config, 4 test). Override with `desloppify zone set <file> production` if any are misclassified.",
         "command": "desloppify zone show",
         "priority": 2,
         "severity": "medium"
       }
     ],
     "reminder_history": {
-      "zone_classification": 2,
-      "report_scores": 1,
-      "rereview_needed": 1,
-      "rescan_needed": 1,
-      "stagnant_nudge": 6
+      "zone_classification": 3,
+      "report_scores": 2,
+      "stagnant_nudge": 4,
+      "wontfix_growing": 2,
+      "feedback_nudge": 1
     }
   },
   "config": {

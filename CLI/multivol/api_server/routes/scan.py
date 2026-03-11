@@ -422,7 +422,7 @@ def get_scan_modules_status(uuid):
                                 try:
                                     container.remove()
                                 except Exception as rm_err:
-                                    pass
+                                    logging.debug(f"Container already removed or removal failed: {rm_err}")
                                     
                     except Exception as e:
                         logging.error(f"Exception checking container {container_names}: {e}")

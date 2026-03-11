@@ -1,72 +1,12 @@
 {
   "version": 8,
   "created": "2026-03-11T08:21:39+00:00",
-  "updated": "2026-03-11T17:07:50+00:00",
+  "updated": "2026-03-11T17:07:51+00:00",
   "queue_order": [
     "workflow::create-plan",
     "triage::enrich",
     "triage::sense-check",
-    "triage::commit",
-    "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
-    "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
-    "review::.::holistic::abstraction_fitness::safe_print_triplicated",
-    "review::.::holistic::ai_generated_debt::bare_except_suppression",
-    "review::.::holistic::ai_generated_debt::build_url_passthrough",
-    "review::.::holistic::ai_generated_debt::restating_comments_multivol",
-    "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
-    "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
-    "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
-    "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
-    "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
-    "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
-    "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
-    "review::.::holistic::convention_outlier::strings_extension_style_island",
-    "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
-    "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
-    "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
-    "review::.::holistic::dependency_health::mcp_unused_requests_dep",
-    "review::.::holistic::dependency_health::no_version_pinning",
-    "review::.::holistic::dependency_health::stale_toplevel_requirements",
-    "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
-    "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
-    "review::.::holistic::design_coherence::inline_script_written_to_disk",
-    "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
-    "review::.::holistic::design_coherence::runner_mega_function",
-    "review::.::holistic::error_consistency::bare_except_utility_layer",
-    "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
-    "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
-    "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
-    "review::.::holistic::high_level_elegance::resolve_path_triplicated",
-    "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
-    "review::.::holistic::incomplete_migration::old_storage_path_shim",
-    "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
-    "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
-    "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
-    "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
-    "review::.::holistic::initialization_coupling::runner_func_silent_noop",
-    "review::.::holistic::logic_clarity::dead_else_in_page_calc",
-    "review::.::holistic::logic_clarity::dead_except_cpu_count",
-    "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
-    "review::.::holistic::logic_clarity::redundant_success_false_assignment",
-    "review::.::holistic::low_level_elegance::duplicate_resolve_path",
-    "review::.::holistic::low_level_elegance::inline_closure_pattern",
-    "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
-    "review::.::holistic::low_level_elegance::scan_route_monolith",
-    "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
-    "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
-    "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
-    "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
-    "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
-    "review::.::holistic::naming_quality::manage_symbols_generic_verb",
-    "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
-    "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
-    "review::.::holistic::test_strategy::auth_middleware_untested",
-    "review::.::holistic::test_strategy::no_test_infrastructure",
-    "review::.::holistic::test_strategy::process_recover_fs_untested",
-    "review::.::holistic::test_strategy::schema_migration_untested",
-    "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
-    "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
-    "review::.::holistic::type_safety::safe_request_return_type_lie"
+    "triage::commit"
   ],
   "deferred": [],
   "skipped": {},
@@ -1149,362 +1089,362 @@
     "review::.::holistic::high_level_elegance::resolve_path_triplicated": {
       "issue_id": "review::.::holistic::high_level_elegance::resolve_path_triplicated",
       "created_at": "2026-03-11T16:48:24+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::abstraction_fitness::resolve_path_triplicated": {
       "issue_id": "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
       "created_at": "2026-03-11T16:48:24+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::abstraction_fitness::safe_print_triplicated": {
       "issue_id": "review::.::holistic::abstraction_fitness::safe_print_triplicated",
       "created_at": "2026-03-11T16:48:26+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::ai_generated_debt::restating_comments_multivol": {
       "issue_id": "review::.::holistic::ai_generated_debt::restating_comments_multivol",
       "created_at": "2026-03-11T16:48:28+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text": {
       "issue_id": "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
       "created_at": "2026-03-11T16:48:30+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation": {
       "issue_id": "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
       "created_at": "2026-03-11T16:48:33+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence": {
       "issue_id": "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
       "created_at": "2026-03-11T16:48:36+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation": {
       "issue_id": "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
       "created_at": "2026-03-11T16:48:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite": {
       "issue_id": "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
       "created_at": "2026-03-11T16:48:42+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::convention_outlier::strings_extension_style_island": {
       "issue_id": "review::.::holistic::convention_outlier::strings_extension_style_island",
       "created_at": "2026-03-11T16:48:46+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::cross_module_architecture::cli_workers_import_api_config": {
       "issue_id": "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
       "created_at": "2026-03-11T16:48:50+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth": {
       "issue_id": "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
       "created_at": "2026-03-11T16:48:53+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier": {
       "issue_id": "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
       "created_at": "2026-03-11T16:48:56+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities": {
       "issue_id": "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
       "created_at": "2026-03-11T16:48:58+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::design_coherence::inline_script_written_to_disk": {
       "issue_id": "review::.::holistic::design_coherence::inline_script_written_to_disk",
       "created_at": "2026-03-11T16:49:00+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::design_coherence::runner_mega_function": {
       "issue_id": "review::.::holistic::design_coherence::runner_mega_function",
       "created_at": "2026-03-11T16:49:02+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::ai_generated_debt::bare_except_suppression": {
       "issue_id": "review::.::holistic::ai_generated_debt::bare_except_suppression",
       "created_at": "2026-03-11T16:49:04+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::error_consistency::bare_except_utility_layer": {
       "issue_id": "review::.::holistic::error_consistency::bare_except_utility_layer",
       "created_at": "2026-03-11T16:49:07+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::error_consistency::files_route_db_bare_except_silent": {
       "issue_id": "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
       "created_at": "2026-03-11T16:49:09+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema": {
       "issue_id": "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
       "created_at": "2026-03-11T16:49:12+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect": {
       "issue_id": "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
       "created_at": "2026-03-11T16:49:14+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race": {
       "issue_id": "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
       "created_at": "2026-03-11T16:49:16+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton": {
       "issue_id": "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
       "created_at": "2026-03-11T16:49:19+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::initialization_coupling::runner_func_silent_noop": {
       "issue_id": "review::.::holistic::initialization_coupling::runner_func_silent_noop",
       "created_at": "2026-03-11T16:49:22+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::logic_clarity::dead_else_in_page_calc": {
       "issue_id": "review::.::holistic::logic_clarity::dead_else_in_page_calc",
       "created_at": "2026-03-11T16:49:25+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::logic_clarity::dead_except_cpu_count": {
       "issue_id": "review::.::holistic::logic_clarity::dead_except_cpu_count",
       "created_at": "2026-03-11T16:49:27+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::logic_clarity::memprocfs_session_stale_leak": {
       "issue_id": "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
       "created_at": "2026-03-11T16:49:30+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::logic_clarity::redundant_success_false_assignment": {
       "issue_id": "review::.::holistic::logic_clarity::redundant_success_false_assignment",
       "created_at": "2026-03-11T16:49:33+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::low_level_elegance::duplicate_resolve_path": {
       "issue_id": "review::.::holistic::low_level_elegance::duplicate_resolve_path",
       "created_at": "2026-03-11T16:49:35+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::low_level_elegance::process_recover_fs_monolith": {
       "issue_id": "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
       "created_at": "2026-03-11T16:49:38+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::low_level_elegance::scan_route_monolith": {
       "issue_id": "review::.::holistic::low_level_elegance::scan_route_monolith",
       "created_at": "2026-03-11T16:49:42+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto": {
       "issue_id": "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
       "created_at": "2026-03-11T16:49:45+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation": {
       "issue_id": "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
       "created_at": "2026-03-11T16:49:49+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection": {
       "issue_id": "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
       "created_at": "2026-03-11T16:49:52+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::naming_quality::manage_symbols_generic_verb": {
       "issue_id": "review::.::holistic::naming_quality::manage_symbols_generic_verb",
       "created_at": "2026-03-11T16:49:54+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface": {
       "issue_id": "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
       "created_at": "2026-03-11T16:49:57+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::ai_generated_debt::build_url_passthrough": {
       "issue_id": "review::.::holistic::ai_generated_debt::build_url_passthrough",
       "created_at": "2026-03-11T16:49:59+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::incomplete_migration::old_storage_path_shim": {
       "issue_id": "review::.::holistic::incomplete_migration::old_storage_path_shim",
       "created_at": "2026-03-11T16:50:01+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou": {
       "issue_id": "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
       "created_at": "2026-03-11T16:50:04+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::low_level_elegance::inline_closure_pattern": {
       "issue_id": "review::.::holistic::low_level_elegance::inline_closure_pattern",
       "created_at": "2026-03-11T16:50:07+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim": {
       "issue_id": "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::high_level_elegance::api_strings_extension_orphan": {
       "issue_id": "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string": {
       "issue_id": "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag": {
       "issue_id": "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::dependency_health::mcp_unused_requests_dep": {
       "issue_id": "review::.::holistic::dependency_health::mcp_unused_requests_dep",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::dependency_health::stale_toplevel_requirements": {
       "issue_id": "review::.::holistic::dependency_health::stale_toplevel_requirements",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::dependency_health::no_version_pinning": {
       "issue_id": "review::.::holistic::dependency_health::no_version_pinning",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub": {
       "issue_id": "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam": {
       "issue_id": "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::authorization_consistency::default_token_baked_into_frontend": {
       "issue_id": "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::package_organization::orphaned_strings_route_in_core_package": {
       "issue_id": "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::package_organization::dead_api_blueprint_aggregator": {
       "issue_id": "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::design_coherence::orphaned_strings_extension_fragment": {
       "issue_id": "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "architecture",
-      "updated_at": "2026-03-11T16:50:49+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::type_safety::safe_request_return_type_lie": {
       "issue_id": "review::.::holistic::type_safety::safe_request_return_type_lie",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "type-safety",
-      "updated_at": "2026-03-11T16:50:51+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::type_safety::runner_func_untyped_callable_slot": {
       "issue_id": "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "type-safety",
-      "updated_at": "2026-03-11T16:50:51+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api": {
       "issue_id": "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "type-safety",
-      "updated_at": "2026-03-11T16:50:51+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::test_strategy::no_test_infrastructure": {
       "issue_id": "review::.::holistic::test_strategy::no_test_infrastructure",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "testing",
-      "updated_at": "2026-03-11T16:50:54+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::test_strategy::auth_middleware_untested": {
       "issue_id": "review::.::holistic::test_strategy::auth_middleware_untested",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "testing",
-      "updated_at": "2026-03-11T16:50:54+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::test_strategy::schema_migration_untested": {
       "issue_id": "review::.::holistic::test_strategy::schema_migration_untested",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "testing",
-      "updated_at": "2026-03-11T16:50:54+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     },
     "review::.::holistic::test_strategy::process_recover_fs_untested": {
       "issue_id": "review::.::holistic::test_strategy::process_recover_fs_untested",
       "created_at": "2026-03-11T16:50:40+00:00",
-      "cluster": "testing",
-      "updated_at": "2026-03-11T16:50:54+00:00"
+      "cluster": null,
+      "updated_at": "2026-03-11T17:07:51+00:00"
     }
   },
   "clusters": {
@@ -1990,68 +1930,7 @@
     "architecture": {
       "name": "architecture",
       "description": "Route prefix inconsistency, god functions, redundant code, mutable module state, argument coupling",
-      "issue_ids": [
-        "review::.::holistic::high_level_elegance::resolve_path_triplicated",
-        "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
-        "review::.::holistic::abstraction_fitness::safe_print_triplicated",
-        "review::.::holistic::ai_generated_debt::restating_comments_multivol",
-        "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
-        "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
-        "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
-        "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
-        "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
-        "review::.::holistic::convention_outlier::strings_extension_style_island",
-        "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
-        "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
-        "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
-        "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
-        "review::.::holistic::design_coherence::inline_script_written_to_disk",
-        "review::.::holistic::design_coherence::runner_mega_function",
-        "review::.::holistic::ai_generated_debt::bare_except_suppression",
-        "review::.::holistic::error_consistency::bare_except_utility_layer",
-        "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
-        "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
-        "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
-        "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
-        "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
-        "review::.::holistic::initialization_coupling::runner_func_silent_noop",
-        "review::.::holistic::logic_clarity::dead_else_in_page_calc",
-        "review::.::holistic::logic_clarity::dead_except_cpu_count",
-        "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
-        "review::.::holistic::logic_clarity::redundant_success_false_assignment",
-        "review::.::holistic::low_level_elegance::duplicate_resolve_path",
-        "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
-        "review::.::holistic::low_level_elegance::scan_route_monolith",
-        "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
-        "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
-        "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
-        "review::.::holistic::naming_quality::manage_symbols_generic_verb",
-        "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
-        "review::.::holistic::ai_generated_debt::build_url_passthrough",
-        "review::.::holistic::incomplete_migration::old_storage_path_shim",
-        "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
-        "review::.::holistic::low_level_elegance::inline_closure_pattern",
-        "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
-        "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
-        "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
-        "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
-        "review::.::holistic::dependency_health::mcp_unused_requests_dep",
-        "review::.::holistic::dependency_health::stale_toplevel_requirements",
-        "review::.::holistic::dependency_health::no_version_pinning",
-        "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
-        "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
-        "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
-        "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
-        "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
-        "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
-        "review::.::holistic::type_safety::safe_request_return_type_lie",
-        "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
-        "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
-        "review::.::holistic::test_strategy::no_test_infrastructure",
-        "review::.::holistic::test_strategy::auth_middleware_untested",
-        "review::.::holistic::test_strategy::schema_migration_untested",
-        "review::.::holistic::test_strategy::process_recover_fs_untested"
-      ],
+      "issue_ids": [],
       "created_at": "2026-03-11T16:47:48+00:00",
       "updated_at": "2026-03-11T17:07:29+00:00",
       "auto": false,
@@ -2085,11 +1964,7 @@
     "type-safety": {
       "name": "type-safety",
       "description": "Missing type annotations on public APIs, untyped callables, misleading return types",
-      "issue_ids": [
-        "review::.::holistic::type_safety::safe_request_return_type_lie",
-        "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
-        "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api"
-      ],
+      "issue_ids": [],
       "created_at": "2026-03-11T16:47:50+00:00",
       "updated_at": "2026-03-11T16:53:08+00:00",
       "auto": false,
@@ -2112,12 +1987,7 @@
     "testing": {
       "name": "testing",
       "description": "No test suite exists; critical paths are completely untested",
-      "issue_ids": [
-        "review::.::holistic::test_strategy::no_test_infrastructure",
-        "review::.::holistic::test_strategy::auth_middleware_untested",
-        "review::.::holistic::test_strategy::schema_migration_untested",
-        "review::.::holistic::test_strategy::process_recover_fs_untested"
-      ],
+      "issue_ids": [],
       "created_at": "2026-03-11T16:47:53+00:00",
       "updated_at": "2026-03-11T16:53:11+00:00",
       "auto": false,
@@ -4132,6 +4002,149 @@
       "actor": "user",
       "note": "Route prefixes standardized; manage_symbols split; execute_command refactored to dataclasses; build_url removed; mutation responses standardized",
       "detail": {}
+    },
+    {
+      "timestamp": "2026-03-11T17:07:51+00:00",
+      "action": "resolve",
+      "issue_ids": [
+        "review::.::holistic::high_level_elegance::resolve_path_triplicated",
+        "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
+        "review::.::holistic::abstraction_fitness::safe_print_triplicated",
+        "review::.::holistic::ai_generated_debt::restating_comments_multivol",
+        "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
+        "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
+        "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
+        "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
+        "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
+        "review::.::holistic::convention_outlier::strings_extension_style_island",
+        "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
+        "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
+        "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
+        "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
+        "review::.::holistic::design_coherence::inline_script_written_to_disk",
+        "review::.::holistic::design_coherence::runner_mega_function",
+        "review::.::holistic::ai_generated_debt::bare_except_suppression",
+        "review::.::holistic::error_consistency::bare_except_utility_layer",
+        "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
+        "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
+        "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
+        "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
+        "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
+        "review::.::holistic::initialization_coupling::runner_func_silent_noop",
+        "review::.::holistic::logic_clarity::dead_else_in_page_calc",
+        "review::.::holistic::logic_clarity::dead_except_cpu_count",
+        "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
+        "review::.::holistic::logic_clarity::redundant_success_false_assignment",
+        "review::.::holistic::low_level_elegance::duplicate_resolve_path",
+        "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
+        "review::.::holistic::low_level_elegance::scan_route_monolith",
+        "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
+        "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
+        "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
+        "review::.::holistic::naming_quality::manage_symbols_generic_verb",
+        "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
+        "review::.::holistic::ai_generated_debt::build_url_passthrough",
+        "review::.::holistic::incomplete_migration::old_storage_path_shim",
+        "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
+        "review::.::holistic::low_level_elegance::inline_closure_pattern",
+        "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
+        "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
+        "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
+        "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
+        "review::.::holistic::dependency_health::mcp_unused_requests_dep",
+        "review::.::holistic::dependency_health::stale_toplevel_requirements",
+        "review::.::holistic::dependency_health::no_version_pinning",
+        "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
+        "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
+        "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
+        "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
+        "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
+        "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
+        "review::.::holistic::type_safety::safe_request_return_type_lie",
+        "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
+        "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
+        "review::.::holistic::test_strategy::no_test_infrastructure",
+        "review::.::holistic::test_strategy::auth_middleware_untested",
+        "review::.::holistic::test_strategy::schema_migration_untested",
+        "review::.::holistic::test_strategy::process_recover_fs_untested"
+      ],
+      "cluster_name": null,
+      "actor": "user",
+      "note": "Route prefixes standardized; manage_symbols split; execute_command refactored to dataclasses; build_url removed; mutation responses standardized",
+      "detail": {
+        "status": "fixed",
+        "attestation": "I have actually Route prefixes standardized; manage_symbols split; execute_command refactored to dataclasses; build_url removed; mutation responses standardized and I am not gaming the score."
+      }
+    },
+    {
+      "timestamp": "2026-03-11T17:07:51+00:00",
+      "action": "cluster_done",
+      "issue_ids": [
+        "review::.::holistic::high_level_elegance::resolve_path_triplicated",
+        "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
+        "review::.::holistic::abstraction_fitness::safe_print_triplicated",
+        "review::.::holistic::ai_generated_debt::restating_comments_multivol",
+        "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
+        "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
+        "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
+        "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
+        "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
+        "review::.::holistic::convention_outlier::strings_extension_style_island",
+        "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
+        "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
+        "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
+        "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
+        "review::.::holistic::design_coherence::inline_script_written_to_disk",
+        "review::.::holistic::design_coherence::runner_mega_function",
+        "review::.::holistic::ai_generated_debt::bare_except_suppression",
+        "review::.::holistic::error_consistency::bare_except_utility_layer",
+        "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
+        "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
+        "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
+        "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
+        "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
+        "review::.::holistic::initialization_coupling::runner_func_silent_noop",
+        "review::.::holistic::logic_clarity::dead_else_in_page_calc",
+        "review::.::holistic::logic_clarity::dead_except_cpu_count",
+        "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
+        "review::.::holistic::logic_clarity::redundant_success_false_assignment",
+        "review::.::holistic::low_level_elegance::duplicate_resolve_path",
+        "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
+        "review::.::holistic::low_level_elegance::scan_route_monolith",
+        "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
+        "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
+        "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
+        "review::.::holistic::naming_quality::manage_symbols_generic_verb",
+        "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
+        "review::.::holistic::ai_generated_debt::build_url_passthrough",
+        "review::.::holistic::incomplete_migration::old_storage_path_shim",
+        "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
+        "review::.::holistic::low_level_elegance::inline_closure_pattern",
+        "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
+        "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
+        "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
+        "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
+        "review::.::holistic::dependency_health::mcp_unused_requests_dep",
+        "review::.::holistic::dependency_health::stale_toplevel_requirements",
+        "review::.::holistic::dependency_health::no_version_pinning",
+        "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
+        "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
+        "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
+        "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
+        "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
+        "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
+        "review::.::holistic::type_safety::safe_request_return_type_lie",
+        "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
+        "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
+        "review::.::holistic::test_strategy::no_test_infrastructure",
+        "review::.::holistic::test_strategy::auth_middleware_untested",
+        "review::.::holistic::test_strategy::schema_migration_untested",
+        "review::.::holistic::test_strategy::process_recover_fs_untested"
+      ],
+      "cluster_name": "architecture",
+      "actor": "user",
+      "note": null,
+      "detail": {}
     }
   ],
   "epic_triage_meta": {
@@ -4342,7 +4355,67 @@
     "review::.::holistic::naming_quality::hash_field_holds_filename",
     "review::.::holistic::naming_quality::runner_generic_orchestration_name",
     "review::.::holistic::convention_outlier::auth_blueprint_name_inconsistency",
-    "review::.::holistic::convention_outlier::snake_case_class_names"
+    "review::.::holistic::convention_outlier::snake_case_class_names",
+    "review::.::holistic::high_level_elegance::resolve_path_triplicated",
+    "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
+    "review::.::holistic::abstraction_fitness::safe_print_triplicated",
+    "review::.::holistic::ai_generated_debt::restating_comments_multivol",
+    "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
+    "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
+    "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
+    "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
+    "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
+    "review::.::holistic::convention_outlier::strings_extension_style_island",
+    "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
+    "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
+    "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
+    "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
+    "review::.::holistic::design_coherence::inline_script_written_to_disk",
+    "review::.::holistic::design_coherence::runner_mega_function",
+    "review::.::holistic::ai_generated_debt::bare_except_suppression",
+    "review::.::holistic::error_consistency::bare_except_utility_layer",
+    "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
+    "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
+    "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
+    "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
+    "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
+    "review::.::holistic::initialization_coupling::runner_func_silent_noop",
+    "review::.::holistic::logic_clarity::dead_else_in_page_calc",
+    "review::.::holistic::logic_clarity::dead_except_cpu_count",
+    "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
+    "review::.::holistic::logic_clarity::redundant_success_false_assignment",
+    "review::.::holistic::low_level_elegance::duplicate_resolve_path",
+    "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
+    "review::.::holistic::low_level_elegance::scan_route_monolith",
+    "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
+    "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
+    "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
+    "review::.::holistic::naming_quality::manage_symbols_generic_verb",
+    "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
+    "review::.::holistic::ai_generated_debt::build_url_passthrough",
+    "review::.::holistic::incomplete_migration::old_storage_path_shim",
+    "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
+    "review::.::holistic::low_level_elegance::inline_closure_pattern",
+    "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
+    "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
+    "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
+    "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
+    "review::.::holistic::dependency_health::mcp_unused_requests_dep",
+    "review::.::holistic::dependency_health::stale_toplevel_requirements",
+    "review::.::holistic::dependency_health::no_version_pinning",
+    "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
+    "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
+    "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
+    "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
+    "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
+    "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
+    "review::.::holistic::type_safety::safe_request_return_type_lie",
+    "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
+    "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
+    "review::.::holistic::test_strategy::no_test_infrastructure",
+    "review::.::holistic::test_strategy::auth_middleware_untested",
+    "review::.::holistic::test_strategy::schema_migration_untested",
+    "review::.::holistic::test_strategy::process_recover_fs_untested"
   ],
   "commit_tracking_branch": null,
   "scan_count_at_plan_start": 1,
