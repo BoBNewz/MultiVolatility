@@ -81,6 +81,21 @@ def _move_task_output(task_out_dir: str, case_extract_dir: str) -> list[str]:
     return created
 
 
+def _persist_task_result(task_id: str, status: str, created_files: list[str], case_extract_dir: str, error_msg: str) -> None:
+    """Write the final dump task outcome to the database."""
+    conn = get_db_connection()
+    c = conn.cursor()
+    if status == 'completed' and created_files:
+        output_path = os.path.join(case_extract_dir, created_files[0])
+        c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?",
+                  (output_path, task_id))
+    else:
+        c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?",
+                  (error_msg, task_id))
+    conn.commit()
+    conn.close()
+
+
 def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | int, image_tag: str, file_path: str | None = None) -> None:
     """Run a Volatility3 memory dump in a background thread, writing output to task_id's entry."""
     logging.debug("[%s] Starting background dump task for scan: %s", task_id, scan['uuid'])
@@ -136,17 +151,7 @@ def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | in
         with dump_tasks_lock:
             task_status = dump_tasks[task_id]['status']
             task_error = dump_tasks[task_id].get('error', 'Unknown error')
-        conn = get_db_connection()
-        c = conn.cursor()
-        if task_status == 'completed' and created_files:
-            output_path = os.path.join(case_extract_dir, created_files[0])
-            c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?",
-                      (output_path, task_id))
-        else:
-            c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?",
-                      (task_error, task_id))
-        conn.commit()
-        conn.close()
+        _persist_task_result(task_id, task_status, created_files, case_extract_dir, task_error)
 
 @dump_bp.route('/scans/<scan_id>/dump-file', methods=['POST'])
 def dump_file_from_memory(scan_id: str) -> Response:
