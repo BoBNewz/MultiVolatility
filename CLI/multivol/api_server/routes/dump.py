@@ -25,8 +25,6 @@ class DumpTask(TypedDict, total=False):
     output_dir: str
     files: list[str]
     error: str
-    started_at: float
-    completed_at: float
 
 
 dump_tasks: dict[str, DumpTask] = {}

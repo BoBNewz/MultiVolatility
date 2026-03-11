@@ -45,7 +45,7 @@ def list_symbols() -> Response:
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
     symbols = []
-    for root, dirs, files in os.walk(symbols_dir):
+    for root, _, files in os.walk(symbols_dir):
         for file in files:
             rel_path = os.path.relpath(os.path.join(root, file), symbols_dir)
             symbols.append(rel_path)

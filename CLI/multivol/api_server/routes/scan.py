@@ -12,15 +12,12 @@ import glob
 import yaml
 import docker
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypedDict
+from typing import Any, Callable, Optional, TypedDict
 from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
 from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 from multivol.multi_volatility_base import ApiScanConfig
-
-if TYPE_CHECKING:
-    pass
 
 scan_bp = Blueprint('scan_bp', __name__)
 
@@ -769,7 +766,7 @@ def download_scan_zip(uuid: str) -> Response:
     try:
         with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
              # Walk output directory
-             for root, dirs, files in os.walk(output_dir):
+             for root, _, files in os.walk(output_dir):
                  for file in files:
                      file_path = os.path.join(root, file)
                      # Add file to zip archive with relative path to avoid absolute paths inside zip
@@ -914,7 +911,7 @@ def get_stats() -> Response:
     symbols_path = os.path.join(BASE_DIR, "volatility3_symbols")
     total_symbols = 0
     if os.path.exists(symbols_path):
-        for root, dirs, files in os.walk(symbols_path):
+        for root, _, files in os.walk(symbols_path):
             total_symbols += len(files)
 
     return jsonify({
