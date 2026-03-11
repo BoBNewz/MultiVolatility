@@ -1,23 +1,312 @@
 {
-  "command": "resolve",
-  "patterns": [
-    "smells::MCP/multivol_mcp.py::high_cyclomatic_complexity"
+  "command": "next",
+  "items": [
+    {
+      "id": "auto/subjective_review",
+      "kind": "cluster",
+      "action_type": "manual_fix",
+      "summary": "Address 15 subjective_review review issues",
+      "member_count": 15,
+      "members": [
+        {
+          "id": "subjective_review::CLI/multivol/api_server/app.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/app.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/database.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/database.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/routes/auth.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/routes/auth.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/routes/docker.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/routes/docker.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/routes/dump.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/routes/dump.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/routes/files.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/routes/files.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/routes/memprocfs.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/routes/memprocfs.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/routes/scan.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/routes/scan.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/api_server/utils.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/api_server/utils.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/multi_volatility2.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/multi_volatility2.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/multi_volatility3.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/multi_volatility3.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/multivol.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/multivol.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::CLI/multivol/strings.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "CLI/multivol/strings.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::Dockerfiles/memprocfs/memprocfs_server.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        },
+        {
+          "id": "subjective_review::MCP/multivol_mcp.py::changed",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "subjective_review",
+          "file": "MCP/multivol_mcp.py",
+          "summary": "File changed since last review \u2014 re-review recommended",
+          "status": "open",
+          "primary_command": "desloppify show subjective"
+        }
+      ],
+      "cluster_name": "auto/subjective_review",
+      "cluster_auto": true,
+      "detector": "subjective_review",
+      "primary_command": "run `desloppify review --prepare` to evaluate files against quality dimensions"
+    },
+    {
+      "id": "smells::Dockerfiles/memprocfs/memprocfs_server.py::stderr_traceback",
+      "kind": "issue",
+      "confidence": "medium",
+      "detector": "smells",
+      "file": "Dockerfiles/memprocfs/memprocfs_server.py",
+      "summary": "2x traceback.print_exc() bypasses structured logging",
+      "detail": {
+        "smell_id": "stderr_traceback",
+        "severity": "high",
+        "count": 2,
+        "lines": [
+          198,
+          246
+        ]
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"smells::Dockerfiles/memprocfs/memprocfs_server.py::stderr_traceback\" --note \"<what you did>\" --confirm",
+      "queue_position": 16
+    },
+    {
+      "id": "auto/smells-dead_function",
+      "kind": "cluster",
+      "action_type": "refactor",
+      "summary": "Fix 2 dead function issues",
+      "member_count": 2,
+      "members": [
+        {
+          "id": "smells::CLI/multivol/multi_volatility2.py::dead_function",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "smells",
+          "file": "CLI/multivol/multi_volatility2.py",
+          "summary": "1x Dead function (body is only pass/return)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"smells::CLI/multivol/multi_volatility2.py::dead_function\" --note \"<what you did>\" --confirm"
+        },
+        {
+          "id": "smells::CLI/multivol/multi_volatility3.py::dead_function",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "smells",
+          "file": "CLI/multivol/multi_volatility3.py",
+          "summary": "1x Dead function (body is only pass/return)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"smells::CLI/multivol/multi_volatility3.py::dead_function\" --note \"<what you did>\" --confirm"
+        }
+      ],
+      "cluster_name": "auto/smells-dead_function",
+      "cluster_auto": true,
+      "detector": "smells",
+      "primary_command": "fix code smells"
+    },
+    {
+      "id": "auto/smells-monster_function",
+      "kind": "cluster",
+      "action_type": "refactor",
+      "summary": "Fix 2 monster function issues",
+      "member_count": 2,
+      "members": [
+        {
+          "id": "smells::CLI/multivol/multi_volatility3.py::monster_function",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "smells",
+          "file": "CLI/multivol/multi_volatility3.py",
+          "summary": "1x Monster function (>150 LOC)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"smells::CLI/multivol/multi_volatility3.py::monster_function\" --note \"<what you did>\" --confirm"
+        },
+        {
+          "id": "smells::CLI/multivol/multivol.py::monster_function",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "smells",
+          "file": "CLI/multivol/multivol.py",
+          "summary": "1x Monster function (>150 LOC)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"smells::CLI/multivol/multivol.py::monster_function\" --note \"<what you did>\" --confirm"
+        }
+      ],
+      "cluster_name": "auto/smells-monster_function",
+      "cluster_auto": true,
+      "detector": "smells",
+      "primary_command": "fix code smells"
+    },
+    {
+      "id": "auto/dict_keys-overwritten_key",
+      "kind": "cluster",
+      "action_type": "refactor",
+      "summary": "Fix 4 overwritten key issues",
+      "member_count": 4,
+      "members": [
+        {
+          "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::fetch_symbol",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "dict_keys",
+          "file": "CLI/multivol/api_server/routes/scan.py",
+          "summary": "Dict key \"fetch_symbol\" overwritten on `default_args` at line 753 (previously set at line 728, never read between)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::fetch_symbol\" --note \"<what you did>\" --confirm"
+        },
+        {
+          "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::linux",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "dict_keys",
+          "file": "CLI/multivol/api_server/routes/scan.py",
+          "summary": "Dict key \"linux\" overwritten on `default_args` at line 752 (previously set at line 728, never read between)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::linux\" --note \"<what you did>\" --confirm"
+        },
+        {
+          "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::windows",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "dict_keys",
+          "file": "CLI/multivol/api_server/routes/scan.py",
+          "summary": "Dict key \"windows\" overwritten on `default_args` at line 755 (previously set at line 728, never read between)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::windows\" --note \"<what you did>\" --confirm"
+        },
+        {
+          "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::mod_dict::status",
+          "kind": "issue",
+          "confidence": "medium",
+          "detector": "dict_keys",
+          "file": "CLI/multivol/api_server/routes/scan.py",
+          "summary": "Dict key \"status\" overwritten on `mod_dict` at line 472 (previously set at line 452, never read between)",
+          "status": "open",
+          "primary_command": "desloppify plan resolve \"dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::mod_dict::status\" --note \"<what you did>\" --confirm"
+        }
+      ],
+      "cluster_name": "auto/dict_keys-overwritten_key",
+      "cluster_auto": true,
+      "detector": "dict_keys",
+      "primary_command": "fix dict key mismatches"
+    }
   ],
-  "status": "fixed",
-  "resolved": [
-    "smells::MCP/multivol_mcp.py::high_cyclomatic_complexity"
-  ],
-  "count": 1,
-  "next_command": "desloppify next",
-  "overall_score": 56.9,
-  "objective_score": 61.2,
-  "strict_score": 52.8,
-  "verified_strict_score": 58.5,
-  "prev_overall_score": 56.9,
-  "prev_objective_score": 61.1,
-  "prev_strict_score": 52.7,
-  "prev_verified_strict_score": 58.5,
-  "attestation": "I have actually reviewed and reduced cyclomatic complexity across all flagged files using helper function extraction and all 21 tests pass and I am not gaming the score.",
+  "queue": {
+    "total": 5
+  },
   "narrative": {
     "phase": "middle_grind",
     "headline": "\u26a0 9 security issues \u2014 review before other cleanup. All T1 items cleared!",
@@ -26,7 +315,7 @@
         {
           "name": "Test health",
           "strict": 0.0,
-          "failing": 29,
+          "failing": 15,
           "impact": 0.0
         },
         {
@@ -49,9 +338,9 @@
       "biggest_gap_dimensions": [
         {
           "name": "Test health",
-          "lenient": 18.0,
+          "lenient": 95.8,
           "strict": 0.0,
-          "gap": 18.0,
+          "gap": 95.8,
           "wontfix_count": 0
         },
         {
@@ -63,9 +352,9 @@
         },
         {
           "name": "Code quality",
-          "lenient": 82.5,
-          "strict": 76.4,
-          "gap": 6.1,
+          "lenient": 86.2,
+          "strict": 78.6,
+          "gap": 7.6,
           "wontfix_count": 0
         }
       ],
@@ -82,11 +371,15 @@
         "type": "reorganize",
         "detector": "orphaned",
         "count": 12,
-        "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
-        "command": "desloppify show orphaned --status open",
+        "description": "12 orphaned issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 1,
+        "clusters": [
+          "auto/orphaned"
+        ],
+        "cluster_count": 1,
         "lane": "restructure"
       },
       {
@@ -115,23 +408,17 @@
         "type": "refactor",
         "detector": "dict_keys",
         "count": 4,
-        "description": "4 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
-        "command": "desloppify show dict_keys --status open",
+        "description": "4 dict_keys issues in 2 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 4,
+        "clusters": [
+          "auto/dict_keys-phantom_read",
+          "auto/dict_keys-overwritten_key"
+        ],
+        "cluster_count": 2,
         "lane": "refactor_0"
-      },
-      {
-        "type": "refactor",
-        "detector": "test_coverage",
-        "count": 14,
-        "description": "14 test_coverage issues \u2014 add tests for untested production modules \u2014 prioritize by import count",
-        "command": "desloppify show test_coverage --status open",
-        "impact": 0.0,
-        "dimension": "Test health",
-        "priority": 5,
-        "lane": "test_coverage"
       },
       {
         "type": "refactor",
@@ -141,7 +428,7 @@
         "command": "desloppify show responsibility_cohesion --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 6,
+        "priority": 5,
         "lane": "refactor_0"
       },
       {
@@ -152,18 +439,33 @@
         "command": "desloppify show boilerplate_duplication --status open",
         "impact": 0.0,
         "dimension": "Duplication",
-        "priority": 7,
+        "priority": 6,
         "lane": "refactor_0"
       },
       {
         "type": "manual_fix",
         "detector": "smells",
-        "count": 26,
-        "description": "26 smells issues \u2014 inspect with `desloppify next` and fix manually",
-        "command": "desloppify show smells --status open",
+        "count": 15,
+        "description": "15 smells issues in 12 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 8,
+        "priority": 7,
+        "clusters": [
+          "auto/smells-silent_except",
+          "auto/smells-swallowed_error",
+          "auto/smells-subprocess_no_timeout",
+          "auto/smells-sys_exit_in_library",
+          "auto/smells-monster_function",
+          "auto/smells-annotation_quality",
+          "auto/smells-high_cyclomatic_complexity",
+          "auto/smells-hardcoded_url",
+          "auto/smells-dead_function",
+          "auto/smells-deferred_import",
+          "auto/smells-debug_tag",
+          "auto/smells-import_runtime_init"
+        ],
+        "cluster_count": 12,
         "lane": "refactor_0"
       },
       {
@@ -174,47 +476,68 @@
         "command": "desloppify show global_mutable_config --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 9,
+        "priority": 8,
         "lane": "refactor_0"
       },
       {
         "type": "manual_fix",
         "detector": "stale_exclude",
         "count": 14,
-        "description": "14 stale_exclude issues \u2014 remove stale exclusion or verify it's still needed",
-        "command": "desloppify show stale_exclude --status open",
+        "description": "14 stale_exclude issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 10,
+        "priority": 9,
+        "clusters": [
+          "auto/stale_exclude"
+        ],
+        "cluster_count": 1,
         "lane": "refactor_1"
       },
       {
         "type": "manual_fix",
         "detector": "security",
         "count": 9,
-        "description": "9 security issues \u2014 review and fix security issues \u2014 prioritize by severity",
-        "command": "desloppify show security --status open",
+        "description": "9 security issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Security",
-        "priority": 11,
+        "priority": 10,
+        "clusters": [
+          "auto/security"
+        ],
+        "cluster_count": 1,
         "lane": "refactor_0"
       },
       {
         "type": "manual_fix",
         "detector": "subjective_review",
         "count": 15,
-        "description": "15 files need design review \u2014 run holistic review to refresh subjective scores",
-        "command": "desloppify review --prepare",
+        "description": "15 subjective_review issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Test health",
-        "priority": 12,
+        "priority": 11,
+        "clusters": [
+          "auto/subjective_review"
+        ],
+        "cluster_count": 1,
         "lane": "refactor_0"
+      },
+      {
+        "type": "debt_review",
+        "detector": null,
+        "description": "4.8 pts of wontfix debt \u2014 review stale decisions",
+        "command": "desloppify show --status wontfix",
+        "gap": 4.8,
+        "priority": 12,
+        "lane": "debt_review"
       }
     ],
     "strategy": {
       "fixer_leverage": {
         "auto_fixable_count": 0,
-        "total_count": 110,
+        "total_count": 85,
         "coverage": 0.0,
         "impact_ratio": 0.0,
         "recommendation": "none"
@@ -234,39 +557,39 @@
           "actions": [
             3,
             4,
+            5,
             6,
             7,
             8,
-            9,
-            11,
-            12
+            10,
+            11
           ],
-          "file_count": 17,
+          "file_count": 16,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         },
         "refactor_1": {
           "actions": [
-            10
+            9
           ],
           "file_count": 14,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         },
-        "test_coverage": {
+        "debt_review": {
           "actions": [
-            5
+            12
           ],
-          "file_count": 14,
+          "file_count": 0,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         }
       },
       "can_parallelize": true,
-      "hint": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify."
+      "hint": "3 independent workstreams, safe to parallelize. Rescan after each phase to verify."
     },
     "tools": {
       "fixers": [],
@@ -288,18 +611,18 @@
       }
     },
     "debt": {
-      "overall_gap": 1.6,
+      "overall_gap": 4.8,
       "wontfix_count": 7,
       "worst_dimension": "Test health",
-      "worst_gap": 18.0,
+      "worst_gap": 95.8,
       "trend": "growing"
     },
     "milestone": "All T1 items cleared!",
     "primary_action": {
-      "command": "desloppify show orphaned --status open",
-      "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
+      "command": "desloppify next",
+      "description": "12 orphaned issues in 1 cluster(s) \u2014 run `desloppify next`"
     },
-    "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify.",
+    "why_now": "3 independent workstreams, safe to parallelize. Rescan after each phase to verify.",
     "verification_step": {
       "command": "desloppify scan",
       "reason": "revalidate after changes"
@@ -308,31 +631,17 @@
       {
         "type": "wontfix_gap",
         "severity": "medium",
-        "message": "Strict/lenient gap is 1.6 pts with 7 wontfix issues"
+        "message": "Strict/lenient gap is 4.8 pts with 7 wontfix issues"
       }
     ],
     "strict_target": {
       "target": 95.0,
-      "current": 52.8,
-      "gap": 42.2,
+      "current": 53.0,
+      "gap": 42.0,
       "state": "below",
       "warning": null
     },
     "reminders": [
-      {
-        "type": "rereview_needed",
-        "message": "Subjective results may be stale after resolve. Re-run `desloppify review --prepare` to refresh, or reset with `desloppify scan --reset-subjective` before a clean rerun.",
-        "command": "desloppify review --prepare",
-        "priority": 1,
-        "severity": "high"
-      },
-      {
-        "type": "rescan_needed",
-        "message": "Rescan to verify \u2014 cascading effects may create new issues.",
-        "command": "desloppify scan",
-        "priority": 1,
-        "severity": "high"
-      },
       {
         "type": "wontfix_growing",
         "message": "Wontfix debt is growing. Review stale decisions: `desloppify show --status wontfix`.",
@@ -347,11 +656,664 @@
       "stagnant_nudge": 3,
       "wontfix_growing": 3,
       "feedback_nudge": 2,
-      "review_issues_pending": 1,
-      "rereview_needed": 1,
-      "rescan_needed": 1
+      "review_issues_pending": 1
     }
   },
+  "agent_notes": [
+    "Do NOT use `desloppify plan skip` unless the user explicitly asks you to skip an item.",
+    "If you cannot fix an item, report it and move to the next one.",
+    "For cluster items: if the autofix_hint finds 0 results, drill into individual issues with the primary_command."
+  ],
+  "plan": {
+    "active": true,
+    "focus": null,
+    "clusters": [
+      {
+        "name": "auto/orphaned",
+        "description": "Fix 12 orphaned issues",
+        "item_count": 12
+      },
+      {
+        "name": "auto/test_coverage",
+        "description": "Fix 14 test coverage issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-silent_except",
+        "description": "Fix 5 silent except issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-swallowed_error",
+        "description": "Fix 9 swallowed error issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-subprocess_no_timeout",
+        "description": "Fix 2 subprocess no timeout issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-sys_exit_in_library",
+        "description": "Fix 2 sys exit in library issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-monster_function",
+        "description": "Fix 2 monster function issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/smells-annotation_quality",
+        "description": "Fix 14 annotation quality issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-high_cyclomatic_complexity",
+        "description": "Fix 8 high cyclomatic complexity issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-hardcoded_url",
+        "description": "Fix 4 hardcoded url issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-dead_function",
+        "description": "Fix 2 dead function issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/smells-deferred_import",
+        "description": "Fix 7 deferred import issues",
+        "item_count": 7
+      },
+      {
+        "name": "auto/smells-debug_tag",
+        "description": "Fix 2 debug tag issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/dict_keys-phantom_read",
+        "description": "Fix 3 phantom read issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/dict_keys-overwritten_key",
+        "description": "Fix 4 overwritten key issues",
+        "item_count": 4
+      },
+      {
+        "name": "auto/subjective_review",
+        "description": "Address 15 subjective_review review issues",
+        "item_count": 15
+      },
+      {
+        "name": "auto/stale_exclude",
+        "description": "Fix 14 stale exclude issues",
+        "item_count": 14
+      },
+      {
+        "name": "dead-code",
+        "description": "Remove api_strings_extension.py dead code and routes/__init__.py dead blueprint",
+        "item_count": 0
+      },
+      {
+        "name": "error-handling",
+        "description": "Fix get_file_hash sentinel return, remaining bare excepts, swallowed errors",
+        "item_count": 0
+      },
+      {
+        "name": "naming-quality",
+        "description": "Fix naming: camelCase, misnamed params, misleading field names",
+        "item_count": 0
+      },
+      {
+        "name": "architecture",
+        "description": "Route prefix inconsistency, god functions, redundant code, mutable module state, argument coupling",
+        "item_count": 0
+      },
+      {
+        "name": "type-safety",
+        "description": "Missing type annotations on public APIs, untyped callables, misleading return types",
+        "item_count": 0
+      },
+      {
+        "name": "testing",
+        "description": "No test suite exists; critical paths are completely untested",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-import_runtime_init",
+        "description": "Fix 2 import runtime init issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/security",
+        "description": "Fix 16 security issues",
+        "item_count": 16
+      },
+      {
+        "name": "auto/review-cross_module_architecture",
+        "description": "Address 2 cross_module_architecture review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-high_level_elegance",
+        "description": "Address 2 high_level_elegance review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-mid_level_elegance",
+        "description": "Address 2 mid_level_elegance review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-low_level_elegance",
+        "description": "Address 2 low_level_elegance review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-type_safety",
+        "description": "Address 3 type_safety review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-error_consistency",
+        "description": "Address 2 error_consistency review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-contract_coherence",
+        "description": "Address 2 contract_coherence review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-design_coherence",
+        "description": "Address 2 design_coherence review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-initialization_coupling",
+        "description": "Address 2 initialization_coupling review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-incomplete_migration",
+        "description": "Address 2 incomplete_migration review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-authorization_consistency",
+        "description": "Address 3 authorization_consistency review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-test_strategy",
+        "description": "Address 2 test_strategy review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/stale-review",
+        "description": "Re-review 3 stale subjective dimensions",
+        "item_count": 3
+      },
+      {
+        "name": "already-fixed",
+        "description": "Issues already fixed this session",
+        "item_count": 0
+      }
+    ],
+    "total_ordered": 23,
+    "total_skipped": 7,
+    "plan_overrides_narrative": true
+  },
+  "overall_score": 69.1,
+  "objective_score": 91.5,
+  "strict_score": 53.0,
+  "scorecard_dimensions": [
+    {
+      "name": "File health",
+      "score": 72.0,
+      "strict": 68.5,
+      "checks": 20,
+      "failing": 8,
+      "tier": 3,
+      "subjective": false
+    },
+    {
+      "name": "AI generated debt",
+      "score": 70.0,
+      "strict": 70.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "ai_generated_debt"
+      ]
+    },
+    {
+      "name": "Abstraction fit",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "abstraction_fitness"
+      ]
+    },
+    {
+      "name": "Auth consistency",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "authorization_consistency"
+      ]
+    },
+    {
+      "name": "Code quality",
+      "score": 86.2,
+      "strict": 78.6,
+      "checks": 148,
+      "failing": 37,
+      "tier": 3,
+      "subjective": false
+    },
+    {
+      "name": "Contracts",
+      "score": 47.0,
+      "strict": 47.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "contract_coherence"
+      ]
+    },
+    {
+      "name": "Convention drift",
+      "score": 57.0,
+      "strict": 57.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "convention_outlier"
+      ]
+    },
+    {
+      "name": "Cross-module arch",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "cross_module_architecture"
+      ]
+    },
+    {
+      "name": "Dep health",
+      "score": 33.0,
+      "strict": 33.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "dependency_health"
+      ]
+    },
+    {
+      "name": "Design coherence",
+      "score": 53.0,
+      "strict": 53.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "design_coherence"
+      ]
+    },
+    {
+      "name": "Duplication",
+      "score": 99.3,
+      "strict": 94.3,
+      "checks": 96,
+      "failing": 1,
+      "tier": 3,
+      "subjective": false
+    },
+    {
+      "name": "Elegance",
+      "score": 56.3,
+      "strict": 56.3,
+      "checks": 30,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "high_level_elegance",
+        "low_level_elegance",
+        "mid_level_elegance"
+      ]
+    },
+    {
+      "name": "Error consistency",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "error_consistency"
+      ]
+    },
+    {
+      "name": "Init coupling",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "initialization_coupling"
+      ]
+    },
+    {
+      "name": "Security",
+      "score": 90.4,
+      "strict": 81.3,
+      "checks": 47,
+      "failing": 9,
+      "tier": 4,
+      "subjective": false
+    },
+    {
+      "name": "Stale migration",
+      "score": 42.0,
+      "strict": 42.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "incomplete_migration"
+      ]
+    },
+    {
+      "name": "Structure nav",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "package_organization"
+      ]
+    },
+    {
+      "name": "Test health",
+      "score": 95.8,
+      "strict": 0.0,
+      "checks": 249,
+      "failing": 15,
+      "tier": 4,
+      "subjective": false
+    },
+    {
+      "name": "Test strategy",
+      "score": 20.0,
+      "strict": 20.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "test_strategy"
+      ]
+    },
+    {
+      "name": "Type safety",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "type_safety"
+      ]
+    }
+  ],
+  "subjective_measures": [
+    {
+      "name": "AI generated debt",
+      "score": 70.0,
+      "strict": 70.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "ai_generated_debt"
+      ]
+    },
+    {
+      "name": "Abstraction fit",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "abstraction_fitness"
+      ]
+    },
+    {
+      "name": "Auth consistency",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "authorization_consistency"
+      ]
+    },
+    {
+      "name": "Contracts",
+      "score": 47.0,
+      "strict": 47.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "contract_coherence"
+      ]
+    },
+    {
+      "name": "Convention drift",
+      "score": 57.0,
+      "strict": 57.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "convention_outlier"
+      ]
+    },
+    {
+      "name": "Cross-module arch",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "cross_module_architecture"
+      ]
+    },
+    {
+      "name": "Dep health",
+      "score": 33.0,
+      "strict": 33.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "dependency_health"
+      ]
+    },
+    {
+      "name": "Design coherence",
+      "score": 53.0,
+      "strict": 53.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "design_coherence"
+      ]
+    },
+    {
+      "name": "Elegance",
+      "score": 56.3,
+      "strict": 56.3,
+      "checks": 30,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "high_level_elegance",
+        "low_level_elegance",
+        "mid_level_elegance"
+      ]
+    },
+    {
+      "name": "Error consistency",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "error_consistency"
+      ]
+    },
+    {
+      "name": "Init coupling",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "initialization_coupling"
+      ]
+    },
+    {
+      "name": "Stale migration",
+      "score": 42.0,
+      "strict": 42.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "incomplete_migration"
+      ]
+    },
+    {
+      "name": "Structure nav",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "package_organization"
+      ]
+    },
+    {
+      "name": "Test strategy",
+      "score": 20.0,
+      "strict": 20.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "test_strategy"
+      ]
+    },
+    {
+      "name": "Type safety",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "type_safety"
+      ]
+    }
+  ],
   "config": {
     "target_strict_score": 95,
     "review_max_age_days": 30,

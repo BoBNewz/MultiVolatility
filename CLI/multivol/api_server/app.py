@@ -6,21 +6,8 @@ import logging
 import sys
 from typing import Callable
 
-# Configure logging at the very start so it applies to all imported modules
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[logging.StreamHandler(sys.stderr)]
-)
-
 from flask import Flask
 from flask_cors import CORS
-from multivol.api_server.database import init_db
-from multivol.api_server.config import ensure_dirs
-
-# Ensure runtime directories exist before anything else
-ensure_dirs()
-
 from multivol.api_server.auth_middleware import check_authorization
 from multivol.api_server.utils import cleanup_timeouts
 
@@ -52,20 +39,29 @@ app.register_blueprint(dump_bp)
 app.register_blueprint(memprocfs_bp)
 app.register_blueprint(auth_bp)
 
-# Init Database
-try:
-    init_db()
-    logging.info("Database initialized.")
-except Exception as e:
-    logging.critical(f"Failed to initialize database: {e}")
-    raise
-
 
 def run_api(runner_cb: Callable[[argparse.Namespace], None], debug_mode: bool = False) -> None:
     """Start the API server. Binds runner_cb as the scan executor for /scan routes."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(message)s',
+        handlers=[logging.StreamHandler(sys.stderr)]
+    )
+
+    from multivol.api_server.database import init_db
+    from multivol.api_server.config import ensure_dirs
+
+    ensure_dirs()
+    try:
+        init_db()
+        logging.info("Database initialized.")
+    except Exception as e:
+        logging.critical("Failed to initialize database: %s", e)
+        raise
+
     init_runner(runner_cb)
-    cleanup_timeouts() # Clean up stale tasks on startup
-    
+    cleanup_timeouts()  # Clean up stale tasks on startup
+
     if debug_mode:
         logging.info("Starting Flask in DEBUG mode...")
         app.run(host='0.0.0.0', port=5001, debug=True)

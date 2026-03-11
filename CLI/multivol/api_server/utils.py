@@ -92,7 +92,7 @@ def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any]:
                 json_content = content[start_index:]
                 parsed_data = json.loads(json_content)
             except json.JSONDecodeError:
-                pass  # Try fallback below
+                pass  # Primary parse failed; try fallback below
         
         if parsed_data is None:
              lines = content.splitlines()
@@ -100,7 +100,7 @@ def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any]:
                  try:
                     parsed_data = json.loads('\n'.join(lines[1:]))
                  except json.JSONDecodeError:
-                    pass
+                    pass  # Both parse attempts failed; fall through to error return
         
         if parsed_data is not None:
             return parsed_data

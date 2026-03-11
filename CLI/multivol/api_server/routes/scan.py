@@ -422,7 +422,7 @@ def _find_container(docker_client: Any, uuid: str, module_name: str) -> Optional
         try:
             return docker_client.containers.get(f"{prefix}_{uuid[:8]}_{sanitized_name}")
         except docker.errors.NotFound:
-            pass
+            pass  # Container already gone — nothing to remove
     return None
 
 

@@ -1,3 +1,4 @@
+VOLATILITY3_SYMBOLS_BANNER_URL = "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"
 import os
 import sqlite3
 import time
@@ -29,7 +30,7 @@ def _build_vol_dump_command(scan: dict[str, Any], virt_addr: Any, file_path: str
     cmd = ["vol", "-v", "-f", f"/dump_dir/{dump_filename}", "-o", "/output"]
     if scan['os'] == 'linux' and config.get('fetch_symbol'):
         cmd.extend(["--remote-isf-url",
-                    "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"])
+                    VOLATILITY3_SYMBOLS_BANNER_URL])
     cmd.extend(["-s", "/symbols"])
 
     if scan['os'] == 'linux':

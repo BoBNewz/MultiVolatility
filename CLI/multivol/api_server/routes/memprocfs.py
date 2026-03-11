@@ -21,6 +21,8 @@ from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import resolve_host_path
 from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 
+SIDECAR_PORT: int = 5002  # Port the memprocfs sidecar container listens on
+
 memprocfs_bp = Blueprint('memprocfs_bp', __name__)
 
 # ──────────────────────────────────────────────
@@ -42,7 +44,7 @@ def get_sidecar_url(scan_id: str) -> Optional[str]:
         if not session:
             return None
         # Use container name as hostname (Docker DNS on shared network)
-        return f"http://{session['container_name']}:5002"
+        return f"http://{session['container_name']}:{SIDECAR_PORT}"
 
 
 def get_next_port() -> int:
@@ -64,7 +66,7 @@ def cleanup_container(container_name: str) -> None:
             container.stop(timeout=5)
             container.remove(force=True)
         except docker.errors.NotFound:
-            pass
+            pass  # Container already gone — nothing to remove
     except Exception:
         logging.warning("Failed to cleanup container %s", container_name, exc_info=True)
 
@@ -159,7 +161,7 @@ def _wait_for_sidecar(container_name: str, uuid: str) -> None:
     """Poll the sidecar's /health endpoint and update module status when ready or timed out."""
     max_wait = 500
     start = time.time()
-    sidecar_url = f"http://{container_name}:5002"
+    sidecar_url = f"http://{container_name}:{SIDECAR_PORT}"
 
     while time.time() - start < max_wait:
         try:
