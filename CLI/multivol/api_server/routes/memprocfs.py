@@ -256,7 +256,7 @@ def start_memprocfs(uuid: str) -> Response:
             {
                 "error": (
                     f"MemProcFS image '{MEMPROCFS_IMAGE}' not found. "
-                    f"Build it first: docker build -t {MEMPROCFS_IMAGE} ./Dockerfiles/memprocfs/"
+                    "Run: docker compose build memprocfs"
                 )
             }
         ), 500

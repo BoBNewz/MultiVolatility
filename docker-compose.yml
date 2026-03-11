@@ -41,3 +41,13 @@ services:
       - API_TOKEN=multivol_default_secret_token
     depends_on:
       - api
+
+  # Build-only service — produces the multivol-memprocfs image that the API
+  # spawns on-demand (one container per scan).  It exits immediately at
+  # runtime; restart:no keeps it from being restarted by compose.
+  memprocfs:
+    build:
+      context: ./Dockerfiles/memprocfs
+    image: multivol-memprocfs
+    restart: "no"
+    command: ["echo", "MemProcFS image ready"]
