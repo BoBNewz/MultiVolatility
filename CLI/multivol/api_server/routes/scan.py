@@ -12,14 +12,29 @@ import glob
 import yaml
 import docker
 import logging
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypedDict
 from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
 from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 from multivol.multi_volatility_base import ApiScanConfig
 
+if TYPE_CHECKING:
+    import docker as docker_types
+
 scan_bp = Blueprint('scan_bp', __name__)
+
+
+class ScanRecord(TypedDict, total=False):
+    """Shape of a scan row returned from the database."""
+    uuid: str
+    status: str
+    output_dir: str
+    mode: str
+    name: str
+    config_json: str
+    created_at: float
+    updated_at: float
 
 def build_fs_tree(base_dir: str) -> list[dict[str, Any]]:
     """
@@ -66,9 +81,9 @@ def build_fs_tree(base_dir: str) -> list[dict[str, Any]]:
 
     return [root]
 
-runner_func: Optional[Callable[[Any], None]] = None
+runner_func: Optional[Callable[[argparse.Namespace], None]] = None
 
-def init_runner(runner_cb: Callable[[Any], None]) -> None:
+def init_runner(runner_cb: Callable[[argparse.Namespace], None]) -> None:
     """Register the analysis runner callback. Must be called before any scan is started.
 
     The callback receives an ``argparse.Namespace`` built from an
@@ -79,17 +94,25 @@ def init_runner(runner_cb: Callable[[Any], None]) -> None:
 
 
 def _require_runner() -> bool:
-    """Return True if runner_func is set; log an error and return False otherwise."""
+    """Guard for route handlers that need an active runner.
+
+    Returns False (with a logged error) when init_runner() has never been called,
+    so callers can immediately return a 503 without checking runner_func directly.
+    """
     if runner_func is None:
         logging.error("runner_func is None — scan cannot execute. Call init_runner() before starting scans.")
         return False
     return True
 
 def ingest_results_to_db(scan_id: str, output_dir: str) -> None:
-    """Reads JSON output files and stores them in the database."""
+    """Sweep output_dir for *_output.json files and persist each into scan_results.
+
+    Idempotent: skips modules already in the database. Called after the background
+    scan thread completes, or on manual re-ingestion via the status endpoint.
+    """
     logging.debug(f"Ingesting results for {scan_id} from {output_dir}")
     if not os.path.exists(output_dir):
-         logging.error(f"Output dir not found: {output_dir}")
+         logging.error("Output dir not found: %s", output_dir)
          return
 
     conn = get_db_connection()
@@ -144,7 +167,7 @@ def _check_concurrency() -> Optional[Response]:
         if existing_scan:
             return jsonify({"error": "A scan is already in progress. Please wait for it to complete."}), 429
     except Exception as e:
-        logging.error(f"Failed to check concurrency: {e}")
+        logging.exception("Failed to check concurrency")
         # Fail closed for stability.
         return jsonify({"error": f"Database error checking concurrency: {e}"}), 500
 
@@ -187,8 +210,8 @@ def _build_args_from_request(data: dict[str, Any]) -> tuple[ApiScanConfig, str, 
     # Ensure directory exists immediately to prevent "No output dir" errors on early failure
     try:
         os.makedirs(final_output_dir, exist_ok=True)
-    except Exception as e:
-        logging.error(f"Failed to create output dir {final_output_dir}: {e}")
+    except Exception:
+        logging.exception("Failed to create output dir %s", final_output_dir)
         raise
 
     # Normalize dump path: if it's a bare filename, look it up under storage
@@ -254,8 +277,8 @@ def _load_command_list(args_obj: ApiScanConfig, target_os: str) -> list[str]:
         if command_list:
             args_obj.commands = ",".join(command_list)
 
-    except Exception as e:
-        logging.error(f"Failed to determine commands: {e}")
+    except Exception:
+        logging.exception("Failed to determine commands")
         command_list = []
 
     return command_list
@@ -339,7 +362,7 @@ def scan() -> Response:
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        logging.error(f"Failed to set up scan: {e}")
+        logging.exception("Failed to set up scan")
         return jsonify({"error": f"Failed to set up scan: {e}"}), 500
 
     case_name = data.get("name")
@@ -408,13 +431,17 @@ def update_scan_module_status(uuid: str) -> Response:
         conn.commit()
         return jsonify({"status": "success"})
     except Exception as e:
-        logging.error(f"Failed to log status: {e}")
+        logging.exception("Failed to log module status")
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
 def _find_container(docker_client: Any, uuid: str, module_name: str) -> Optional[Any]:
-    """Return the first running/exited container matching this module, or None."""
+    """Locate a running or exited Docker container for this scan+module pair.
+
+    Tries both ``vol3_`` and ``vol2_`` name prefixes to handle mixed-version
+    scans. Returns None when no matching container is found (already removed).
+    """
     sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', module_name)
     for prefix in ("vol3", "vol2"):
         try:
@@ -424,8 +451,12 @@ def _find_container(docker_client: Any, uuid: str, module_name: str) -> Optional
     return None
 
 
-def _ingest_module_output(c: Any, uuid: str, module_name: str, output_dir: str) -> None:
-    """Parse module JSON output and store it in scan_results if not already present."""
+def _ingest_module_output(c: sqlite3.Cursor, uuid: str, module_name: str, output_dir: str) -> None:
+    """Persist a single module's output into scan_results, skipping duplicates.
+
+    Reads ``<module>_output.json``, parses it, and writes to the DB only when
+    no existing row for (scan_id, module) exists, keeping ingestion idempotent.
+    """
     output_file = os.path.join(output_dir, f"{module_name}_output.json")
     if not os.path.exists(output_file):
         return
@@ -442,7 +473,7 @@ def _ingest_module_output(c: Any, uuid: str, module_name: str, output_dir: str) 
         logging.exception("Failed to ingest %s for scan %s", module_name, uuid)
 
 
-def _handle_exited_container(c: Any, uuid: str, module_name: str, output_dir: Optional[str], container: Any) -> None:
+def _handle_exited_container(c: sqlite3.Cursor, uuid: str, module_name: str, output_dir: Optional[str], container: Any) -> None:
     """Handle a container that has exited: ingest output, mark COMPLETED, remove container."""
     if module_name == "linux.pagecache.RecoverFs" and output_dir:
         process_recover_fs(output_dir)
@@ -458,7 +489,7 @@ def _handle_exited_container(c: Any, uuid: str, module_name: str, output_dir: Op
         logging.debug("Container removal skipped (already gone or API error): %s", rm_err)
 
 
-def _refresh_module_from_docker(c: Any, docker_client: Any, uuid: str, mod_dict: dict, output_dir: Optional[str]) -> None:
+def _refresh_module_from_docker(c: sqlite3.Cursor, docker_client: Any, uuid: str, mod_dict: dict, output_dir: Optional[str]) -> None:
     """Update mod_dict status by inspecting the corresponding Docker container."""
     module_name = mod_dict['module']
     try:
@@ -478,7 +509,7 @@ def _refresh_module_from_docker(c: Any, docker_client: Any, uuid: str, mod_dict:
         logging.exception("Exception checking container for module %s", module_name)
 
 
-def _status_list_from_results(c: Any, uuid: str) -> list[dict]:
+def _status_list_from_results(c: sqlite3.Cursor, uuid: str) -> list[dict]:
     """Build a status list from scan_results when no scan_module_status rows exist."""
     c.execute("SELECT module FROM scan_results WHERE scan_id = ?", (uuid,))
     return [{"module": r['module'], "status": "COMPLETED", "error_message": None} for r in c.fetchall()]
@@ -542,7 +573,7 @@ def get_scan_modules_status(uuid: str) -> Response:
         return jsonify(status_list)
 
     except Exception as e:
-        logging.error(f"Fetching module status: {e}")
+        logging.exception("Failed to fetch module status for scan %s", scan_id)
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
@@ -561,7 +592,7 @@ def _parse_int_param(value: str | None, default: int) -> int:
         return default
 
 
-def _get_recoverfs_result(c: Any, uuid: str) -> Response:
+def _get_recoverfs_result(c: sqlite3.Cursor, uuid: str) -> Response:
     """Return the RecoverFs filesystem tree for the given scan."""
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
     scan = c.fetchone()
@@ -745,9 +776,9 @@ def download_scan_zip(uuid: str) -> Response:
                      zipf.write(file_path, arcname)
                      
         return send_file(zip_filepath, as_attachment=True, download_name=zip_filename)
-    except Exception as e:
-         logging.error(f"ZIP creation failed: {e}")
-         return jsonify({"error": "Failed to generate ZIP archive"}), 500
+    except Exception:
+        logging.exception("ZIP creation failed for scan %s", scan_id)
+        return jsonify({"error": "Failed to generate ZIP archive"}), 500
 
 def _store_plugin_result(scan_id: str, module: str, output_dir: str) -> None:
     """Persist a plugin's JSON output file into the scan_results table (upsert-style)."""
@@ -768,6 +799,59 @@ def _store_plugin_result(scan_id: str, module: str, output_dir: str) -> None:
     conn.close()
 
 
+def _fetch_scan(uuid: str) -> Optional[sqlite3.Row]:
+    """Return the scan row for *uuid*, or None when the scan does not exist."""
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM scans WHERE uuid = ?", (uuid,))
+    scan = c.fetchone()
+    conn.close()
+    return scan
+
+
+def _upsert_module_status(uuid: str, module: str, status: str) -> None:
+    """Insert or update a scan_module_status row for the given scan and module."""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT id FROM scan_module_status WHERE scan_id = ? AND module = ?", (uuid, module))
+        if c.fetchone():
+            c.execute(
+                "UPDATE scan_module_status SET status = ?, updated_at = ? WHERE scan_id = ? AND module = ?",
+                (status, time.time(), uuid, module),
+            )
+        else:
+            c.execute(
+                "INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, ?, ?)",
+                (uuid, module, status, time.time()),
+            )
+        conn.commit()
+        conn.close()
+    except Exception:
+        logging.exception("Failed to upsert module status for scan %s, module %s", uuid, module)
+
+
+def _background_single_plugin(s_id: str, cfg: ApiScanConfig) -> None:
+    """Execute one plugin in a background thread, storing the result and updating status."""
+    try:
+        if _require_runner():
+            args = argparse.Namespace(**dataclasses.asdict(cfg))
+            runner_func(args)  # type: ignore[misc]
+        _store_plugin_result(s_id, cfg.commands, cfg.output_dir)
+    except Exception:
+        logging.exception("Manual plugin execution failed for scan %s, module %s", s_id, cfg.commands)
+        conn_err = get_db_connection()
+        try:
+            conn_err.execute(
+                "UPDATE scan_module_status SET status = 'FAILED', error_message = 'Execution error', updated_at = ? WHERE scan_id = ? AND module = ?",
+                (time.time(), s_id, cfg.commands),
+            )
+            conn_err.commit()
+        finally:
+            conn_err.close()
+
+
 @scan_bp.route('/scans/<uuid>/execute', methods=['POST'])
 def execute_plugin(uuid: str) -> Response:
     data = request.get_json() or {}
@@ -775,13 +859,7 @@ def execute_plugin(uuid: str) -> Response:
     if not module:
         return jsonify({"error": "Missing 'module' parameter"}), 400
 
-    conn = get_db_connection()
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    c.execute("SELECT * FROM scans WHERE uuid = ?", (uuid,))
-    scan = c.fetchone()
-    conn.close()
-
+    scan = _fetch_scan(uuid)
     if not scan:
         return jsonify({"error": "Scan not found"}), 404
 
@@ -809,39 +887,9 @@ def execute_plugin(uuid: str) -> Response:
         scan_id=uuid,
     )
 
-    def background_single_run(s_id: str, cfg: ApiScanConfig) -> None:
-        try:
-            if _require_runner():
-                args = argparse.Namespace(**dataclasses.asdict(cfg))
-                runner_func(args)
-            _store_plugin_result(s_id, cfg.commands, cfg.output_dir)
-        except Exception:
-            logging.exception("Manual plugin execution failed for scan %s, module %s", s_id, cfg.commands)
-            conn_err = get_db_connection()
-            try:
-                conn_err.execute(
-                    "UPDATE scan_module_status SET status = 'FAILED', error_message = 'Execution error', updated_at = ? WHERE scan_id = ? AND module = ?",
-                    (time.time(), s_id, cfg.commands),
-                )
-                conn_err.commit()
-            finally:
-                conn_err.close()
+    _upsert_module_status(uuid, module, 'RUNNING')
 
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT id FROM scan_module_status WHERE scan_id = ? AND module = ?", (uuid, module))
-        if c.fetchone():
-            c.execute("UPDATE scan_module_status SET status = 'RUNNING', updated_at = ? WHERE scan_id = ? AND module = ?", (time.time(), uuid, module))
-        else:
-            c.execute("INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, ?, ?)",
-                      (uuid, module, 'RUNNING', time.time()))
-        conn.commit()
-        conn.close()
-    except Exception:
-        logging.exception("Failed to update module status for %s", module)
-
-    thread = threading.Thread(target=background_single_run, args=(uuid, config))
+    thread = threading.Thread(target=_background_single_plugin, args=(uuid, config))
     thread.daemon = True
     thread.start()
 

@@ -9,7 +9,7 @@ import threading
 import docker
 import re
 import logging
-from typing import Any
+from typing import Any, TypedDict
 from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import resolve_host_path
@@ -17,10 +17,21 @@ from multivol.api_server.config import STORAGE_DIR
 
 dump_bp = Blueprint('dump_bp', __name__)
 
-dump_tasks: dict[str, dict[str, Any]] = {}
+
+class DumpTask(TypedDict, total=False):
+    """Shape of a dump task record stored in dump_tasks."""
+    status: str
+    output_dir: str
+    files: list[str]
+    error: str
+    started_at: float
+    completed_at: float
+
+
+dump_tasks: dict[str, DumpTask] = {}
 dump_tasks_lock = threading.Lock()
 
-def _build_vol_dump_command(scan: dict[str, Any], virt_addr: Any, file_path: str | None, config: dict[str, Any]) -> list[str]:
+def _build_vol_dump_command(scan: dict[str, Any], virt_addr: str | int, file_path: str | None, config: dict[str, Any]) -> list[str]:
     """Build the Volatility command list for a memory dump task."""
     uploaded_path = scan['dump_path']
     if not os.path.isabs(uploaded_path) and not uploaded_path.startswith('/'):
@@ -70,7 +81,7 @@ def _move_task_output(task_out_dir: str, case_extract_dir: str) -> list[str]:
     return created
 
 
-def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: Any, image_tag: str, file_path: str | None = None) -> None:
+def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | int, image_tag: str, file_path: str | None = None) -> None:
     """Run a Volatility3 memory dump in a background thread, writing output to task_id's entry."""
     logging.debug("[%s] Starting background dump task for scan: %s", task_id, scan['uuid'])
     with dump_tasks_lock:
@@ -174,7 +185,7 @@ def dump_file_from_memory(scan_id: str) -> Response:
     
     return jsonify({"task_id": task_id, "status": "pending"})
 
-@dump_bp.route('/dump-task/<task_id>', methods=['GET'])
+@dump_bp.route('/dump-tasks/<task_id>', methods=['GET'])
 def get_dump_status(task_id: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
@@ -188,7 +199,7 @@ def get_dump_status(task_id: str) -> Response:
         
     return jsonify(dict(task))
 
-@dump_bp.route('/dump-task/<task_id>/download', methods=['GET'])
+@dump_bp.route('/dump-tasks/<task_id>/download', methods=['GET'])
 def download_dump_result(task_id: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row

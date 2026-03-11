@@ -149,7 +149,9 @@ class TestListSymbols:
     def test_returns_list(self, client, auth_headers):
         resp = client.get("/symbols", headers=auth_headers)
         data = resp.get_json()
-        assert isinstance(data, list)
+        assert isinstance(data, dict)
+        assert "symbols" in data
+        assert isinstance(data["symbols"], list)
 
 
 class TestErrorPaths:

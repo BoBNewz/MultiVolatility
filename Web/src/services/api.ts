@@ -192,7 +192,7 @@ export const api = {
 
     getDockerImages: async (): Promise<string[]> => {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/list_images`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/images`);
             if (!response.ok) return [];
             const data = await response.json();
             return data.images || [];
@@ -221,13 +221,13 @@ export const api = {
     },
 
     getDumpTaskStatus: async (taskId: string): Promise<any> => {
-        const response = await fetchWithAuth(`${API_BASE_URL}/dump-task/${taskId}`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/dump-tasks/${taskId}`);
         if (!response.ok) throw new Error('Failed to get task status');
         return response.json();
     },
 
     getDumpDownloadUrl: (taskId: string): string => {
-        return `${API_BASE_URL}/dump-task/${taskId}/download?token=${getApiToken()}`;
+        return `${API_BASE_URL}/dump-tasks/${taskId}/download?token=${getApiToken()}`;
     },
 
     getSymbols: async (): Promise<any[]> => {

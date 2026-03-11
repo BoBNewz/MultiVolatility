@@ -34,7 +34,10 @@ def resolve_host_path(container_path: str, host_path_override: Optional[str] = N
     return container_path
 
 def calculate_sha256(filepath: str) -> str:
-    """Calculate the SHA-256 hash of a file and return it as a hex string."""
+    """Stream-hash a file in 4 KiB blocks to keep memory usage bounded.
+
+    Raises ``OSError`` if the file cannot be opened; does not return on failure.
+    """
     sha256_hash = hashlib.sha256()
     with open(filepath, "rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
@@ -114,7 +117,11 @@ def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any] | None:
         return None
 
 def _build_extracted_files_map(output_dir: str) -> dict[str, str]:
-    """Map decimal inode strings to their extracted filename under output_dir."""
+    """Index files extracted by Volatility's RecoverFs by their decimal inode number.
+
+    Returns a mapping of ``str(inode)`` → filename so tree nodes can link to
+    downloadable files without iterating the directory on every request.
+    """
     result = {}
     for filename in os.listdir(output_dir):
         if filename.startswith("file."):
@@ -125,7 +132,12 @@ def _build_extracted_files_map(output_dir: str) -> dict[str, str]:
 
 
 def _build_fs_tree(data: list[Any], output_dir: str, extracted_files: dict[str, str]) -> dict[str, Any]:
-    """Build a JSON-serialisable directory tree from RecoverFs node list."""
+    """Convert a flat RecoverFs node list into a nested JSON-serialisable directory tree.
+
+    Each node in *data* is a Volatility output row with ``FilePath`` and
+    ``Inode`` fields. Nodes are inserted in path order; the returned root dict
+    is suitable for direct serialisation in the ``/results/<uuid>/fs/list`` endpoint.
+    """
     tree: dict[str, Any] = {"name": "/", "path": "/", "type": "directory", "children": []}
 
     for item in data:

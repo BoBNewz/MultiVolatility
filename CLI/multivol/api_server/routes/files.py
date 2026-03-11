@@ -37,7 +37,7 @@ def upload_file() -> Response:
             logging.debug(f"File saved successfully")
             return jsonify({"status": "success", "path": save_path, "server_path": save_path})
         except Exception as e:
-            logging.error(f"Failed to save file: {e}")
+            logging.exception("Failed to save file")
             return jsonify({"error": str(e)}), 500
 
 @files_bp.route('/symbols', methods=['GET'])
@@ -49,7 +49,7 @@ def list_symbols() -> Response:
         for file in files:
             rel_path = os.path.relpath(os.path.join(root, file), symbols_dir)
             symbols.append(rel_path)
-    return jsonify(symbols)
+    return jsonify({"symbols": symbols})
 
 @files_bp.route('/symbols', methods=['POST'])
 def upload_symbol() -> Response:
@@ -236,7 +236,7 @@ def delete_evidence(filename: str) -> Response:
                 
             return jsonify({"status": "deleted"})
         except Exception as e:
-            logging.error(f"Failed to delete {path}: {e}")
+            logging.exception("Failed to delete %s", path)
             return jsonify({"error": str(e)}), 500
     return jsonify({"error": "File not found"}), 404
 

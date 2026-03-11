@@ -2,44 +2,500 @@
   "command": "next",
   "items": [
     {
-      "id": "security::CLI/multivol/api_server/app.py::security::B201::CLI/multivol/api_server/app.py::67",
+      "id": "review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers",
       "kind": "issue",
-      "confidence": "high",
-      "detector": "security",
-      "file": "CLI/multivol/api_server/app.py",
-      "summary": "[B201] A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.",
+      "confidence": "low",
+      "detector": "review",
+      "file": ".",
+      "summary": "Several extracted helper docstrings restate the function name without adding context",
       "detail": {
-        "kind": "B201",
-        "severity": "high",
-        "line": 67,
-        "content": "66         logging.info(\"Starting Flask in DEBUG mode...\")\n67         app.run(host='0.0.0.0', port=5001, debug=True)\n68     else:\n",
-        "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b201_flask_debug_true.html",
-        "test_name": "flask_debug_true",
-        "source": "bandit"
+        "holistic": true,
+        "dimension": "ai_generated_debt",
+        "related_files": [
+          "CLI/multivol/api_server/routes/scan.py"
+        ],
+        "evidence": [
+          "_require_runner: 'Return True if runner is initialised' \u2014 restates the name without explaining why caller needs to check",
+          "_find_container: 'Find the running Docker container for the given scan and module' \u2014 restates signature",
+          "These single-line docstrings that echo the name add noise without explaining intent or edge cases"
+        ],
+        "suggestion": "Replace restating docstrings with intent-explaining ones: e.g. '_require_runner: Guards route handlers; returns 503 JSON error if no runner has been registered via init_runner()'",
+        "reasoning": "",
+        "content_hash": "1af6e931"
       },
       "status": "open",
-      "primary_command": "desloppify plan resolve \"security::CLI/multivol/api_server/app.py::security::B201::CLI/multivol/api_server/app.py::67\" --note \"<what you did>\" --confirm",
-      "queue_position": 69,
+      "primary_command": "desloppify plan resolve \"review::.::holistic::ai_generated_debt::restating_docstrings_in_helpers\" --note \"<what you did>\" --confirm",
+      "queue_position": 5,
       "plan_cluster": {
-        "name": "auto/security",
-        "description": "Fix 16 security issues",
-        "total_items": 16,
-        "action_steps": []
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::cross_module_architecture::mcp_duplicates_api_logic",
+      "kind": "issue",
+      "confidence": "medium",
+      "detector": "review",
+      "file": ".",
+      "summary": "MCP server reimplements pagination and search logic that exists in API",
+      "detail": {
+        "holistic": true,
+        "dimension": "cross_module_architecture",
+        "related_files": [
+          "MCP/multivol_mcp.py",
+          "CLI/multivol/api_server/routes/scan.py"
+        ],
+        "evidence": [
+          "search_multivol_results implements client-side regex matching over paginated API calls",
+          "list_multivol_windows_recovered_files merges two API calls client-side",
+          "Pagination logic duplicated in MCP that could be server-side"
+        ],
+        "suggestion": "Add server-side search endpoints (e.g., /results/<uuid>/search?regex=...) so MCP can delegate instead of reimplementing. Reduces network round-trips and duplication.",
+        "reasoning": "",
+        "content_hash": "22ee906b"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::cross_module_architecture::mcp_duplicates_api_logic\" --note \"<what you did>\" --confirm",
+      "queue_position": 7,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::design_coherence::background_dump_task_mixed_concerns",
+      "kind": "issue",
+      "confidence": "medium",
+      "detector": "review",
+      "file": ".",
+      "summary": "background_dump_task handles command building, Docker execution, file moving, and DB updates",
+      "detail": {
+        "holistic": true,
+        "dimension": "design_coherence",
+        "related_files": [
+          "CLI/multivol/api_server/routes/dump.py"
+        ],
+        "evidence": [
+          "Lines 73-138: one function does setup, Docker run, file move, DB update in both success and failure branches",
+          "Finally block duplicates status update logic from try/except"
+        ],
+        "suggestion": "Split into: (1) _execute_dump_container() for Docker work, (2) _finalize_dump_task() for DB updates. Use context manager or try/finally pattern once.",
+        "reasoning": "",
+        "content_hash": "b241bb93"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::design_coherence::background_dump_task_mixed_concerns\" --note \"<what you did>\" --confirm",
+      "queue_position": 8,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::initialization_coupling::config_env_read_at_import",
+      "kind": "issue",
+      "confidence": "medium",
+      "detector": "review",
+      "file": ".",
+      "summary": "Config module reads environment variables at import time, complicating test isolation",
+      "detail": {
+        "holistic": true,
+        "dimension": "initialization_coupling",
+        "related_files": [
+          "CLI/multivol/api_server/config.py"
+        ],
+        "evidence": [
+          "API_TOKEN = os.getenv('API_TOKEN') at module level (line 13)",
+          "APP_PASSWORD = os.getenv('APP_PASSWORD') at module level (line 14)",
+          "Warning logged at import if not set"
+        ],
+        "suggestion": "Defer env var reads to first access via get_api_token()/get_app_password() which already exist. Remove module-level fallback logic that logs warnings at import.",
+        "reasoning": "",
+        "content_hash": "29a07219"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::initialization_coupling::config_env_read_at_import\" --note \"<what you did>\" --confirm",
+      "queue_position": 9,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::low_level_elegance::long_execute_plugin_function",
+      "kind": "issue",
+      "confidence": "medium",
+      "detector": "review",
+      "file": ".",
+      "summary": "execute_plugin route handler is ~70 lines with mixed concerns",
+      "detail": {
+        "holistic": true,
+        "dimension": "low_level_elegance",
+        "related_files": [
+          "CLI/multivol/api_server/routes/scan.py"
+        ],
+        "evidence": [
+          "Lines 770-848: builds args, updates DB, spawns thread, handles errors",
+          "Inline function definition (background_single_run) adds to length"
+        ],
+        "suggestion": "Extract: (1) args building into _build_plugin_args(), (2) background_single_run to module level, (3) DB status update into _update_module_running_status().",
+        "reasoning": "",
+        "content_hash": "709665f0"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::low_level_elegance::long_execute_plugin_function\" --note \"<what you did>\" --confirm",
+      "queue_position": 10,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::mid_level_elegance::dict_based_scan_records",
+      "kind": "issue",
+      "confidence": "high",
+      "detector": "review",
+      "file": ".",
+      "summary": "Scan records flow as dicts throughout, requiring callers to know field names",
+      "detail": {
+        "holistic": true,
+        "dimension": "mid_level_elegance",
+        "related_files": [
+          "CLI/multivol/api_server/routes/dump.py",
+          "CLI/multivol/api_server/routes/scan.py"
+        ],
+        "evidence": [
+          "scan['dump_path'], scan['os'], scan['uuid'] accessed repeatedly without type safety",
+          "scan_dict = dict(scan) conversions at dump.py:169, then accessed by string keys"
+        ],
+        "suggestion": "Define a ScanRecord TypedDict or dataclass. Use it when fetching from DB and passing between functions.",
+        "reasoning": "",
+        "content_hash": "11f0706b"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::mid_level_elegance::dict_based_scan_records\" --note \"<what you did>\" --confirm",
+      "queue_position": 11,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::mid_level_elegance::namespace_invisible_contract",
+      "kind": "issue",
+      "confidence": "high",
+      "detector": "review",
+      "file": ".",
+      "summary": "argparse.Namespace flows between API and CLI with implicit field expectations",
+      "detail": {
+        "holistic": true,
+        "dimension": "mid_level_elegance",
+        "related_files": [
+          "CLI/multivol/api_server/routes/scan.py",
+          "CLI/multivol/multivol.py"
+        ],
+        "evidence": [
+          "_build_args_from_request builds Namespace with 20+ fields",
+          "run_analysis in multivol.py expects specific fields on args",
+          "No shared type definition documents the contract"
+        ],
+        "suggestion": "Create a dataclass (e.g., ScanConfig) that both the API and CLI can use. This makes the contract explicit and enables IDE autocomplete and type checking.",
+        "reasoning": "",
+        "content_hash": "d8d6b6ea"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::mid_level_elegance::namespace_invisible_contract\" --note \"<what you did>\" --confirm",
+      "queue_position": 12,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::naming_quality::generic_helper_names",
+      "kind": "issue",
+      "confidence": "low",
+      "detector": "review",
+      "file": ".",
+      "summary": "Some helper functions use generic names that don't communicate purpose",
+      "detail": {
+        "holistic": true,
+        "dimension": "naming_quality",
+        "related_files": [
+          "CLI/multivol/api_server/routes/scan.py"
+        ],
+        "evidence": [
+          "_build_args_from_request - args for what?",
+          "_run_scan_background - could be more specific about what 'running' means",
+          "paginate_data named without domain context"
+        ],
+        "suggestion": "Rename to: _build_volatility_scan_args, _execute_scan_in_thread, _slice_result_list. Names should hint at domain purpose.",
+        "reasoning": "",
+        "content_hash": "b7fb50b8"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::naming_quality::generic_helper_names\" --note \"<what you did>\" --confirm",
+      "queue_position": 13,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::test_strategy::missing_error_path_tests",
+      "kind": "issue",
+      "confidence": "high",
+      "detector": "review",
+      "file": ".",
+      "summary": "Tests focus on happy paths; error scenarios in critical functions untested",
+      "detail": {
+        "holistic": true,
+        "dimension": "test_strategy",
+        "related_files": [
+          "CLI/tests/test_routes.py",
+          "CLI/tests/test_scan_helpers.py"
+        ],
+        "evidence": [
+          "No tests for what happens when Docker fails",
+          "No tests for database connection failures",
+          "No tests for malformed JSON parsing in clean_and_parse_json"
+        ],
+        "suggestion": "Add tests for: Docker image not found, container crashes, database locked, corrupted JSON output files. These are common failure modes in production.",
+        "reasoning": "",
+        "content_hash": "33d96dc8"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::test_strategy::missing_error_path_tests\" --note \"<what you did>\" --confirm",
+      "queue_position": 14,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
+      }
+    },
+    {
+      "id": "review::.::holistic::test_strategy::missing_volatility_execution_tests",
+      "kind": "issue",
+      "confidence": "high",
+      "detector": "review",
+      "file": ".",
+      "summary": "No tests for actual Volatility command execution paths with mocked Docker",
+      "detail": {
+        "holistic": true,
+        "dimension": "test_strategy",
+        "related_files": [
+          "CLI/tests/test_volatility_commands.py",
+          "CLI/multivol/multi_volatility3.py"
+        ],
+        "evidence": [
+          "test_volatility_commands.py only tests get_commands() YAML loading",
+          "execute_command_volatility3 has no test coverage",
+          "Docker container creation/wait logic untested"
+        ],
+        "suggestion": "Add tests that mock docker.from_env() to verify command building, volume mounting, and error handling in execute_command_volatility3/2.",
+        "reasoning": "",
+        "content_hash": "410a0bc4"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::test_strategy::missing_volatility_execution_tests\" --note \"<what you did>\" --confirm",
+      "queue_position": 15,
+      "plan_cluster": {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "total_items": 10,
+        "action_steps": [
+          {
+            "title": "Extract background_dump_task helpers"
+          },
+          {
+            "title": "Reduce execute_plugin length"
+          },
+          {
+            "title": "Add TypedDict for scan records"
+          },
+          {
+            "title": "Improve test coverage for error paths"
+          },
+          {
+            "title": "Fix generic helper names"
+          }
+        ]
       }
     }
   ],
   "queue": {
-    "total": 1
+    "total": 10
   },
   "narrative": {
     "phase": "middle_grind",
-    "headline": "\u26a0 9 security issues \u2014 review before other cleanup. 103 issues open. Test health (0.0%) needs attention \u2014 run `desloppify next` to start. (25 review issues \u2014 run `desloppify show review --status open`)",
+    "headline": "\u26a0 6 security issues \u2014 review before other cleanup. 128 issues open. Test health (0.0%) needs attention \u2014 run `desloppify next` to start. (15 review issues \u2014 run `desloppify show review --status open`)",
     "dimensions": {
       "lowest_dimensions": [
         {
           "name": "Test health",
           "strict": 0.0,
-          "failing": 15,
+          "failing": 29,
           "impact": 0.0
         },
         {
@@ -53,37 +509,42 @@
         {
           "name": "File health",
           "strict": 68.5,
-          "failing": 8,
+          "failing": 4,
           "impact": 0.0
         }
       ],
       "biggest_gap_dimensions": [
         {
           "name": "Test health",
-          "lenient": 95.8,
+          "lenient": 24.1,
           "strict": 0.0,
-          "gap": 95.8,
+          "gap": 24.1,
           "wontfix_count": 0
         },
         {
-          "name": "Code quality",
-          "lenient": 88.5,
-          "strict": 77.7,
-          "gap": 10.8,
+          "name": "File health",
+          "lenient": 86.0,
+          "strict": 68.5,
+          "gap": 17.5,
           "wontfix_count": 0
         },
         {
           "name": "Security",
-          "lenient": 90.4,
-          "strict": 81.3,
-          "gap": 9.1,
-          "wontfix_count": 7
+          "lenient": 95.1,
+          "strict": 82.5,
+          "gap": 12.6,
+          "wontfix_count": 0
         }
       ],
       "stagnant_dimensions": [
         {
           "name": "File health",
           "strict": 68.5,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Test health",
+          "strict": 0.0,
           "stuck_scans": 5
         }
       ]
@@ -118,8 +579,8 @@
       {
         "type": "refactor",
         "detector": "structural",
-        "count": 8,
-        "description": "8 structural issues \u2014 review large files \u2014 split only when responsibilities are clearly separable",
+        "count": 4,
+        "description": "4 structural issues \u2014 review large files \u2014 split only when responsibilities are clearly separable",
         "command": "desloppify show structural --status open",
         "impact": 0.0,
         "dimension": "File health",
@@ -128,46 +589,66 @@
       },
       {
         "type": "refactor",
-        "detector": "responsibility_cohesion",
-        "count": 1,
-        "description": "1 responsibility_cohesion issues \u2014 split modules with too many responsibilities \u2014 extract focused sub-modules",
-        "command": "desloppify show responsibility_cohesion --status open",
+        "detector": "dict_keys",
+        "count": 2,
+        "description": "2 dict_keys issues in 2 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 4,
+        "clusters": [
+          "auto/dict_keys-phantom_read",
+          "auto/dict_keys-overwritten_key"
+        ],
+        "cluster_count": 2,
         "lane": "refactor_0"
       },
       {
         "type": "refactor",
-        "detector": "boilerplate_duplication",
-        "count": 1,
-        "description": "1 boilerplate_duplication issues \u2014 extract shared boilerplate into reusable helpers or base classes",
-        "command": "desloppify show boilerplate_duplication --status open",
+        "detector": "test_coverage",
+        "count": 12,
+        "description": "12 test_coverage issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
-        "dimension": "Duplication",
+        "dimension": "Test health",
         "priority": 5,
+        "clusters": [
+          "auto/test_coverage"
+        ],
+        "cluster_count": 1,
+        "lane": "test_coverage"
+      },
+      {
+        "type": "refactor",
+        "detector": "responsibility_cohesion",
+        "count": 2,
+        "description": "2 responsibility_cohesion issues \u2014 split modules with too many responsibilities \u2014 extract focused sub-modules",
+        "command": "desloppify show responsibility_cohesion --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 6,
         "lane": "refactor_0"
       },
       {
         "type": "refactor",
         "detector": "review",
-        "count": 25,
-        "description": "25 review issues need investigation \u2014 run `desloppify show review --status open` to see them",
+        "count": 15,
+        "description": "15 review issues need investigation \u2014 run `desloppify show review --status open` to see them",
         "command": "desloppify show review --status open",
         "impact": 0.0,
         "dimension": "Unknown",
-        "priority": 6,
+        "priority": 7,
         "lane": "refactor_1"
       },
       {
         "type": "manual_fix",
         "detector": "smells",
-        "count": 12,
-        "description": "12 smells issues in 12 cluster(s) \u2014 run `desloppify next`",
+        "count": 37,
+        "description": "37 smells issues in 12 cluster(s) \u2014 run `desloppify next`",
         "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 7,
+        "priority": 8,
         "clusters": [
           "auto/smells-silent_except",
           "auto/smells-swallowed_error",
@@ -188,12 +669,12 @@
       {
         "type": "manual_fix",
         "detector": "global_mutable_config",
-        "count": 5,
-        "description": "5 global_mutable_config issues \u2014 refactor module-level mutable state \u2014 use explicit init functions or dependency injection",
+        "count": 6,
+        "description": "6 global_mutable_config issues \u2014 refactor module-level mutable state \u2014 use explicit init functions or dependency injection",
         "command": "desloppify show global_mutable_config --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 8,
+        "priority": 9,
         "lane": "refactor_0"
       },
       {
@@ -204,7 +685,7 @@
         "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 9,
+        "priority": 10,
         "clusters": [
           "auto/stale_exclude"
         ],
@@ -214,12 +695,12 @@
       {
         "type": "manual_fix",
         "detector": "security",
-        "count": 9,
-        "description": "9 security issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "count": 6,
+        "description": "6 security issues in 1 cluster(s) \u2014 run `desloppify next`",
         "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Security",
-        "priority": 10,
+        "priority": 11,
         "clusters": [
           "auto/security"
         ],
@@ -229,12 +710,12 @@
       {
         "type": "manual_fix",
         "detector": "subjective_review",
-        "count": 15,
-        "description": "15 subjective_review issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "count": 17,
+        "description": "17 subjective_review issues in 1 cluster(s) \u2014 run `desloppify next`",
         "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Test health",
-        "priority": 11,
+        "priority": 12,
         "clusters": [
           "auto/subjective_review"
         ],
@@ -244,17 +725,17 @@
       {
         "type": "debt_review",
         "detector": null,
-        "description": "4.9 pts of wontfix debt \u2014 review stale decisions",
+        "description": "2.4 pts of wontfix debt \u2014 review stale decisions",
         "command": "desloppify show --status wontfix",
-        "gap": 4.9,
-        "priority": 12,
+        "gap": 2.4,
+        "priority": 13,
         "lane": "debt_review"
       }
     ],
     "strategy": {
       "fixer_leverage": {
         "auto_fixable_count": 0,
-        "total_count": 153,
+        "total_count": 158,
         "coverage": 0.0,
         "impact_ratio": 0.0,
         "recommendation": "none"
@@ -274,20 +755,20 @@
           "actions": [
             3,
             4,
-            5,
-            7,
+            6,
             8,
-            10,
-            11
+            9,
+            11,
+            12
           ],
-          "file_count": 16,
+          "file_count": 18,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         },
         "refactor_1": {
           "actions": [
-            6
+            7
           ],
           "file_count": 1,
           "total_impact": 0.0,
@@ -296,16 +777,25 @@
         },
         "refactor_2": {
           "actions": [
-            9
+            10
           ],
           "file_count": 14,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         },
+        "test_coverage": {
+          "actions": [
+            5
+          ],
+          "file_count": 12,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
         "debt_review": {
           "actions": [
-            12
+            13
           ],
           "file_count": 0,
           "total_impact": 0.0,
@@ -314,7 +804,7 @@
         }
       },
       "can_parallelize": true,
-      "hint": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 25 issue(s) \u2014 `desloppify show review --status open`."
+      "hint": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 15 issue(s) \u2014 `desloppify show review --status open`."
     },
     "tools": {
       "fixers": [],
@@ -336,10 +826,10 @@
       }
     },
     "debt": {
-      "overall_gap": 4.9,
-      "wontfix_count": 7,
+      "overall_gap": 2.4,
+      "wontfix_count": 0,
       "worst_dimension": "Test health",
-      "worst_gap": 95.8,
+      "worst_gap": 24.1,
       "trend": "growing"
     },
     "milestone": null,
@@ -347,7 +837,7 @@
       "command": "desloppify next",
       "description": "12 orphaned issues in 1 cluster(s) \u2014 run `desloppify next`"
     },
-    "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 25 issue(s) \u2014 `desloppify show review --status open`.",
+    "why_now": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 15 issue(s) \u2014 `desloppify show review --status open`.",
     "verification_step": {
       "command": "desloppify scan",
       "reason": "revalidate after changes"
@@ -356,39 +846,32 @@
       {
         "type": "wontfix_gap",
         "severity": "medium",
-        "message": "Strict/lenient gap is 4.9 pts with 7 wontfix issues"
+        "message": "Strict/lenient gap is 2.4 pts with 0 wontfix issues"
       }
     ],
     "strict_target": {
       "target": 95.0,
-      "current": 67.7,
-      "gap": 27.3,
+      "current": 68.4,
+      "gap": 26.6,
       "state": "below",
       "warning": null
     },
     "reminders": [
       {
         "type": "review_issues_pending",
-        "message": "25 review issue(s) need investigation. Run `desloppify show review --status open` to see the work queue.",
+        "message": "15 review issue(s) need investigation. Run `desloppify show review --status open` to see the work queue.",
         "command": "desloppify show review --status open",
         "priority": 1,
         "severity": "high"
-      },
-      {
-        "type": "wontfix_growing",
-        "message": "Wontfix debt is growing. Review stale decisions: `desloppify show --status wontfix`.",
-        "command": "desloppify show --status wontfix",
-        "priority": 2,
-        "severity": "medium"
       }
     ],
     "reminder_history": {
       "zone_classification": 3,
-      "report_scores": 3,
+      "report_scores": 4,
       "stagnant_nudge": 3,
       "wontfix_growing": 3,
-      "feedback_nudge": 2,
-      "review_issues_pending": 2
+      "feedback_nudge": 3,
+      "review_issues_pending": 3
     }
   },
   "agent_notes": [
@@ -403,7 +886,7 @@
       {
         "name": "auto/orphaned",
         "description": "Fix 12 orphaned issues",
-        "item_count": 12
+        "item_count": 11
       },
       {
         "name": "auto/test_coverage",
@@ -433,7 +916,7 @@
       {
         "name": "auto/smells-monster_function",
         "description": "Fix 2 monster function issues",
-        "item_count": 2
+        "item_count": 1
       },
       {
         "name": "auto/smells-annotation_quality",
@@ -478,7 +961,7 @@
       {
         "name": "auto/subjective_review",
         "description": "Address 15 subjective_review review issues",
-        "item_count": 15
+        "item_count": 14
       },
       {
         "name": "auto/stale_exclude",
@@ -493,7 +976,7 @@
       {
         "name": "error-handling",
         "description": "Fix get_file_hash sentinel return, remaining bare excepts, swallowed errors",
-        "item_count": 0
+        "item_count": 1
       },
       {
         "name": "naming-quality",
@@ -508,7 +991,7 @@
       {
         "name": "type-safety",
         "description": "Missing type annotations on public APIs, untyped callables, misleading return types",
-        "item_count": 0
+        "item_count": 1
       },
       {
         "name": "testing",
@@ -523,7 +1006,7 @@
       {
         "name": "auto/security",
         "description": "Fix 16 security issues",
-        "item_count": 16
+        "item_count": 1
       },
       {
         "name": "auto/review-cross_module_architecture",
@@ -594,22 +1077,37 @@
         "name": "already-fixed",
         "description": "Issues already fixed this session",
         "item_count": 0
+      },
+      {
+        "name": "quick-wins",
+        "description": "Already-fixed items and quick wins like rename and comments",
+        "item_count": 1
+      },
+      {
+        "name": "api-surface",
+        "description": "API response shape and URL convention inconsistencies",
+        "item_count": 2
+      },
+      {
+        "name": "design-quality",
+        "description": "Design and structural improvements",
+        "item_count": 10
       }
     ],
-    "total_ordered": 28,
-    "total_skipped": 7,
+    "total_ordered": 36,
+    "total_skipped": 0,
     "plan_overrides_narrative": true
   },
-  "overall_score": 84.1,
-  "objective_score": 92.1,
-  "strict_score": 67.7,
+  "overall_score": 74.0,
+  "objective_score": 66.8,
+  "strict_score": 68.4,
   "scorecard_dimensions": [
     {
       "name": "File health",
-      "score": 72.0,
+      "score": 86.0,
       "strict": 68.5,
       "checks": 20,
-      "failing": 8,
+      "failing": 4,
       "tier": 3,
       "subjective": false
     },
@@ -631,7 +1129,7 @@
       "score": 75.0,
       "strict": 75.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -644,7 +1142,7 @@
       "score": 85.0,
       "strict": 85.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -654,10 +1152,10 @@
     },
     {
       "name": "Code quality",
-      "score": 88.5,
-      "strict": 77.7,
+      "score": 80.4,
+      "strict": 69.3,
       "checks": 148,
-      "failing": 30,
+      "failing": 57,
       "tier": 3,
       "subjective": false
     },
@@ -666,7 +1164,7 @@
       "score": 80.0,
       "strict": 80.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -705,7 +1203,7 @@
       "score": 88.0,
       "strict": 88.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -728,10 +1226,10 @@
     },
     {
       "name": "Duplication",
-      "score": 99.3,
-      "strict": 94.3,
-      "checks": 96,
-      "failing": 1,
+      "score": 100.0,
+      "strict": 99.0,
+      "checks": 128,
+      "failing": 0,
       "tier": 3,
       "subjective": false
     },
@@ -740,7 +1238,7 @@
       "score": 78.3,
       "strict": 78.3,
       "checks": 30,
-      "failing": 4,
+      "failing": 3,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -755,7 +1253,7 @@
       "score": 70.0,
       "strict": 70.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -781,7 +1279,7 @@
       "score": 78.0,
       "strict": 78.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -791,10 +1289,10 @@
     },
     {
       "name": "Security",
-      "score": 90.4,
-      "strict": 81.3,
-      "checks": 47,
-      "failing": 9,
+      "score": 95.1,
+      "strict": 82.5,
+      "checks": 53,
+      "failing": 6,
       "tier": 4,
       "subjective": false
     },
@@ -803,7 +1301,7 @@
       "score": 85.0,
       "strict": 85.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -813,10 +1311,10 @@
     },
     {
       "name": "Test health",
-      "score": 95.8,
+      "score": 24.1,
       "strict": 0.0,
-      "checks": 249,
-      "failing": 15,
+      "checks": 251,
+      "failing": 29,
       "tier": 4,
       "subjective": false
     },
@@ -838,7 +1336,7 @@
       "score": 72.0,
       "strict": 72.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -866,7 +1364,7 @@
       "score": 75.0,
       "strict": 75.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -879,7 +1377,7 @@
       "score": 85.0,
       "strict": 85.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -892,7 +1390,7 @@
       "score": 80.0,
       "strict": 80.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -931,7 +1429,7 @@
       "score": 88.0,
       "strict": 88.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -957,7 +1455,7 @@
       "score": 78.3,
       "strict": 78.3,
       "checks": 30,
-      "failing": 4,
+      "failing": 3,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -972,7 +1470,7 @@
       "score": 70.0,
       "strict": 70.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -998,7 +1496,7 @@
       "score": 78.0,
       "strict": 78.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -1011,7 +1509,7 @@
       "score": 85.0,
       "strict": 85.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -1037,7 +1535,7 @@
       "score": 72.0,
       "strict": 72.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "subjective": true,
       "placeholder": false,
@@ -1047,8 +1545,8 @@
     }
   ],
   "warnings": [
-    "25 new review issue(s) not yet triaged. Run the staged triage runner to incorporate them (`desloppify plan triage --run-stages --runner codex` or `desloppify plan triage --run-stages --runner claude`).",
-    "TRIAGE PENDING \u2014 queued and will activate after objective work is complete."
+    "15 new review issue(s) not yet triaged. Run the staged triage runner to incorporate them (`desloppify plan triage --run-stages --runner codex` or `desloppify plan triage --run-stages --runner claude`).",
+    "TRIAGE RECOMMENDED \u2014 review issues changed since last triage. Run: desloppify plan triage --run-stages --runner codex (or desloppify plan triage --run-stages --runner claude)"
   ],
   "config": {
     "target_strict_score": 95,

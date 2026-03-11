@@ -9,7 +9,7 @@ from multivol.api_server.config import BASE_DIR
 
 docker_bp = Blueprint('docker_bp', __name__)
 
-@docker_bp.route('/list_images', methods=['GET'])
+@docker_bp.route('/images', methods=['GET'])
 def list_images() -> Response:
     try:
         client = docker.from_env()
@@ -107,5 +107,5 @@ def list_volatility_plugins() -> Response:
              return jsonify({"error": "Failed to parse script output", "raw": raw_output}), 500
 
     except Exception as e:
-        logging.error(f"List plugins failed: {e}")
+        logging.exception("List plugins failed")
         return jsonify({"error": str(e)}), 500
