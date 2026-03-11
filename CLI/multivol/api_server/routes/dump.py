@@ -1,14 +1,15 @@
+"""Memory dump task routes."""
 import os
+import re
 import sqlite3
 import time
 import shutil
 import uuid
 import json
-import threading
-import docker
-import re
 import logging
+import threading
 from typing import Any, TypedDict
+import docker
 from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import resolve_host_path
@@ -57,8 +58,8 @@ def _build_vol_dump_command(scan: dict[str, Any], virt_addr: str | int, file_pat
 
 def _run_docker_vol(client: docker.DockerClient, image_tag: str, container_name: str, cmd: list[str], volumes: dict[str, Any]) -> str:
     """Run a Volatility Docker container, auto-pulling the image if missing. Returns decoded stdout."""
-    run_kwargs = dict(image=image_tag, name=container_name, command=cmd,
-                      volumes=volumes, remove=True, detach=False, stderr=True, stdout=True)
+    run_kwargs = {"image": image_tag, "name": container_name, "command": cmd,
+                  "volumes": volumes, "remove": True, "detach": False, "stderr": True, "stdout": True}
     try:
         output = client.containers.run(**run_kwargs)
     except docker.errors.ImageNotFound:
@@ -95,7 +96,7 @@ def _persist_task_result(task_id: str, status: str, created_files: list[str], ca
     conn.close()
 
 
-def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | int, image_tag: str, file_path: str | None = None) -> None:
+def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | int, image_tag: str, file_path: str | None = None) -> None:  # pylint: disable=too-many-locals
     """Run a Volatility3 memory dump in a background thread, writing output to task_id's entry."""
     logging.debug("[%s] Starting background dump task for scan: %s", task_id, scan['uuid'])
     with dump_tasks_lock:
@@ -108,7 +109,7 @@ def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | in
         if scan.get('config_json'):
             try:
                 config = json.loads(scan['config_json'])
-            except Exception:
+            except (json.JSONDecodeError, ValueError):
                 logging.warning("Failed to parse config_json for scan %s", scan.get('uuid', '?'), exc_info=True)
 
         cmd = _build_vol_dump_command(scan, virt_addr, file_path, config)
@@ -142,7 +143,7 @@ def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | in
             dump_tasks[task_id]['status'] = 'completed'
             dump_tasks[task_id]['output_path'] = f"/evidence/{created_files[0]}/download"
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         with dump_tasks_lock:
             dump_tasks[task_id]['status'] = 'failed'
             dump_tasks[task_id]['error'] = str(e)
@@ -154,6 +155,7 @@ def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: str | in
 
 @dump_bp.route('/scans/<scan_id>/dump-file', methods=['POST'])
 def dump_file_from_memory(scan_id: str) -> Response:
+    """Initiate an async memory dump extraction for a scan."""
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -170,7 +172,7 @@ def dump_file_from_memory(scan_id: str) -> Response:
     virt_addr = data.get('virt_addr')
     image = data.get('image') or scan['image'] or default_image
     file_path = data.get('file_path')
-    
+
     if not virt_addr and not file_path:
         conn.close()
         return jsonify({'error': 'Virtual address or File Path required'}), 400
@@ -180,48 +182,50 @@ def dump_file_from_memory(scan_id: str) -> Response:
               (task_id, scan_id, "pending", time.time()))
     conn.commit()
     conn.close()
-    
+
     scan_dict = dict(scan)
 
     thread = threading.Thread(target=background_dump_task, args=(task_id, scan_dict, virt_addr, image, file_path))
     thread.daemon = True
     thread.start()
-    
+
     return jsonify({"task_id": task_id, "status": "pending"})
 
 @dump_bp.route('/dump-tasks/<task_id>', methods=['GET'])
 def get_dump_status(task_id: str) -> Response:
+    """Get the current status of a dump extraction task."""
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM dump_tasks WHERE task_id = ?", (task_id,))
     task = c.fetchone()
     conn.close()
-    
+
     if not task:
         return jsonify({"error": "Task not found"}), 404
-        
+
     return jsonify(dict(task))
 
 @dump_bp.route('/dump-tasks/<task_id>/download', methods=['GET'])
 def download_dump_result(task_id: str) -> Response:
+    """Download the output file produced by a completed dump task."""
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM dump_tasks WHERE task_id = ?", (task_id,))
     task = c.fetchone()
     conn.close()
-    
+
     if not task:
         return jsonify({"error": "Task not found"}), 404
-        
+
     if task['status'] != 'completed':
         return jsonify({"error": "Task not completed"}), 400
-        
+
     file_path = task['output_path']
     if not file_path or not os.path.exists(file_path):
         return jsonify({"error": "File not found on server"}), 404
-        
+
     return send_file(
         file_path,
         as_attachment=True,

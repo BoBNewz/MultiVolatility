@@ -1,3 +1,4 @@
+"""Runtime configuration: paths, tokens, and startup helpers."""
 import os
 import logging
 import secrets

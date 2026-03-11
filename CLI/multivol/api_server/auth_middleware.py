@@ -1,6 +1,7 @@
+"""Request authentication middleware for the Flask API."""
+import logging
 from typing import Optional, Tuple, Union
 from flask import request, jsonify, Response
-import logging
 from multivol.api_server.config import get_api_token
 
 # Paths that do not require authentication
@@ -37,7 +38,7 @@ def check_authorization() -> _AuthResult:
         provided_token = token_query
 
     if not provided_token or provided_token != get_api_token():
-        logging.warning(f"Unauthorized access attempt to {request.path}")
+        logging.warning("Unauthorized access attempt to %s", request.path)
         return jsonify({"error": "Unauthorized"}), 401
 
     return None

@@ -1,20 +1,23 @@
-# multi_volatility3.py
-# Implements Volatility3 memory analysis orchestration, Docker command generation, and backend communication.
-import os
+"""Volatility 3 memory analysis orchestration using Docker containers."""
+# pylint: disable=line-too-long
 import json
 import logging
+import os
 import re
 import uuid
 import yaml
 import docker
 from multivol.multi_volatility_base import MultiVolatilityBase, Vol3RunConfig
 
+
 class MultiVolatility3(MultiVolatilityBase):
-    def execute_command_volatility3(self, command: str, config: Vol3RunConfig, quiet: bool = False, lock=None) -> tuple[str, bool]:
-        # Executes a Volatility3 command in Docker and handles output
+    """Orchestrate Volatility 3 commands executed inside Docker containers."""
+
+    def execute_command_volatility3(self, command: str, config: Vol3RunConfig, quiet: bool = False, lock=None) -> tuple[str, bool]:  # pylint: disable=too-many-return-statements,too-many-branches,too-many-locals,too-many-statements
+        """Execute a Volatility 3 command in Docker and handle output."""
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
-        
+
         client = docker.from_env()
 
         # Resolve paths for DooD
@@ -22,31 +25,31 @@ class MultiVolatility3(MultiVolatilityBase):
         host_cache_path = self.resolve_path(os.path.abspath(config.cache_dir), config.host_path)
         host_plugin_dir = self.resolve_path(os.path.abspath(config.plugin_dir), config.host_path)
         host_output_dir = self.resolve_path(os.path.abspath(config.output_dir), config.host_path)
-        
+
         host_dump_path = self.resolve_path(os.path.abspath(config.dump_dir), config.host_path)
         host_dump_dir = os.path.dirname(host_dump_path)
-        
+
         # Debug logging for path resolution
         if config.show_commands:
             print(f"[DEBUG] dump={config.dump}, dump_dir={config.dump_dir}", flush=True)
             print(f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}", flush=True)
-        
+
         volumes = {
-             host_dump_dir: {'bind': '/dump_dir', 'mode': 'ro'},
-             host_symbols_path: {'bind': '/symbols', 'mode': 'rw'},
-             host_cache_path: {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
-             host_plugin_dir: {'bind': '/plugins', 'mode': 'ro'},
-             host_output_dir: {'bind': '/output', 'mode': 'rw'}
+            host_dump_dir: {'bind': '/dump_dir', 'mode': 'ro'},
+            host_symbols_path: {'bind': '/symbols', 'mode': 'rw'},
+            host_cache_path: {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
+            host_plugin_dir: {'bind': '/plugins', 'mode': 'ro'},
+            host_output_dir: {'bind': '/output', 'mode': 'rw'}
         }
-        
+
         # Base arguments
         # Base arguments with new volume paths:
         # dump_dir -> /dump_dir
         # symbols -> /symbols
         # cache -> /root/.cache/volatility3
         # plugins -> /plugins
-        
-        # NOTE: -f expects the file path. Volume maps dump_dir to /dump_dir. 
+
+        # NOTE: -f expects the file path. Volume maps dump_dir to /dump_dir.
         # So dump file is at /dump_dir/basename(dump)
         dump_filename = os.path.basename(config.dump)
         if config.show_commands:
@@ -95,7 +98,7 @@ class MultiVolatility3(MultiVolatilityBase):
                 existing_container.remove(force=True)
             except docker.errors.NotFound:
                 pass
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 self.safe_print(f"[!] Warning: Failed to cleanup existing container {container_name}: {e}", lock)
                 logging.warning("Failed to cleanup existing container %s", container_name, exc_info=True)
 
@@ -117,18 +120,18 @@ class MultiVolatility3(MultiVolatilityBase):
 
             if config.format == "json":
                 try:
-                    with open(output_file, "r") as f:
+                    with open(output_file, "r", encoding="utf-8") as f:
                         lines = f.readlines()
                     if lines:
-                        with open(output_file, "w") as f:
+                        with open(output_file, "w", encoding="utf-8") as f:
                             f.writelines(lines[2:])
                 except OSError:
                     logging.warning("Could not trim JSON output for %s", command, exc_info=True)
 
-        except Exception as e:
-             self.safe_print(f"[!] Error running {command}: {e}", lock)
-             logging.exception("Volatility3 container failed for %s", command)
-             return (command, False)
+        except Exception as e:  # pylint: disable=broad-except
+            self.safe_print(f"[!] Error running {command}: {e}", lock)
+            logging.exception("Volatility3 container failed for %s", command)
+            return (command, False)
 
         if not quiet:
             self.safe_print(f"[+] {command} finished.", lock)
@@ -137,12 +140,12 @@ class MultiVolatility3(MultiVolatilityBase):
             return (command, False)
 
         try:
-            with open(output_file, "r") as f:
+            with open(output_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "Volatility experienced" in content or "vol.py: error:" in content or "vol: error:" in content:
                 return (command, False)
-            elif config.format == "json":
+            if config.format == "json":
                 start_index = content.find('[')
                 if start_index == -1:
                     start_index = content.find('{')
@@ -150,20 +153,18 @@ class MultiVolatility3(MultiVolatilityBase):
                 if start_index != -1:
                     json.loads(content[start_index:])
                     return (command, True)
-                else:
-                     lines = content.splitlines()
-                     if len(lines) > 1:
-                         json.loads('\n'.join(lines[1:]))
-                         return (command, True)
+                lines = content.splitlines()
+                if len(lines) > 1:
+                    json.loads('\n'.join(lines[1:]))
+                    return (command, True)
                 return (command, False)
-            else:
-                return (command, True)
-        except Exception as e:
-            logging.warning(f"Could not validate output for {command}: {e}")
+            return (command, True)
+        except Exception as e:  # pylint: disable=broad-except
+            logging.warning("Could not validate output for %s: %s", command, e)
             return (command, False)
 
     def get_commands(self, opsys: str) -> list[str]:
-
+        """Return the list of plugin commands for the given operating system."""
         base_dir = os.path.dirname(os.path.abspath(__file__))
 
         yaml_path = os.path.join(base_dir, "plugins_list", f"vol3_{opsys}.yaml")

@@ -1,14 +1,17 @@
-# multi_volatility2.py
-# Implements Volatility2 memory analysis orchestration, Docker command generation, and backend communication.
-import time
-import os
+"""Volatility 2 memory analysis orchestration using Docker containers."""
+# pylint: disable=line-too-long
 import logging
+import os
 import re
+import time
 import yaml
 import docker
 from multivol.multi_volatility_base import MultiVolatilityBase, Vol2RunConfig
 
+
 class MultiVolatility2(MultiVolatilityBase):
+    """Orchestrate Volatility 2 commands executed inside Docker containers."""
+
     def _output_file_info(self, command: str, output_dir: str, fmt: str) -> tuple[str, str]:
         """Return (output_file_path, output_filename) for the given command and format."""
         ext = "json" if fmt == "json" else "txt"
@@ -18,16 +21,16 @@ class MultiVolatility2(MultiVolatilityBase):
     def _trim_json_output(self, output_file: str, command: str) -> None:
         """Keep only the last line of a JSON output file (avoids log-rotation noise)."""
         try:
-            with open(output_file, "r") as f:
+            with open(output_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
             if lines:
-                with open(output_file, "w") as f:
+                with open(output_file, "w", encoding="utf-8") as f:
                     f.writelines(lines[-1])
         except OSError:
             logging.warning("Could not trim JSON output for %s", command, exc_info=True)
 
-    def execute_command_volatility2(self, command: str, config: Vol2RunConfig, quiet: bool = False, lock=None) -> tuple[str, bool]:
-        # Executes a Volatility2 command in Docker and handles output
+    def execute_command_volatility2(self, command: str, config: Vol2RunConfig, quiet: bool = False, lock=None) -> tuple[str, bool]:  # pylint: disable=too-many-locals
+        """Execute a Volatility 2 command in Docker and handle output."""
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
 
@@ -59,7 +62,7 @@ class MultiVolatility2(MultiVolatilityBase):
             existing.remove(force=True)
         except docker.errors.NotFound:
             pass
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.safe_print(f"[!] Warning: Failed to cleanup existing container {container_name}: {e}", lock)
             logging.warning("Failed to cleanup existing container %s", container_name, exc_info=True)
 
@@ -75,7 +78,7 @@ class MultiVolatility2(MultiVolatilityBase):
                 log_config={"type": "none"},
             )
             container.wait()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.safe_print(f"[!] Error running {command}: {e}", lock)
             logging.exception("Volatility2 container failed for %s", command)
             return (command, False)
@@ -89,7 +92,7 @@ class MultiVolatility2(MultiVolatilityBase):
         return (command, True)
 
     def get_commands(self, opsys: str) -> list[str]:
-
+        """Return the list of plugin commands for the given operating system."""
         base_dir = os.path.dirname(os.path.abspath(__file__))
 
         yaml_path = os.path.join(base_dir, "plugins_list", f"vol2_{opsys}.yaml")

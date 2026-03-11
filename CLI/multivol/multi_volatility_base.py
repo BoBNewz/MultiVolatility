@@ -1,4 +1,5 @@
 """Shared base class for Volatility runner classes."""
+# pylint: disable=line-too-long,too-many-instance-attributes
 import os
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -31,8 +32,9 @@ class ApiScanConfig:
     custom_symbol: Optional[str] = None
 
 
-@dataclass
+@dataclass  # pylint: disable=too-many-instance-attributes
 class Vol3RunConfig:
+    """Configuration for a Volatility 3 run."""
     dump: str
     dump_dir: str
     symbols_path: str
@@ -49,8 +51,9 @@ class Vol3RunConfig:
     extra_args: str = ""
 
 
-@dataclass
+@dataclass  # pylint: disable=too-many-instance-attributes
 class Vol2RunConfig:
+    """Configuration for a Volatility 2 run."""
     dump: str
     dump_file_path: str
     profiles_path: str
@@ -73,7 +76,7 @@ class MultiVolatilityBase:
         implementation for CLI-only usage where the server package is absent.
         """
         try:
-            from multivol.api_server.utils import resolve_host_path
+            from multivol.api_server.utils import resolve_host_path  # pylint: disable=import-outside-toplevel
             return resolve_host_path(path, host_path_override=host_path)
         except ImportError:
             pass

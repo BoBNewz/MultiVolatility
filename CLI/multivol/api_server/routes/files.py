@@ -1,3 +1,4 @@
+"""Evidence file upload, symbol management, and file listing routes."""
 import os
 import sqlite3
 import time
@@ -14,34 +15,38 @@ files_bp = Blueprint('files_bp', __name__)
 
 @files_bp.route('/upload', methods=['POST'])
 def upload_file() -> Response:
+    """Upload a memory dump or evidence file to the storage directory."""
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No chosen file"}), 400
-    
+
     if file:
         filename = secure_filename(file.filename)
         save_path = os.path.join(STORAGE_DIR, filename)
-        
+
         # Check if file already exists to avoid overwrite or just overwrite?
         # For simplicity, we overwrite.
         try:
-            logging.debug(f"Saving file to {save_path}")
+            logging.debug("Saving file to %s", save_path)
             file.save(save_path)
-            
+
             # Calculate and cache hash immediately
-            logging.debug(f"Calculating hash for {save_path}")
+            logging.debug("Calculating hash for %s", save_path)
             get_file_hash(save_path)
-            
+
             logging.debug("File saved successfully")
             return jsonify({"status": "success", "path": save_path, "server_path": save_path})
-        except Exception as e:
+        except OSError as e:
             logging.exception("Failed to save file")
             return jsonify({"error": str(e)}), 500
 
+    return jsonify({"error": "No file content"}), 400
+
 @files_bp.route('/symbols', methods=['GET'])
 def list_symbols() -> Response:
+    """List all Volatility 3 symbol files in the symbols directory."""
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
     symbols = []
@@ -53,6 +58,7 @@ def list_symbols() -> Response:
 
 @files_bp.route('/symbols', methods=['POST'])
 def upload_symbol() -> Response:
+    """Upload a Volatility 3 symbol file, optionally into a subdirectory."""
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
     if 'file' not in request.files:
@@ -73,6 +79,7 @@ def upload_symbol() -> Response:
 
 @files_bp.route('/symbols', methods=['DELETE'])
 def delete_symbol() -> Response:
+    """Delete a Volatility 3 symbol file or directory."""
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
     path = request.args.get('path')
@@ -113,7 +120,7 @@ def _load_case_name_map() -> dict[str, str]:
             if row['name'] and row['dump_path']:
                 case_map[os.path.basename(row['dump_path'])] = row['name']
         conn.close()
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logging.warning("Failed to load case names from DB for evidence listing.", exc_info=True)
     return case_map
 
@@ -129,7 +136,7 @@ def _resolve_source_dump_name(dump_base: str) -> str:
         conn.close()
         if row:
             return os.path.basename(row['dump_path'])
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logging.warning("Failed to resolve source dump from DB; falling back to folder name.", exc_info=True)
     return dump_base
 
@@ -146,7 +153,7 @@ def _build_extracted_group(item: str, path: str, processed_dumps: set[str]) -> d
             if os.path.isfile(subpath):
                 files.append({"id": os.path.join(item, sub), "name": sub,
                                "size": os.path.getsize(subpath), "type": "Extracted File"})
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logging.exception("Error reading subdir %s", path)
 
     source_dump = _resolve_source_dump_name(dump_base)
@@ -187,6 +194,7 @@ def _build_dump_group(item: str, path: str, case_map: dict[str, str]) -> dict[st
 
 @files_bp.route('/evidences', methods=['GET'])
 def list_evidences() -> Response:
+    """List all evidence files grouped by dump and extracted data."""
     try:
         all_items = [i for i in os.listdir(STORAGE_DIR)
                      if not (i.startswith("scans.db") or i.endswith(".sha256"))]
@@ -207,15 +215,16 @@ def list_evidences() -> Response:
         path = os.path.join(STORAGE_DIR, item)
         if os.path.isfile(path) and not item.endswith('.sha256') and item not in processed_dumps:
             evidences.append(_build_dump_group(item, path, case_map))
-            
+
     return jsonify(evidences)
 
 @files_bp.route('/evidence/<filename>', methods=['DELETE'])
 def delete_evidence(filename: str) -> Response:
+    """Delete an evidence file and its associated extracted directory."""
     # Strip virtual group prefix if present
     if filename.startswith("group_"):
         filename = filename[6:]
-        
+
     filename = secure_filename(filename)
     path = os.path.join(STORAGE_DIR, filename)
     if os.path.exists(path):
@@ -227,21 +236,22 @@ def delete_evidence(filename: str) -> Response:
                 # Remove sidecar hash if exists
                 if os.path.exists(path + ".sha256"):
                     os.remove(path + ".sha256")
-                
+
                 # Also remove extracted directory (if this was a dump file)
                 # Checks for standard <filename>_extracted pattern
                 extracted_dir = os.path.join(STORAGE_DIR, f"{filename}_extracted")
                 if os.path.exists(extracted_dir):
                     shutil.rmtree(extracted_dir)
-                
+
             return jsonify({"status": "deleted"})
-        except Exception as e:
+        except OSError as e:
             logging.exception("Failed to delete %s", path)
             return jsonify({"error": str(e)}), 500
     return jsonify({"error": "File not found"}), 404
 
 @files_bp.route('/evidence/<path:filename>/download', methods=['GET'])
 def download_evidence(filename: str) -> Response:
+    """Download an evidence file or extracted sub-file by path."""
     # Allow nested paths for extracted files
     # send_from_directory handles traversal attacks (mostly), but we shouldn't use secure_filename on the whole path
     return send_from_directory(STORAGE_DIR, filename, as_attachment=True)

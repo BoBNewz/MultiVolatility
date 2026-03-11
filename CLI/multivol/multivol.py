@@ -1,14 +1,14 @@
-# multivol.py
-# Entry point for MultiVolatility: orchestrates running Volatility2 and Volatility3 memory analysis in parallel using multiprocessing.
+"""Entry point for MultiVolatility: orchestrate Volatility 2/3 analysis in parallel."""
+# pylint: disable=line-too-long
 import multiprocessing
 import time
 import os
 import argparse
 import sys
 import logging
+from datetime import datetime
 from typing import Any, Union
 import docker
-from datetime import datetime
 from rich.console import Console
 from rich.theme import Theme
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -28,10 +28,12 @@ except ImportError:
 
 
 def vol3_wrapper(packed_args: Any) -> tuple[str, bool]:
+    """Unpack arguments and call execute_command_volatility3."""
     instance, args = packed_args
     return instance.execute_command_volatility3(*args)
 
 def vol2_wrapper(packed_args: Any) -> tuple[str, bool]:
+    """Unpack arguments and call execute_command_volatility2."""
     instance, args = packed_args
     return instance.execute_command_volatility2(*args)
 
@@ -54,7 +56,7 @@ def _ensure_docker_image(image_name: str, console: Console) -> None:
                 client.images.pull(image_name)
             console.print(f"[bold green]{msg}[/bold green]")
             console.print(f"[bold green][*] Image {image_name} ready.[/bold green]")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         console.print(f"[bold red]Warning: Docker check failed: {e}[/bold red]")
         logging.warning("Docker image check failed for %s", image_name, exc_info=True)
 
@@ -75,7 +77,7 @@ def _resolve_commands(arguments: argparse.Namespace) -> tuple[list[str], Union[M
         else:
             cmds = []
         return cmds, instance
-    elif arguments.mode == "vol3":
+    if arguments.mode == "vol3":
         instance = MultiVolatility3()
         if arguments.commands:
             cmds = arguments.commands.split(",")
@@ -86,8 +88,7 @@ def _resolve_commands(arguments: argparse.Namespace) -> tuple[list[str], Union[M
         else:
             cmds = []
         return cmds, instance
-    else:
-        raise ValueError(f"Unknown mode: {arguments.mode!r}. Expected 'vol2' or 'vol3'.")
+    raise ValueError(f"Unknown mode: {arguments.mode!r}. Expected 'vol2' or 'vol3'.")
 
 
 def _print_scan_summary(console: Console, successful_modules: list[str], failed_modules: list[str],
@@ -107,7 +108,7 @@ def _print_scan_summary(console: Console, successful_modules: list[str], failed_
                 console.print(f"[red][!] Failed to validate JSON for {mod}[/red]")
 
 
-def _run_vol2_pool(pool: Any, vol_instance: MultiVolatility2, commands: list[str],
+def _run_vol2_pool(pool: Any, vol_instance: MultiVolatility2, commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
                    arguments: argparse.Namespace, output_dir: str, lock: Any) -> tuple[list[str], list[str]]:
     """Run vol2 commands via pool and return (successful, failed) module lists."""
     vol2_cfg = Vol2RunConfig(
@@ -128,7 +129,7 @@ def _run_vol2_pool(pool: Any, vol_instance: MultiVolatility2, commands: list[str
     return successful, failed
 
 
-def _run_vol3_pool(pool: Any, vol_instance: MultiVolatility3, commands: list[str],
+def _run_vol3_pool(pool: Any, vol_instance: MultiVolatility3, commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
                    arguments: argparse.Namespace, output_dir: str, lock: Any,
                    console: Console) -> tuple[list[str], list[str]]:
     """Run vol3 commands via pool, including info bootstrap and strings, return (successful, failed)."""
@@ -168,6 +169,7 @@ def _run_vol3_pool(pool: Any, vol_instance: MultiVolatility3, commands: list[str
 
 
 def run_analysis(arguments: argparse.Namespace) -> None:
+    """Run the full analysis pipeline based on parsed CLI arguments."""
     for d in ("volatility3_symbols", "volatility2_profiles", "volatility3_cache", "volatility3_plugins"):
         os.makedirs(os.path.join(os.getcwd(), d), exist_ok=True)
 
@@ -228,6 +230,7 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
 
 
 def main():
+    """Parse CLI arguments and dispatch to API server or analysis runner."""
     # Argument parsing for CLI usage
     parser = argparse.ArgumentParser("multivol")
     parser.add_argument("--api", action="store_true", help="Start API server")
@@ -268,7 +271,7 @@ def main():
     vol3_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
     vol3_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes")
     vol3_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
-    
+
     # Global arguments
     parser.add_argument("--debug", action="store_true", help="Show executed Docker commands")
     parser.add_argument("--scan-id", help="Scan UUID for API status updates", required=False)
@@ -277,18 +280,14 @@ def main():
 
     if args.api:
         try:
-            from .api_server import run_api
+            from .api_server import run_api  # pylint: disable=import-outside-toplevel
         except ImportError:
-            from api_server import run_api
+            from api_server import run_api  # pylint: disable=import-outside-toplevel
         run_api(run_analysis, debug_mode=args.dev)
         return
 
     _validate_args(parser, args)
 
-    # Start the runner with parsed arguments
-    run_analysis(args)
-    
-    # Start the runner with parsed arguments
     run_analysis(args)
 
 if __name__ == "__main__":

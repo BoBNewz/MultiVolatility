@@ -5,6 +5,7 @@ for Windows memory dump file recovery.
 The sidecar container keeps a persistent memprocfs.Vmm handle open,
 enabling instant file listing and downloads without re-initialization.
 """
+# pylint: disable=duplicate-code
 
 import os
 import re
@@ -12,9 +13,9 @@ import time
 import json
 import sqlite3
 import threading
-import docker
 import logging
 from typing import Optional
+import docker
 from flask import Blueprint, request, jsonify, Response
 import requests as http_requests
 from multivol.api_server.database import get_db_connection
@@ -66,7 +67,7 @@ def cleanup_container(container_name: str) -> None:
             container.remove(force=True)
         except docker.errors.NotFound:
             pass  # Container already gone — nothing to remove
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logging.warning("Failed to cleanup container %s", container_name, exc_info=True)
 
 
@@ -90,7 +91,7 @@ def _get_or_check_active_session(uuid: str) -> Optional[Response]:
             container = client.containers.get(session['container_name'])
             if container.status == 'running':
                 return jsonify({"status": "already_running", "port": session.get('port')})
-        except Exception:
+        except docker.errors.DockerException:
             del active_sessions[uuid]
     return None
 
@@ -140,7 +141,7 @@ def _register_module_status(uuid: str) -> None:
                 (time.time(), uuid, MODULE_NAME)
             )
         conn.commit()
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logging.exception("Failed to update module status for scan %s", uuid)
     finally:
         conn.close()
@@ -152,7 +153,7 @@ def _detect_network(client: docker.DockerClient) -> str:
         api_container = client.containers.get('multivol-api')
         api_networks = list(api_container.attrs['NetworkSettings']['Networks'].keys())
         return api_networks[0] if api_networks else 'bridge'
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         return 'bridge'
 
 
@@ -174,7 +175,7 @@ def _wait_for_sidecar(container_name: str, uuid: str) -> None:
                 )
                 conn.commit()
                 conn.close()
-                logging.info(f"MemProcFS sidecar ready for {uuid}")
+                logging.info("MemProcFS sidecar ready for %s", uuid)
                 return
         except http_requests.exceptions.RequestException as poll_err:
             # Expected during sidecar initialization — suppress until ready
@@ -208,7 +209,8 @@ def start_memprocfs(uuid: str) -> Response:
     try:
         _scan, dump_path, dump_filename = _lookup_scan_for_memprocfs(uuid)
     except ValueError as exc:
-        message, status_code = exc.args
+        message = exc.args[0] if exc.args else "Unknown error"
+        status_code = exc.args[1] if len(exc.args) > 1 else 500
         return jsonify({"error": message}), status_code
 
     _register_module_status(uuid)
@@ -245,8 +247,8 @@ def start_memprocfs(uuid: str) -> Response:
         return jsonify({
             "error": f"MemProcFS image '{MEMPROCFS_IMAGE}' not found. Build it first: docker build -t {MEMPROCFS_IMAGE} ./Dockerfiles/memprocfs/"
         }), 500
-    except Exception as e:
-        logging.error(f"Failed to start sidecar: {e}", exc_info=True)
+    except Exception as e:  # pylint: disable=broad-except
+        logging.error("Failed to start sidecar: %s", e, exc_info=True)
         return jsonify({"error": f"Failed to start sidecar: {str(e)}"}), 500
 
 
@@ -281,7 +283,7 @@ def _fetch_and_cache_files(uuid: str) -> tuple[Optional[list], Optional[Response
         return None, (jsonify({"error": "MemProcFS sidecar is not reachable. It may still be initializing."}), 503)
     except http_requests.exceptions.Timeout:
         return None, (jsonify({"error": "MemProcFS file listing timed out (>5 min)"}), 504)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         return None, (jsonify({"error": f"Failed to fetch files: {str(e)}"}), 500)
 
     try:
@@ -295,7 +297,7 @@ def _fetch_and_cache_files(uuid: str) -> tuple[Optional[list], Optional[Response
             )
         conn.commit()
         conn.close()
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logging.warning("Failed to cache MemProcFS results for scan %s", uuid, exc_info=True)
 
     return all_files, None
@@ -358,7 +360,7 @@ def download_memprocfs_file(uuid: str) -> Response:
         if resp.status_code != 200:
             try:
                 return jsonify(resp.json()), resp.status_code
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 return jsonify({"error": "Download failed"}), resp.status_code
 
         # Stream the response back to the client
@@ -372,7 +374,7 @@ def download_memprocfs_file(uuid: str) -> Response:
             }
         )
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         return jsonify({"error": f"Download failed: {str(e)}"}), 500
 
 
@@ -408,3 +410,4 @@ def memprocfs_status(uuid: str) -> Response:
     except http_requests.exceptions.RequestException as health_err:
         # Sidecar unreachable — treat as inactive
         logging.debug("MemProcFS health check failed: %s", health_err)
+    return jsonify({"active": False})
