@@ -1,518 +1,64 @@
 {
-  "command": "show",
-  "query": "Code quality",
-  "status_filter": "open",
-  "total": 37,
-  "summary": {
-    "by_tier": {
-      "T2": 13,
-      "T3": 14,
-      "T4": 10
-    },
-    "by_detector": {
-      "stale_exclude": 10,
-      "orphaned": 10,
-      "smells": 10,
-      "dict_keys": 7
-    },
-    "files": 20
+  "command": "next",
+  "items": [
+    {
+      "id": "review::.::holistic::error_consistency::mixed_error_strategies_in_utils",
+      "kind": "issue",
+      "confidence": "high",
+      "detector": "review",
+      "file": ".",
+      "summary": "utils.py uses two different error strategies for I/O failures: get_file_hash raises OSError while clean_and_parse_json returns an error dict",
+      "detail": {
+        "holistic": true,
+        "dimension": "error_consistency",
+        "related_files": [
+          "CLI/multivol/api_server/utils.py"
+        ],
+        "evidence": [
+          "get_file_hash(): docstring says 'Raises OSError if the file cannot be read'; calculate_sha256() propagates FileNotFoundError from open()",
+          "clean_and_parse_json(): returns {\"error\": \"File not found\", \"raw_output\": \"\"} when file is missing instead of raising",
+          "Callers of both functions must use completely different error-handling patterns even though both are reading files"
+        ],
+        "suggestion": "Decide on one strategy for the module. Since callers are Flask routes, returning error dicts is more idiomatic for utils used at the HTTP layer. Either (a) have get_file_hash return None on failure and document it, or (b) have clean_and_parse_json raise FileNotFoundError on missing file. Apply the chosen strategy consistently.",
+        "reasoning": "",
+        "content_hash": "b2ec8365"
+      },
+      "status": "open",
+      "primary_command": "desloppify plan resolve \"review::.::holistic::error_consistency::mixed_error_strategies_in_utils\" --note \"<what you did>\" --confirm",
+      "queue_position": 1,
+      "plan_cluster": {
+        "name": "auto/review-error_consistency",
+        "description": "Address 2 error_consistency review issues",
+        "total_items": 1,
+        "action_steps": []
+      }
+    }
+  ],
+  "queue": {
+    "total": 1
   },
-  "by_file": {
-    "CLI/multivol/api_server/routes/scan.py": [
-      {
-        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::phantom_read::mod_dict::module",
-        "tier": 2,
-        "confidence": "high",
-        "summary": "Dict key \"module\" read at line 373 but never written to `mod_dict`",
-        "detail": {
-          "kind": "phantom_read",
-          "key": "module",
-          "line": 373,
-          "info": "Created at line 372 in get_scan_modules_status() \u2014 will raise KeyError or return None via .get()"
-        }
-      },
-      {
-        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::phantom_read::scan_dict::uuid",
-        "tier": 2,
-        "confidence": "high",
-        "summary": "Dict key \"uuid\" read at line 562 but never written to `scan_dict`",
-        "detail": {
-          "kind": "phantom_read",
-          "key": "uuid",
-          "line": 562,
-          "info": "Created at line 561 in list_scans() \u2014 will raise KeyError or return None via .get()"
-        }
-      },
-      {
-        "id": "smells::CLI/multivol/api_server/routes/scan.py::empty_except",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "1x Empty except block (except: pass)",
-        "detail": {
-          "smell_id": "empty_except",
-          "severity": "high",
-          "count": 1,
-          "lines": [
-            424
-          ]
-        }
-      },
-      {
-        "id": "smells::CLI/multivol/api_server/routes/scan.py::monster_function",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "1x Monster function (>150 LOC)",
-        "detail": {
-          "smell_id": "monster_function",
-          "severity": "high",
-          "count": 1,
-          "lines": [
-            119
-          ]
-        }
-      },
-      {
-        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::fetch_symbol",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Dict key \"fetch_symbol\" overwritten on `default_args` at line 701 (previously set at line 676, never read between)",
-        "detail": {
-          "kind": "overwritten_key",
-          "key": "fetch_symbol",
-          "line": 701,
-          "info": "in execute_plugin()"
-        }
-      },
-      {
-        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::linux",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Dict key \"linux\" overwritten on `default_args` at line 700 (previously set at line 676, never read between)",
-        "detail": {
-          "kind": "overwritten_key",
-          "key": "linux",
-          "line": 700,
-          "info": "in execute_plugin()"
-        }
-      },
-      {
-        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::windows",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Dict key \"windows\" overwritten on `default_args` at line 703 (previously set at line 676, never read between)",
-        "detail": {
-          "kind": "overwritten_key",
-          "key": "windows",
-          "line": 703,
-          "info": "in execute_plugin()"
-        }
-      },
-      {
-        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::mod_dict::status",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Dict key \"status\" overwritten on `mod_dict` at line 418 (previously set at line 396, never read between)",
-        "detail": {
-          "kind": "overwritten_key",
-          "key": "status",
-          "line": 418,
-          "info": "in get_scan_modules_status()"
-        }
-      },
-      {
-        "id": "orphaned::CLI/multivol/api_server/routes/scan.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (982 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 982
-        }
-      }
-    ],
-    "CLI/multivol/api_server/routes/memprocfs.py": [
-      {
-        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::empty_except",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "2x Empty except block (except: pass)",
-        "detail": {
-          "smell_id": "empty_except",
-          "severity": "high",
-          "count": 2,
-          "lines": [
-            207,
-            395
-          ]
-        }
-      },
-      {
-        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::monster_function",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "1x Monster function (>150 LOC)",
-        "detail": {
-          "smell_id": "monster_function",
-          "severity": "high",
-          "count": 1,
-          "lines": [
-            77
-          ]
-        }
-      },
-      {
-        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::silent_except",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "3x Except handler silently suppresses error (pass/continue, no log)",
-        "detail": {
-          "smell_id": "silent_except",
-          "severity": "high",
-          "count": 3,
-          "lines": [
-            66,
-            207,
-            395
-          ]
-        }
-      },
-      {
-        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::stderr_traceback",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "1x traceback.print_exc() bypasses structured logging",
-        "detail": {
-          "smell_id": "stderr_traceback",
-          "severity": "high",
-          "count": 1,
-          "lines": [
-            236
-          ]
-        }
-      },
-      {
-        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::swallowed_error",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "3x Catch block that only logs (swallowed error)",
-        "detail": {
-          "smell_id": "swallowed_error",
-          "severity": "high",
-          "count": 3,
-          "lines": [
-            68,
-            134,
-            292
-          ]
-        }
-      },
-      {
-        "id": "orphaned::CLI/multivol/api_server/routes/memprocfs.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (398 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 398
-        }
-      }
-    ],
-    "CLI/multivol/api_server/routes/dump.py": [
-      {
-        "id": "dict_keys::CLI/multivol/api_server/routes/dump.py::phantom_read::config::fetch_symbol",
-        "tier": 2,
-        "confidence": "high",
-        "summary": "Dict key \"fetch_symbol\" read at line 42 but never written to `config`",
-        "detail": {
-          "kind": "phantom_read",
-          "key": "fetch_symbol",
-          "line": 42,
-          "info": "Created at line 35 in background_dump_task() \u2014 will raise KeyError or return None via .get()"
-        }
-      },
-      {
-        "id": "smells::CLI/multivol/api_server/routes/dump.py::swallowed_error",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "1x Catch block that only logs (swallowed error)",
-        "detail": {
-          "smell_id": "swallowed_error",
-          "severity": "high",
-          "count": 1,
-          "lines": [
-            39
-          ]
-        }
-      },
-      {
-        "id": "orphaned::CLI/multivol/api_server/routes/dump.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (219 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 219
-        }
-      }
-    ],
-    "CLI/multivol/api_server/database.py": [
-      {
-        "id": "smells::CLI/multivol/api_server/database.py::swallowed_error",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "2x Catch block that only logs (swallowed error)",
-        "detail": {
-          "smell_id": "swallowed_error",
-          "severity": "high",
-          "count": 2,
-          "lines": [
-            95,
-            101
-          ]
-        }
-      },
-      {
-        "id": "orphaned::CLI/multivol/api_server/database.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (110 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 110
-        }
-      }
-    ],
-    "CLI/multivol/api_server/routes/files.py": [
-      {
-        "id": "smells::CLI/multivol/api_server/routes/files.py::swallowed_error",
-        "tier": 2,
-        "confidence": "medium",
-        "summary": "2x Catch block that only logs (swallowed error)",
-        "detail": {
-          "smell_id": "swallowed_error",
-          "severity": "high",
-          "count": 2,
-          "lines": [
-            126,
-            158
-          ]
-        }
-      },
-      {
-        "id": "orphaned::CLI/multivol/api_server/routes/files.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (279 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 279
-        }
-      }
-    ],
-    "CLI/build": [
-      {
-        "id": "stale_exclude::CLI/build::CLI/build",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/build' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/build",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/dist": [
-      {
-        "id": "stale_exclude::CLI/dist::CLI/dist",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/dist' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/dist",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/multivol.egg-info": [
-      {
-        "id": "stale_exclude::CLI/multivol.egg-info::CLI/multivol.egg-info",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/multivol.egg-info' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/multivol.egg-info",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/multivol/api_server/auth.py": [
-      {
-        "id": "orphaned::CLI/multivol/api_server/auth.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (28 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 28
-        }
-      }
-    ],
-    "CLI/multivol/api_server/routes/auth.py": [
-      {
-        "id": "orphaned::CLI/multivol/api_server/routes/auth.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (23 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 23
-        }
-      }
-    ],
-    "CLI/multivol/api_server/routes/docker.py": [
-      {
-        "id": "orphaned::CLI/multivol/api_server/routes/docker.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (111 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 111
-        }
-      }
-    ],
-    "CLI/multivol/api_server/utils.py": [
-      {
-        "id": "orphaned::CLI/multivol/api_server/utils.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (232 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 232
-        }
-      }
-    ],
-    "CLI/multivol/multivol.py": [
-      {
-        "id": "orphaned::CLI/multivol/multivol.py",
-        "tier": 3,
-        "confidence": "medium",
-        "summary": "Orphaned file (362 LOC): zero importers, not an entry point",
-        "detail": {
-          "loc": 362
-        }
-      }
-    ],
-    "CLI/outputs": [
-      {
-        "id": "stale_exclude::CLI/outputs::CLI/outputs",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/outputs' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/outputs",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/storage": [
-      {
-        "id": "stale_exclude::CLI/storage::CLI/storage",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/storage' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/storage",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/volatility2_profiles": [
-      {
-        "id": "stale_exclude::CLI/volatility2_profiles::CLI/volatility2_profiles",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/volatility2_profiles' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/volatility2_profiles",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/volatility3_cache": [
-      {
-        "id": "stale_exclude::CLI/volatility3_cache::CLI/volatility3_cache",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/volatility3_cache' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/volatility3_cache",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/volatility3_plugins": [
-      {
-        "id": "stale_exclude::CLI/volatility3_plugins::CLI/volatility3_plugins",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/volatility3_plugins' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/volatility3_plugins",
-          "references": 0
-        }
-      }
-    ],
-    "CLI/volatility3_symbols": [
-      {
-        "id": "stale_exclude::CLI/volatility3_symbols::CLI/volatility3_symbols",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'CLI/volatility3_symbols' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "CLI/volatility3_symbols",
-          "references": 0
-        }
-      }
-    ],
-    "Web/node_modules": [
-      {
-        "id": "stale_exclude::Web/node_modules::Web/node_modules",
-        "tier": 4,
-        "confidence": "low",
-        "summary": "Excluded directory 'Web/node_modules' has 0 references from scanned code \u2014 may be stale",
-        "detail": {
-          "directory": "Web/node_modules",
-          "references": 0
-        }
-      }
-    ]
-  },
-  "total_matching": 91,
-  "hidden": {
-    "by_detector": {
-      "smells": 48,
-      "stale_exclude": 4,
-      "orphaned": 2
-    },
-    "total": 54
-  },
-  "noise_budget": 10,
-  "noise_global_budget": 0,
   "narrative": {
-    "phase": "regression",
-    "headline": "\u26a0 22 security issues \u2014 review before other cleanup. All T1 items cleared!",
+    "phase": "middle_grind",
+    "headline": "\u26a0 9 security issues \u2014 review before other cleanup. 164 issues open. Test health (0.0%) needs attention \u2014 run `desloppify next` to start. (16 review issues \u2014 run `desloppify show review --status open`)",
     "dimensions": {
       "lowest_dimensions": [
         {
           "name": "Test health",
           "strict": 0.0,
-          "failing": 30,
+          "failing": 29,
           "impact": 0.0
         },
         {
           "name": "Test strategy",
-          "strict": 0.0,
-          "failing": 0,
+          "strict": 20.0,
+          "failing": 1,
           "impact": 0.0,
           "subjective": true,
           "impact_description": "re-review to improve"
         },
         {
-          "name": "Type safety",
-          "strict": 19.0,
+          "name": "Dep health",
+          "strict": 33.0,
           "failing": 0,
           "impact": 0.0,
           "subjective": true,
@@ -522,23 +68,23 @@
       "biggest_gap_dimensions": [
         {
           "name": "Test health",
-          "lenient": 18.5,
+          "lenient": 18.0,
           "strict": 0.0,
-          "gap": 18.5,
+          "gap": 18.0,
           "wontfix_count": 0
+        },
+        {
+          "name": "Security",
+          "lenient": 90.4,
+          "strict": 81.3,
+          "gap": 9.1,
+          "wontfix_count": 7
         },
         {
           "name": "Duplication",
-          "lenient": 99.2,
-          "strict": 93.4,
-          "gap": 5.8,
-          "wontfix_count": 0
-        },
-        {
-          "name": "Code quality",
-          "lenient": 73.5,
-          "strict": 70.7,
-          "gap": 2.8,
+          "lenient": 99.3,
+          "strict": 94.3,
+          "gap": 5.0,
           "wontfix_count": 0
         }
       ],
@@ -546,12 +92,7 @@
         {
           "name": "File health",
           "strict": 68.5,
-          "stuck_scans": 4
-        },
-        {
-          "name": "Test strategy",
-          "strict": 0.0,
-          "stuck_scans": 4
+          "stuck_scans": 5
         }
       ]
     },
@@ -560,11 +101,15 @@
         "type": "reorganize",
         "detector": "orphaned",
         "count": 12,
-        "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
-        "command": "desloppify show orphaned --status open",
+        "description": "12 orphaned issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 1,
+        "clusters": [
+          "auto/orphaned"
+        ],
+        "cluster_count": 1,
         "lane": "restructure"
       },
       {
@@ -581,8 +126,8 @@
       {
         "type": "refactor",
         "detector": "structural",
-        "count": 9,
-        "description": "9 structural issues \u2014 review large files \u2014 split only when responsibilities are clearly separable",
+        "count": 8,
+        "description": "8 structural issues \u2014 review large files \u2014 split only when responsibilities are clearly separable",
         "command": "desloppify show structural --status open",
         "impact": 0.0,
         "dimension": "File health",
@@ -593,22 +138,31 @@
         "type": "refactor",
         "detector": "dict_keys",
         "count": 7,
-        "description": "7 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
-        "command": "desloppify show dict_keys --status open",
+        "description": "7 dict_keys issues in 2 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 4,
+        "clusters": [
+          "auto/dict_keys-phantom_read",
+          "auto/dict_keys-overwritten_key"
+        ],
+        "cluster_count": 2,
         "lane": "refactor_0"
       },
       {
         "type": "refactor",
         "detector": "test_coverage",
         "count": 14,
-        "description": "14 test_coverage issues \u2014 add tests for untested production modules \u2014 prioritize by import count",
-        "command": "desloppify show test_coverage --status open",
+        "description": "14 test_coverage issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Test health",
         "priority": 5,
+        "clusters": [
+          "auto/test_coverage"
+        ],
+        "cluster_count": 1,
         "lane": "test_coverage"
       },
       {
@@ -634,14 +188,40 @@
         "lane": "refactor_0"
       },
       {
+        "type": "refactor",
+        "detector": "review",
+        "count": 16,
+        "description": "16 review issues need investigation \u2014 run `desloppify show review --status open` to see them",
+        "command": "desloppify show review --status open",
+        "impact": 0.0,
+        "dimension": "Unknown",
+        "priority": 8,
+        "lane": "refactor_1"
+      },
+      {
         "type": "manual_fix",
         "detector": "smells",
-        "count": 70,
-        "description": "70 smells issues \u2014 inspect with `desloppify next` and fix manually",
-        "command": "desloppify show smells --status open",
+        "count": 61,
+        "description": "61 smells issues in 12 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 8,
+        "priority": 9,
+        "clusters": [
+          "auto/smells-silent_except",
+          "auto/smells-swallowed_error",
+          "auto/smells-subprocess_no_timeout",
+          "auto/smells-sys_exit_in_library",
+          "auto/smells-monster_function",
+          "auto/smells-annotation_quality",
+          "auto/smells-high_cyclomatic_complexity",
+          "auto/smells-hardcoded_url",
+          "auto/smells-dead_function",
+          "auto/smells-deferred_import",
+          "auto/smells-debug_tag",
+          "auto/smells-import_runtime_init"
+        ],
+        "cluster_count": 12,
         "lane": "refactor_0"
       },
       {
@@ -652,47 +232,59 @@
         "command": "desloppify show global_mutable_config --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 9,
+        "priority": 10,
         "lane": "refactor_0"
       },
       {
         "type": "manual_fix",
         "detector": "stale_exclude",
         "count": 14,
-        "description": "14 stale_exclude issues \u2014 remove stale exclusion or verify it's still needed",
-        "command": "desloppify show stale_exclude --status open",
+        "description": "14 stale_exclude issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 10,
-        "lane": "refactor_1"
+        "priority": 11,
+        "clusters": [
+          "auto/stale_exclude"
+        ],
+        "cluster_count": 1,
+        "lane": "refactor_2"
       },
       {
         "type": "manual_fix",
         "detector": "security",
-        "count": 22,
-        "description": "22 security issues \u2014 review and fix security issues \u2014 prioritize by severity",
-        "command": "desloppify show security --status open",
+        "count": 9,
+        "description": "9 security issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Security",
-        "priority": 11,
+        "priority": 12,
+        "clusters": [
+          "auto/security"
+        ],
+        "cluster_count": 1,
         "lane": "refactor_0"
       },
       {
         "type": "manual_fix",
         "detector": "subjective_review",
-        "count": 16,
-        "description": "16 files need design review \u2014 run holistic review to refresh subjective scores",
-        "command": "desloppify review --prepare",
+        "count": 15,
+        "description": "15 subjective_review issues in 1 cluster(s) \u2014 run `desloppify next`",
+        "command": "desloppify next",
         "impact": 0.0,
         "dimension": "Test health",
-        "priority": 12,
+        "priority": 13,
+        "clusters": [
+          "auto/subjective_review"
+        ],
+        "cluster_count": 1,
         "lane": "refactor_0"
       }
     ],
     "strategy": {
       "fixer_leverage": {
         "auto_fixable_count": 0,
-        "total_count": 172,
+        "total_count": 196,
         "coverage": 0.0,
         "impact_ratio": 0.0,
         "recommendation": "none"
@@ -714,19 +306,28 @@
             4,
             6,
             7,
-            8,
             9,
-            11,
-            12
+            10,
+            12,
+            13
           ],
-          "file_count": 19,
+          "file_count": 18,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         },
         "refactor_1": {
           "actions": [
-            10
+            8
+          ],
+          "file_count": 1,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "refactor_2": {
+          "actions": [
+            11
           ],
           "file_count": 14,
           "total_impact": 0.0,
@@ -744,7 +345,7 @@
         }
       },
       "can_parallelize": true,
-      "hint": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify."
+      "hint": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 16 issue(s) \u2014 `desloppify show review --status open`."
     },
     "tools": {
       "fixers": [],
@@ -766,18 +367,18 @@
       }
     },
     "debt": {
-      "overall_gap": 1.0,
-      "wontfix_count": 0,
+      "overall_gap": 1.5,
+      "wontfix_count": 7,
       "worst_dimension": "Test health",
-      "worst_gap": 18.5,
+      "worst_gap": 18.0,
       "trend": "growing"
     },
-    "milestone": "All T1 items cleared!",
+    "milestone": null,
     "primary_action": {
-      "command": "desloppify show orphaned --status open",
-      "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
+      "command": "desloppify next",
+      "description": "12 orphaned issues in 1 cluster(s) \u2014 run `desloppify next`"
     },
-    "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify.",
+    "why_now": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 16 issue(s) \u2014 `desloppify show review --status open`.",
     "verification_step": {
       "command": "desloppify scan",
       "reason": "revalidate after changes"
@@ -786,30 +387,23 @@
       {
         "type": "wontfix_gap",
         "severity": "medium",
-        "message": "Strict/lenient gap is 1.0 pts with 0 wontfix issues"
+        "message": "Strict/lenient gap is 1.5 pts with 7 wontfix issues"
       }
     ],
     "strict_target": {
       "target": 95.0,
-      "current": 46.4,
-      "gap": 48.6,
+      "current": 52.1,
+      "gap": 42.9,
       "state": "below",
       "warning": null
     },
     "reminders": [
       {
-        "type": "stagnant_nudge",
-        "message": "File health has been stuck at 68.5% for 4 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
-        "command": null,
-        "priority": 2,
-        "severity": "medium"
-      },
-      {
-        "type": "stagnant_nudge",
-        "message": "Test strategy has been stuck at 0.0% for 4 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
-        "command": null,
-        "priority": 2,
-        "severity": "medium"
+        "type": "review_issues_pending",
+        "message": "16 review issue(s) need investigation. Run `desloppify show review --status open` to see the work queue.",
+        "command": "desloppify show review --status open",
+        "priority": 1,
+        "severity": "high"
       },
       {
         "type": "wontfix_growing",
@@ -817,23 +411,672 @@
         "command": "desloppify show --status wontfix",
         "priority": 2,
         "severity": "medium"
-      },
-      {
-        "type": "zone_classification",
-        "message": "6 of 26 files classified as non-production (2 config, 4 test). Override with `desloppify zone set <file> production` if any are misclassified.",
-        "command": "desloppify zone show",
-        "priority": 2,
-        "severity": "medium"
       }
     ],
     "reminder_history": {
       "zone_classification": 3,
-      "report_scores": 2,
-      "stagnant_nudge": 4,
-      "wontfix_growing": 2,
-      "feedback_nudge": 1
+      "report_scores": 3,
+      "stagnant_nudge": 3,
+      "wontfix_growing": 3,
+      "feedback_nudge": 2,
+      "review_issues_pending": 2
     }
   },
+  "agent_notes": [
+    "Do NOT use `desloppify plan skip` unless the user explicitly asks you to skip an item.",
+    "If you cannot fix an item, report it and move to the next one.",
+    "For cluster items: if the autofix_hint finds 0 results, drill into individual issues with the primary_command."
+  ],
+  "plan": {
+    "active": true,
+    "focus": null,
+    "clusters": [
+      {
+        "name": "auto/orphaned",
+        "description": "Fix 12 orphaned issues",
+        "item_count": 12
+      },
+      {
+        "name": "auto/test_coverage",
+        "description": "Fix 14 test coverage issues",
+        "item_count": 14
+      },
+      {
+        "name": "auto/smells-silent_except",
+        "description": "Fix 5 silent except issues",
+        "item_count": 5
+      },
+      {
+        "name": "auto/smells-swallowed_error",
+        "description": "Fix 9 swallowed error issues",
+        "item_count": 9
+      },
+      {
+        "name": "auto/smells-subprocess_no_timeout",
+        "description": "Fix 2 subprocess no timeout issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/smells-sys_exit_in_library",
+        "description": "Fix 2 sys exit in library issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/smells-monster_function",
+        "description": "Fix 2 monster function issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/smells-annotation_quality",
+        "description": "Fix 14 annotation quality issues",
+        "item_count": 14
+      },
+      {
+        "name": "auto/smells-high_cyclomatic_complexity",
+        "description": "Fix 8 high cyclomatic complexity issues",
+        "item_count": 8
+      },
+      {
+        "name": "auto/smells-hardcoded_url",
+        "description": "Fix 4 hardcoded url issues",
+        "item_count": 4
+      },
+      {
+        "name": "auto/smells-dead_function",
+        "description": "Fix 2 dead function issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/smells-deferred_import",
+        "description": "Fix 7 deferred import issues",
+        "item_count": 7
+      },
+      {
+        "name": "auto/smells-debug_tag",
+        "description": "Fix 2 debug tag issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/dict_keys-phantom_read",
+        "description": "Fix 3 phantom read issues",
+        "item_count": 3
+      },
+      {
+        "name": "auto/dict_keys-overwritten_key",
+        "description": "Fix 4 overwritten key issues",
+        "item_count": 4
+      },
+      {
+        "name": "auto/subjective_review",
+        "description": "Address 15 subjective_review review issues",
+        "item_count": 15
+      },
+      {
+        "name": "auto/stale_exclude",
+        "description": "Fix 14 stale exclude issues",
+        "item_count": 14
+      },
+      {
+        "name": "dead-code",
+        "description": "Remove api_strings_extension.py dead code and routes/__init__.py dead blueprint",
+        "item_count": 0
+      },
+      {
+        "name": "error-handling",
+        "description": "Fix get_file_hash sentinel return, remaining bare excepts, swallowed errors",
+        "item_count": 0
+      },
+      {
+        "name": "naming-quality",
+        "description": "Fix naming: camelCase, misnamed params, misleading field names",
+        "item_count": 0
+      },
+      {
+        "name": "architecture",
+        "description": "Route prefix inconsistency, god functions, redundant code, mutable module state, argument coupling",
+        "item_count": 0
+      },
+      {
+        "name": "type-safety",
+        "description": "Missing type annotations on public APIs, untyped callables, misleading return types",
+        "item_count": 0
+      },
+      {
+        "name": "testing",
+        "description": "No test suite exists; critical paths are completely untested",
+        "item_count": 0
+      },
+      {
+        "name": "auto/smells-import_runtime_init",
+        "description": "Fix 2 import runtime init issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/security",
+        "description": "Fix 16 security issues",
+        "item_count": 16
+      },
+      {
+        "name": "auto/review-cross_module_architecture",
+        "description": "Address 2 cross_module_architecture review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-high_level_elegance",
+        "description": "Address 2 high_level_elegance review issues",
+        "item_count": 3
+      },
+      {
+        "name": "auto/review-mid_level_elegance",
+        "description": "Address 2 mid_level_elegance review issues",
+        "item_count": 4
+      },
+      {
+        "name": "auto/review-low_level_elegance",
+        "description": "Address 2 low_level_elegance review issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/review-type_safety",
+        "description": "Address 3 type_safety review issues",
+        "item_count": 3
+      },
+      {
+        "name": "auto/review-error_consistency",
+        "description": "Address 2 error_consistency review issues",
+        "item_count": 1
+      },
+      {
+        "name": "auto/review-contract_coherence",
+        "description": "Address 2 contract_coherence review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-design_coherence",
+        "description": "Address 2 design_coherence review issues",
+        "item_count": 1
+      },
+      {
+        "name": "auto/review-initialization_coupling",
+        "description": "Address 2 initialization_coupling review issues",
+        "item_count": 2
+      },
+      {
+        "name": "auto/review-incomplete_migration",
+        "description": "Address 2 incomplete_migration review issues",
+        "item_count": 3
+      },
+      {
+        "name": "auto/review-authorization_consistency",
+        "description": "Address 3 authorization_consistency review issues",
+        "item_count": 0
+      },
+      {
+        "name": "auto/review-test_strategy",
+        "description": "Address 2 test_strategy review issues",
+        "item_count": 1
+      },
+      {
+        "name": "auto/stale-review",
+        "description": "Re-review 3 stale subjective dimensions",
+        "item_count": 3
+      },
+      {
+        "name": "already-fixed",
+        "description": "Issues already fixed this session",
+        "item_count": 1
+      }
+    ],
+    "total_ordered": 39,
+    "total_skipped": 7,
+    "plan_overrides_narrative": true
+  },
+  "overall_score": 56.0,
+  "objective_score": 58.8,
+  "strict_score": 52.1,
+  "scorecard_dimensions": [
+    {
+      "name": "File health",
+      "score": 72.0,
+      "strict": 68.5,
+      "checks": 20,
+      "failing": 8,
+      "tier": 3,
+      "subjective": false
+    },
+    {
+      "name": "AI generated debt",
+      "score": 70.0,
+      "strict": 70.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "ai_generated_debt"
+      ]
+    },
+    {
+      "name": "Abstraction fit",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "abstraction_fitness"
+      ]
+    },
+    {
+      "name": "Auth consistency",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "authorization_consistency"
+      ]
+    },
+    {
+      "name": "Code quality",
+      "score": 74.2,
+      "strict": 70.7,
+      "checks": 148,
+      "failing": 85,
+      "tier": 3,
+      "subjective": false
+    },
+    {
+      "name": "Contracts",
+      "score": 47.0,
+      "strict": 47.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "contract_coherence"
+      ]
+    },
+    {
+      "name": "Convention drift",
+      "score": 57.0,
+      "strict": 57.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "convention_outlier"
+      ]
+    },
+    {
+      "name": "Cross-module arch",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "cross_module_architecture"
+      ]
+    },
+    {
+      "name": "Dep health",
+      "score": 33.0,
+      "strict": 33.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "dependency_health"
+      ]
+    },
+    {
+      "name": "Design coherence",
+      "score": 53.0,
+      "strict": 53.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "design_coherence"
+      ]
+    },
+    {
+      "name": "Duplication",
+      "score": 99.3,
+      "strict": 94.3,
+      "checks": 96,
+      "failing": 1,
+      "tier": 3,
+      "subjective": false
+    },
+    {
+      "name": "Elegance",
+      "score": 56.3,
+      "strict": 56.3,
+      "checks": 30,
+      "failing": 6,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "high_level_elegance",
+        "low_level_elegance",
+        "mid_level_elegance"
+      ]
+    },
+    {
+      "name": "Error consistency",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 1,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "error_consistency"
+      ]
+    },
+    {
+      "name": "Init coupling",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 2,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "initialization_coupling"
+      ]
+    },
+    {
+      "name": "Security",
+      "score": 90.4,
+      "strict": 81.3,
+      "checks": 47,
+      "failing": 9,
+      "tier": 4,
+      "subjective": false
+    },
+    {
+      "name": "Stale migration",
+      "score": 42.0,
+      "strict": 42.0,
+      "checks": 10,
+      "failing": 2,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "incomplete_migration"
+      ]
+    },
+    {
+      "name": "Structure nav",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 1,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "package_organization"
+      ]
+    },
+    {
+      "name": "Test health",
+      "score": 18.0,
+      "strict": 0.0,
+      "checks": 249,
+      "failing": 29,
+      "tier": 4,
+      "subjective": false
+    },
+    {
+      "name": "Test strategy",
+      "score": 20.0,
+      "strict": 20.0,
+      "checks": 10,
+      "failing": 1,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "test_strategy"
+      ]
+    },
+    {
+      "name": "Type safety",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 3,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "type_safety"
+      ]
+    }
+  ],
+  "subjective_measures": [
+    {
+      "name": "AI generated debt",
+      "score": 70.0,
+      "strict": 70.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "ai_generated_debt"
+      ]
+    },
+    {
+      "name": "Abstraction fit",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "abstraction_fitness"
+      ]
+    },
+    {
+      "name": "Auth consistency",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "authorization_consistency"
+      ]
+    },
+    {
+      "name": "Contracts",
+      "score": 47.0,
+      "strict": 47.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "contract_coherence"
+      ]
+    },
+    {
+      "name": "Convention drift",
+      "score": 57.0,
+      "strict": 57.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "convention_outlier"
+      ]
+    },
+    {
+      "name": "Cross-module arch",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "cross_module_architecture"
+      ]
+    },
+    {
+      "name": "Dep health",
+      "score": 33.0,
+      "strict": 33.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "dependency_health"
+      ]
+    },
+    {
+      "name": "Design coherence",
+      "score": 53.0,
+      "strict": 53.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "design_coherence"
+      ]
+    },
+    {
+      "name": "Elegance",
+      "score": 56.3,
+      "strict": 56.3,
+      "checks": 30,
+      "failing": 6,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "high_level_elegance",
+        "low_level_elegance",
+        "mid_level_elegance"
+      ]
+    },
+    {
+      "name": "Error consistency",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 1,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "error_consistency"
+      ]
+    },
+    {
+      "name": "Init coupling",
+      "score": 50.0,
+      "strict": 50.0,
+      "checks": 10,
+      "failing": 2,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "initialization_coupling"
+      ]
+    },
+    {
+      "name": "Stale migration",
+      "score": 42.0,
+      "strict": 42.0,
+      "checks": 10,
+      "failing": 2,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "incomplete_migration"
+      ]
+    },
+    {
+      "name": "Structure nav",
+      "score": 60.0,
+      "strict": 60.0,
+      "checks": 10,
+      "failing": 1,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "package_organization"
+      ]
+    },
+    {
+      "name": "Test strategy",
+      "score": 20.0,
+      "strict": 20.0,
+      "checks": 10,
+      "failing": 1,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "test_strategy"
+      ]
+    },
+    {
+      "name": "Type safety",
+      "score": 43.0,
+      "strict": 43.0,
+      "checks": 10,
+      "failing": 3,
+      "tier": 4,
+      "subjective": true,
+      "placeholder": false,
+      "cli_keys": [
+        "type_safety"
+      ]
+    }
+  ],
   "config": {
     "target_strict_score": 95,
     "review_max_age_days": 30,

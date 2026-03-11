@@ -1,5 +1,6 @@
 import os
 import logging
+import secrets
 
 # Base paths — __file__ is CLI/multivol/api_server/config.py, BASE_DIR is CLI/
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -7,8 +8,21 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'storage', 'uploads')
 STORAGE_DIR = os.environ.get("STORAGE_DIR", os.path.join(BASE_DIR, "storage"))
 
-API_TOKEN = os.getenv("API_TOKEN", "multivol_default_secret_token")
-APP_PASSWORD = os.getenv("APP_PASSWORD", "multivol_password")
+API_TOKEN = os.getenv("API_TOKEN") or ""
+APP_PASSWORD = os.getenv("APP_PASSWORD") or ""
+
+if not API_TOKEN:
+    API_TOKEN = secrets.token_hex(32)
+    logging.warning(
+        "API_TOKEN env var is not set. Generated a random token for this session. "
+        "Set API_TOKEN in your environment to use a stable token."
+    )
+
+if not APP_PASSWORD:
+    logging.warning(
+        "APP_PASSWORD env var is not set. Login will be disabled. "
+        "Set APP_PASSWORD in your environment to enable password authentication."
+    )
 
 
 def ensure_dirs() -> None:

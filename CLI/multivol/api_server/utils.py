@@ -8,29 +8,30 @@ import subprocess
 from typing import Optional, Union
 from multivol.api_server.database import get_db_connection
 
-def resolve_host_path(container_path: str) -> str:
-    """Translate a container-side path to the host path using the HOST_PATH env var."""
-    host_base = os.environ.get("HOST_PATH")
+def resolve_host_path(container_path: str, host_path_override: Optional[str] = None) -> str:
+    """Translate a container-side path to the host path.
+
+    Uses *host_path_override* when provided; otherwise falls back to the
+    ``HOST_PATH`` environment variable. Returns *container_path* unchanged
+    when no host base is available (e.g. single-host deployments).
+    """
+    host_base = host_path_override or os.environ.get("HOST_PATH")
     if not host_base:
-         logging.warning("HOST_PATH not set. Docker volumes might map incorrectly if not using named volumes.")
-         return container_path # Fallback, might work if paths somehow align or not using docker-in-docker
-         
+        return container_path
+
     try:
         from multivol.api_server.config import BASE_DIR
 
-        # If the container_path is inside BASE_DIR, we translate it
         if container_path.startswith(BASE_DIR):
-             # e.g., /app/outputs/volatility3_1234 -> outputs/volatility3_1234
-             rel_path = os.path.relpath(container_path, BASE_DIR)
-             return os.path.join(host_base, rel_path)
+            rel_path = os.path.relpath(container_path, BASE_DIR)
+            return os.path.join(host_base, rel_path)
 
-        # Fallback to the old storage hack just in case
         if 'storage' in container_path:
-             rel_path = container_path[container_path.find('storage'):]
-             return os.path.join(host_base, rel_path)
+            rel_path = container_path[container_path.find('storage'):]
+            return os.path.join(host_base, rel_path)
     except Exception as e:
         logging.warning(f"resolve_host_path fallback triggered: {e}")
-    return container_path # Fallback
+    return container_path
 
 def calculate_sha256(filepath: str) -> str:
     """Calculate the SHA-256 hash of a file and return it as a hex string."""
@@ -40,27 +41,39 @@ def calculate_sha256(filepath: str) -> str:
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
 
-def get_file_hash(filepath: str) -> str:
-    """Gets cached hash or calculates it. Raises OSError if the file cannot be read."""
+def get_file_hash(filepath: str) -> Optional[str]:
+    """Return the SHA-256 hex digest for filepath, using a cached .sha256 sidecar file.
+
+    Returns None (with a warning log) if the file cannot be read, so callers
+    in HTTP handlers don't need try/except for missing files.
+    """
     hash_file = filepath + ".sha256"
     if os.path.exists(hash_file):
         try:
             with open(hash_file, 'r') as f:
                 return f.read().strip()
         except OSError as e:
-            logging.warning(f"Could not read cached hash for {filepath}: {e}")
+            logging.warning("Could not read cached hash for %s: %s", filepath, e)
 
-    # Calculate and cache
-    file_hash = calculate_sha256(filepath)
+    try:
+        file_hash = calculate_sha256(filepath)
+    except OSError as e:
+        logging.warning("Could not hash file %s: %s", filepath, e)
+        return None
+
     try:
         with open(hash_file, 'w') as f:
             f.write(file_hash)
     except OSError as e:
-        logging.warning(f"Could not write hash cache for {filepath}: {e}")
+        logging.warning("Could not write hash cache for %s: %s", filepath, e)
     return file_hash
 
 def clean_and_parse_json(filepath: str) -> Union[list, dict]:
-    """Helper to parse JSON from Volatility output files, handling errors gracefully."""
+    """Parse JSON from a Volatility output file.
+
+    Always returns a ``list`` or ``dict``. On parse failure or missing file,
+    returns ``{"error": "...", "raw_output": "..."}``.
+    """
     if not os.path.exists(filepath):
         logging.warning(f"File not found: {filepath}")
         return {"error": "File not found", "raw_output": ""}

@@ -91,153 +91,121 @@ def delete_symbol():
         return jsonify({"status": "success"})
     return jsonify({"error": "Not found"}), 404
 
-@files_bp.route('/evidences', methods=['GET'])
-def list_evidences():
-    # Helper to calculate size recursively
-    def get_dir_size(start_path):
-        total_size = 0
-        for dirpath, dirnames, filenames in os.walk(start_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                total_size += os.path.getsize(fp)
-        return total_size
+def _get_dir_size(start_path: str) -> int:
+    """Return total byte size of all files under start_path."""
+    total = 0
+    for dirpath, _, filenames in os.walk(start_path):
+        for f in filenames:
+            total += os.path.getsize(os.path.join(dirpath, f))
+    return total
 
-    try:
-        items = os.listdir(STORAGE_DIR)
-        # Robustly filter system files immediately
-        items = [i for i in items if not (i.startswith("scans.db") or i.endswith(".sha256"))]
-    except FileNotFoundError:
-        logging.error(f"Storage dir not found: {STORAGE_DIR}")
-        items = []
 
-    # Pre-load Case Name map from DB
-    case_map = {} # filename -> case name
+def _load_case_name_map() -> dict:
+    """Return a dict mapping dump filename → case name from the scans table."""
+    case_map: dict = {}
     try:
         conn = get_db_connection()
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute("SELECT name, dump_path FROM scans ORDER BY created_at ASC")
-        rows = c.fetchall()
-        for r in rows:
-            if r['name'] and r['dump_path']:
-                fname = os.path.basename(r['dump_path'])
-                case_map[fname] = r['name']
+        for row in c.fetchall():
+            if row['name'] and row['dump_path']:
+                case_map[os.path.basename(row['dump_path'])] = row['name']
         conn.close()
     except Exception:
         logging.warning("Failed to load case names from DB for evidence listing.", exc_info=True)
+    return case_map
 
-    evidences = []
-    
-    # First pass: Identify extracted folders
-    processed_dumps = set()
 
-    for item in items:
-        # Filter out system files
-        if item.startswith("scans.db") or item.endswith(".sha256"):
-            continue
+def _resolve_source_dump_name(dump_base: str) -> str:
+    """Return the dump filename for a case name (dump_base), or dump_base as fallback."""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT dump_path FROM scans WHERE name = ? ORDER BY created_at DESC LIMIT 1", (dump_base,))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            return os.path.basename(row['dump_path'])
+    except Exception:
+        logging.warning("Failed to resolve source dump from DB; falling back to folder name.", exc_info=True)
+    return dump_base
 
+
+def _build_extracted_group(item: str, path: str, processed_dumps: set) -> dict:
+    """Build an evidence-group dict for a *_extracted directory."""
+    dump_base = item[:-10]  # strip _extracted
+    files = []
+    try:
+        for sub in os.listdir(path):
+            if sub.endswith('.sha256'):
+                continue
+            subpath = os.path.join(path, sub)
+            if os.path.isfile(subpath):
+                files.append({"id": os.path.join(item, sub), "name": sub,
+                               "size": os.path.getsize(subpath), "type": "Extracted File"})
+    except Exception as e:
+        logging.error("Error reading subdir %s: %s", path, e)
+
+    source_dump = _resolve_source_dump_name(dump_base)
+    if source_dump and source_dump != "Unknown Source":
+        dump_path = os.path.join(STORAGE_DIR, source_dump)
+        if os.path.exists(dump_path):
+            processed_dumps.add(source_dump)
+            files.insert(0, {"id": source_dump, "name": source_dump,
+                              "size": os.path.getsize(dump_path),
+                              "type": "Memory Dump", "is_source": True})
+
+    return {
+        "id": item, "name": dump_base, "type": "Evidence Group",
+        "size": _get_dir_size(path), "hash": source_dump,
+        "source_id": source_dump if os.path.exists(os.path.join(STORAGE_DIR, source_dump)) else None,
+        "uploaded": "Extracted group", "children": files,
+    }
+
+
+def _build_dump_group(item: str, path: str, case_map: dict) -> dict:
+    """Build an evidence-group dict for a standalone dump file."""
+    display_name = case_map.get(item, "Unassigned Evidence")
+    child_file = {
+        "id": item, "name": item, "size": os.path.getsize(path),
+        "type": "Memory Dump",
+        "hash": get_file_hash(path),
+        "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path))),
+        "is_source": True,
+    }
+    return {
+        "id": f"group_{item}", "name": display_name,
+        "size": os.path.getsize(path), "type": "Evidence Group",
+        "hash": item, "source_id": item,
+        "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path))),
+        "children": [child_file],
+    }
+
+
+@files_bp.route('/evidences', methods=['GET'])
+def list_evidences():
+    try:
+        all_items = [i for i in os.listdir(STORAGE_DIR)
+                     if not (i.startswith("scans.db") or i.endswith(".sha256"))]
+    except FileNotFoundError:
+        logging.error("Storage dir not found: %s", STORAGE_DIR)
+        all_items = []
+
+    case_map = _load_case_name_map()
+    evidences: list = []
+    processed_dumps: set = set()
+
+    for item in all_items:
         path = os.path.join(STORAGE_DIR, item)
         if os.path.isdir(path) and item.endswith("_extracted"):
-             # This is an extracted folder
-             dump_base = item[:-10] # remove _extracted
-             files = []
-             try:
-                  subitems = os.listdir(path)
-                  for sub in subitems:
-                      if sub.endswith('.sha256'):
-                          continue
-                      
-                      subpath = os.path.join(path, sub)
-                      if os.path.isfile(subpath):
-                         files.append({
-                             "id": os.path.join(item, sub), # Relative path ID for download
-                             "name": sub,
-                             "size": os.path.getsize(subpath),
-                             "type": "Extracted File"
-                         })
-             except Exception as e:
-                 logging.error(f"Error reading subdir {path}: {e}")
-            
-             # Resolve Source Dump from DB using Folder Name matches
-             source_dump = "Unknown Source"
-             # 1. Check if dump_base matches a Case Name (Case Name Extraction)
-             # If so, source is the dump file associated with that case
-             # 2. Check if dump_base matches a Filename (Legacy Extraction)
-             
-             # Case Name match attempt
-             matched_case_name = dump_base
-             try:
-                 conn = get_db_connection()
-                 conn.row_factory = sqlite3.Row
-                 c = conn.cursor()
-                 c.execute("SELECT dump_path FROM scans WHERE name = ? ORDER BY created_at DESC LIMIT 1", (dump_base,))
-                 row = c.fetchone()
-                 if row:
-                     source_dump = os.path.basename(row['dump_path'])
-                 else:
-                     source_dump = dump_base
-                 conn.close()
-             except Exception:
-                 logging.warning("Failed to resolve source dump from DB; falling back to folder name.", exc_info=True)
-                 source_dump = dump_base
+            evidences.append(_build_extracted_group(item, path, processed_dumps))
 
-             # If source dump exists in storage, add it to children list as requested
-             if source_dump and source_dump != "Unknown Source":
-                 dump_path = os.path.join(STORAGE_DIR, source_dump)
-                 if os.path.exists(dump_path):
-                     processed_dumps.add(source_dump)
-                     files.insert(0, {
-                         "id": source_dump, # Relative path (just filename)
-                         "name": source_dump,
-                         "size": os.path.getsize(dump_path),
-                         "type": "Memory Dump",
-                         "is_source": True
-                     })
-
-             evidences.append({
-                 "id": item,
-                 "name": matched_case_name, 
-                 "type": "Evidence Group",
-                 "size": get_dir_size(path),
-                 "hash": source_dump, 
-                 "source_id": source_dump if os.path.exists(os.path.join(STORAGE_DIR, source_dump)) else None, 
-                 "uploaded": "Extracted group",
-                 "children": files
-             })
-             
-    # Second pass: List main dumps and attach extracted files
-    for item in items:
+    for item in all_items:
         path = os.path.join(STORAGE_DIR, item)
-        if os.path.isfile(path) and not item.endswith('.sha256'):
-            # It's a dump file (or other uploaded file)
-            # Skip if it's already included in an evidence group
-            if item in processed_dumps:
-                continue
-
-            # Resolve Display Name (Case Name)
-            display_name = case_map.get(item, "Unassigned Evidence")
-            
-            # WRAP IN GROUP to ensure Folder Style
-            child_file = {
-                "id": item,
-                "name": item,
-                "size": os.path.getsize(path),
-                "type": "Memory Dump",
-                "hash": get_file_hash(path) if os.path.exists(path) else None,
-                "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path))),
-                "is_source": True
-            }
-            
-            evidences.append({
-                "id": f"group_{item}", # Virtual ID for the group
-                "name": display_name,
-                "size": os.path.getsize(path),
-                "type": "Evidence Group",
-                "hash": item, 
-                "source_id": item,
-                "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path))),
-                "children": [child_file] 
-            })
+        if os.path.isfile(path) and not item.endswith('.sha256') and item not in processed_dumps:
+            evidences.append(_build_dump_group(item, path, case_map))
             
     return jsonify(evidences)
 

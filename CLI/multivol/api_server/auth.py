@@ -1,21 +1,33 @@
-from flask import request, jsonify
+from typing import Optional, Tuple, Union
+from flask import request, jsonify, Response
 import logging
 from multivol.api_server.config import API_TOKEN
 
-def check_authorization():
-    # Allow OPTIONS requests for CORS (preflight)
+# Paths that do not require authentication
+_PUBLIC_PATHS = {'/auth/login', '/health'}
+
+# Return type: None means "allow the request", a Response/tuple means "reject it".
+_AuthResult = Optional[Union[Response, Tuple[Response, int]]]
+
+
+def check_authorization() -> _AuthResult:
+    """Flask before_request hook that enforces token authentication.
+
+    Returns ``None`` to allow the request to proceed, or a ``(Response, status)``
+    tuple to reject it. Callers (Flask internals) handle both return shapes
+    correctly — this is the standard Flask before_request contract.
+    """
+    # Allow CORS preflight requests
     if request.method == 'OPTIONS':
         return '', 200
 
-    # Allow login endpoint
-    if request.path == '/auth/login':
+    if request.path in _PUBLIC_PATHS:
         return None
 
     auth_header = request.headers.get("Authorization")
     token_query = request.args.get("token")
 
     provided_token = None
-
     if auth_header and auth_header.startswith("Bearer "):
         provided_token = auth_header.split(" ")[1]
     elif token_query:

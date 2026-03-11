@@ -18,108 +18,99 @@ dump_bp = Blueprint('dump_bp', __name__)
 dump_tasks: dict = {}
 dump_tasks_lock = threading.Lock()
 
-def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
+def _build_vol_dump_command(scan: dict, virt_addr, file_path, config: dict) -> list:
+    """Build the Volatility command list for a memory dump task."""
+    uploaded_path = scan['dump_path']
+    if not os.path.isabs(uploaded_path) and not uploaded_path.startswith('/'):
+        uploaded_path = os.path.join(STORAGE_DIR, uploaded_path)
+    dump_filename = os.path.basename(uploaded_path)
+
+    cmd = ["vol", "-v", "-f", f"/dump_dir/{dump_filename}", "-o", "/output"]
+    if scan['os'] == 'linux' and config.get('fetch_symbol'):
+        cmd.extend(["--remote-isf-url",
+                    "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"])
+    cmd.extend(["-s", "/symbols"])
+
+    if scan['os'] == 'linux':
+        if not file_path:
+            raise ValueError("file_path is required for Linux dumps")
+        cmd.extend(["linux.pagecache.Files", "--find", file_path, "--dump"])
+    else:
+        cmd.append("windows.dumpfiles.DumpFiles")
+        addr_val = int(virt_addr)
+        cmd.append("--physaddr" if addr_val < 0x80000000 else "--virtaddr")
+        cmd.append(hex(addr_val))
+    return cmd
+
+
+def _run_docker_vol(client, image_tag: str, container_name: str, cmd: list, volumes: dict) -> str:
+    """Run a Volatility Docker container, auto-pulling the image if missing. Returns decoded stdout."""
+    run_kwargs = dict(image=image_tag, name=container_name, command=cmd,
+                      volumes=volumes, remove=True, detach=False, stderr=True, stdout=True)
+    try:
+        output = client.containers.run(**run_kwargs)
+    except docker.errors.ImageNotFound:
+        client.images.pull(image_tag)
+        output = client.containers.run(**run_kwargs)
+    return output.decode('utf-8', errors='replace') if output else ""
+
+
+def _move_task_output(task_out_dir: str, case_extract_dir: str) -> list:
+    """Move all files from task_out_dir to case_extract_dir. Returns list of moved filenames."""
+    files = os.listdir(task_out_dir)
+    if not files:
+        raise RuntimeError("Volatility plugin produced no output files")
+    created = []
+    for f in files:
+        shutil.move(os.path.join(task_out_dir, f), os.path.join(case_extract_dir, f))
+        created.append(f)
+    os.rmdir(task_out_dir)
+    return created
+
+
+def background_dump_task(task_id: str, scan: dict, virt_addr, image_tag: str, file_path=None) -> None:
     """Run a Volatility3 memory dump in a background thread, writing output to task_id's entry."""
-    logging.debug(f"[{task_id}] Starting background dump task for scan: {scan['uuid']}")
+    logging.debug("[%s] Starting background dump task for scan: %s", task_id, scan['uuid'])
     with dump_tasks_lock:
         dump_tasks[task_id] = {'status': 'running'}
-    
+
+    created_files: list = []
+    case_extract_dir: str = ""
     try:
-        uploaded_path = scan['dump_path']
-        if not os.path.isabs(uploaded_path) and not uploaded_path.startswith('/'):
-            uploaded_path = os.path.join(STORAGE_DIR, uploaded_path)
-            
-        dump_filename = os.path.basename(uploaded_path)
-        cmd = ["vol", "-v", "-f", f"/dump_dir/{dump_filename}", "-o", "/output"]
+        config: dict = {}
+        if scan.get('config_json'):
+            try:
+                config = json.loads(scan['config_json'])
+            except Exception:
+                logging.warning("Failed to parse config_json for scan %s", scan.get('uuid', '?'), exc_info=True)
 
-        config = {}
-        if 'config_json' in scan.keys() and scan['config_json']:
-             try:
-                 config = json.loads(scan['config_json'])
-             except Exception:
-                 logging.warning("Failed to parse config_json for scan %s; using empty config.", scan.get('uuid', '?'), exc_info=True)
+        cmd = _build_vol_dump_command(scan, virt_addr, file_path, config)
 
-        if scan['os'] == 'linux' and config.get('fetch_symbol'):
-             cmd.extend(["--remote-isf-url", "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"])
-             
-        cmd.extend(["-s", "/symbols"])
-
-        if scan['os'] == 'linux':
-             if not file_path:
-                 raise Exception("File Path is required for Linux dumps")
-             cmd.extend(["linux.pagecache.Files", "--find", file_path, "--dump"])
-        else:
-            cmd.append("windows.dumpfiles.DumpFiles")
-            addr_val = int(virt_addr)
-            if addr_val < 0x80000000:
-                cmd.append("--physaddr")
-            else:
-                cmd.append("--virtaddr")
-            cmd.append(hex(addr_val))
-
-        case_name = scan['name']
-        case_extract_dir = os.path.join(STORAGE_DIR, f"{case_name}_extracted")
-        if not os.path.exists(case_extract_dir):
-            os.makedirs(case_extract_dir)
-
+        case_extract_dir = os.path.join(STORAGE_DIR, f"{scan['name']}_extracted")
+        os.makedirs(case_extract_dir, exist_ok=True)
         task_out_dir = os.path.join(STORAGE_DIR, f"task_{task_id}")
-        if not os.path.exists(task_out_dir):
-           os.makedirs(task_out_dir)
+        os.makedirs(task_out_dir, exist_ok=True)
 
         symbols_path = os.path.join(STORAGE_DIR, 'symbols')
         cache_path = os.path.join(STORAGE_DIR, 'cache')
         os.makedirs(symbols_path, exist_ok=True)
         os.makedirs(cache_path, exist_ok=True)
 
+        uploaded_path = scan['dump_path']
+        if not os.path.isabs(uploaded_path):
+            uploaded_path = os.path.join(STORAGE_DIR, uploaded_path)
         volumes = {
             resolve_host_path(os.path.dirname(uploaded_path)): {'bind': '/dump_dir', 'mode': 'ro'},
-            resolve_host_path(task_out_dir): {'bind': '/output', 'mode': 'rw'},
-            resolve_host_path(symbols_path): {'bind': '/symbols', 'mode': 'rw'},
-            resolve_host_path(cache_path): {'bind': '/root/.cache/volatility3', 'mode': 'rw'}
+            resolve_host_path(task_out_dir):                   {'bind': '/output',   'mode': 'rw'},
+            resolve_host_path(symbols_path):                   {'bind': '/symbols',  'mode': 'rw'},
+            resolve_host_path(cache_path):                     {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
         }
 
-        safe_scan_id = re.sub(r'[^a-zA-Z0-9]', '', scan['uuid'])[:8]
-        container_name = f"vol3_dump_{safe_scan_id}_{task_id}"
+        safe_id = re.sub(r'[^a-zA-Z0-9]', '', scan['uuid'])[:8]
+        client = docker.from_env()
+        _run_docker_vol(client, image_tag, f"vol3_dump_{safe_id}_{task_id}", cmd, volumes)
 
-        try:
-            client = docker.from_env()
-            container = client.containers.run(
-                image=image_tag,
-                name=container_name,
-                command=cmd,
-                volumes=volumes,
-                remove=True,
-                detach=False,
-                stderr=True,
-                stdout=True
-            )
-            output_str = container.decode('utf-8', errors='replace') if container else ""
-        except docker.errors.ImageNotFound:
-             client.images.pull(image_tag)
-             container = client.containers.run(
-                image=image_tag,
-                name=container_name,
-                command=cmd,
-                volumes=volumes,
-                remove=True,
-                detach=False
-            )
-        except Exception as e:
-            raise Exception(f"Docker execution failed: {e}")
-
-        files = os.listdir(task_out_dir)
-        if not files:
-            raise Exception(f"No file extracted by Volatility plugin. Dump command executed but output dir is empty.")
-        
-        created_files = []
-        for f in files:
-            src = os.path.join(task_out_dir, f)
-            dst = os.path.join(case_extract_dir, f)
-            shutil.move(src, dst)
-            created_files.append(f)
-            
-        os.rmdir(task_out_dir)
-
+        created_files = _move_task_output(task_out_dir, case_extract_dir)
         with dump_tasks_lock:
             dump_tasks[task_id]['status'] = 'completed'
             dump_tasks[task_id]['output_path'] = f"/evidence/{created_files[0]}/download"
@@ -129,16 +120,18 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
             dump_tasks[task_id]['status'] = 'failed'
             dump_tasks[task_id]['error'] = str(e)
     finally:
-        conn = get_db_connection()
-        c = conn.cursor()
         with dump_tasks_lock:
             task_status = dump_tasks[task_id]['status']
             task_error = dump_tasks[task_id].get('error', 'Unknown error')
-        if task_status == 'completed':
-            output_path = os.path.join(case_extract_dir, created_files[0]) if created_files else None
-            c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?", (output_path, task_id))
+        conn = get_db_connection()
+        c = conn.cursor()
+        if task_status == 'completed' and created_files:
+            output_path = os.path.join(case_extract_dir, created_files[0])
+            c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?",
+                      (output_path, task_id))
         else:
-            c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?", (task_error, task_id))
+            c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?",
+                      (task_error, task_id))
         conn.commit()
         conn.close()
 
@@ -154,7 +147,7 @@ def dump_file_from_memory(scan_id):
         conn.close()
         return jsonify({'error': 'Scan not found'}), 404
 
-    data = request.json
+    data = request.get_json() or {}
     default_image = "sp00kyskelet0n/volatility3" if scan['volatility_version'] != "2" else "sp00kyskelet0n/volatility2"
 
     virt_addr = data.get('virt_addr')

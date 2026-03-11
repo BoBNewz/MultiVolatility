@@ -1,6 +1,6 @@
 """Shared base class for Volatility runner classes."""
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 from rich import print as rprint
 
@@ -39,23 +39,26 @@ class Vol2RunConfig:
 class MultiVolatilityBase:
     """Common functionality shared by multi_volatility2 and multi_volatility3."""
 
-    def resolve_path(self, path: str, host_path: str | None) -> str:
-        """Translate a container-side path to the corresponding host path for Docker-in-Docker (DooD)."""
-        if host_path:
-            if path.startswith("/storage"):
-                rel_path = os.path.relpath(path, "/storage")
-                return os.path.join(host_path, "storage", "data", rel_path)
+    def resolve_path(self, path: str, host_path: Optional[str]) -> str:
+        """Translate a container-side path to the corresponding host path for Docker-in-Docker (DooD).
 
-            try:
-                from api_server.config import BASE_DIR
-                if path.startswith(BASE_DIR):
-                    rel_path = os.path.relpath(path, BASE_DIR)
-                    return os.path.join(host_path, rel_path)
-            except ImportError:
-                if path.startswith(os.getcwd()):
-                    rel_path = os.path.relpath(path, os.getcwd())
-                    return os.path.join(host_path, rel_path)
+        Delegates to :func:`multivol.api_server.utils.resolve_host_path` when the
+        API server package is importable; falls back to a lightweight local
+        implementation for CLI-only usage where the server package is absent.
+        """
+        try:
+            from multivol.api_server.utils import resolve_host_path
+            return resolve_host_path(path, host_path_override=host_path)
+        except ImportError:
+            pass
+
+        # Lightweight fallback for CLI-only context (no API server installed).
+        if host_path:
+            if path.startswith(os.getcwd()):
+                rel_path = os.path.relpath(path, os.getcwd())
+                return os.path.join(host_path, rel_path)
         return path
+
 
     def safe_print(self, message: str, lock) -> None:
         """Thread-safe print using rich."""

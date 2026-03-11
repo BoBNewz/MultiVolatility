@@ -25,6 +25,26 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 app = Flask(__name__)
 
 # ──────────────────────────────────────────────
+# Authentication
+# ──────────────────────────────────────────────
+_SIDECAR_TOKEN = os.environ.get("SIDECAR_TOKEN", "")
+_PUBLIC_PATHS = {"/health"}
+
+
+@app.before_request
+def check_sidecar_auth():
+    """Require SIDECAR_TOKEN on all non-public endpoints when the token is configured."""
+    if not _SIDECAR_TOKEN or request.path in _PUBLIC_PATHS:
+        return None
+    auth = request.headers.get("Authorization", "")
+    token = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else ""
+    if not token or token != _SIDECAR_TOKEN:
+        logging.warning(f"Unauthorized sidecar request to {request.path}")
+        return jsonify({"error": "Unauthorized"}), 401
+    return None
+
+
+# ──────────────────────────────────────────────
 # Global VMM state
 # ──────────────────────────────────────────────
 vmm_handle = None
@@ -194,8 +214,7 @@ def list_files_endpoint():
         file_cache = results
         return jsonify(results)
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logging.exception("Failed to list files")
         return jsonify({"error": f"Failed to list files: {str(e)}"}), 500
 
 
@@ -242,8 +261,7 @@ def read_file():
             }
         )
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logging.exception("Read failed for VFS path %s", vfs_path)
         return jsonify({"error": f"Read failed: {str(e)}"}), 500
 
 

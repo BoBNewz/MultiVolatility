@@ -46,7 +46,7 @@ export const api = {
 
     getScan: async (uuid: string): Promise<Scan | null> => {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/status/${uuid}`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/scans/${uuid}/status`);
             if (!response.ok) return null;
             const item = await response.json();
             return {

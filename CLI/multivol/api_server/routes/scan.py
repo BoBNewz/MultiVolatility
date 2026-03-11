@@ -11,7 +11,7 @@ import glob
 import yaml
 import docker
 import logging
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple, Union
 from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
@@ -65,9 +65,19 @@ def build_fs_tree(base_dir):
     return [root]
 
 runner_func: Optional[Callable[[argparse.Namespace], None]] = None
-def init_runner(runner_cb):
+
+def init_runner(runner_cb: Callable[[argparse.Namespace], None]) -> None:
+    """Register the analysis runner callback. Must be called before any scan is started."""
     global runner_func
-    runner_func = runner_cb               
+    runner_func = runner_cb
+
+
+def _require_runner() -> bool:
+    """Return True if runner_func is set; log an error and return False otherwise."""
+    if runner_func is None:
+        logging.error("runner_func is None — scan cannot execute. Call init_runner() before starting scans.")
+        return False
+    return True
 
 def ingest_results_to_db(scan_id, output_dir):
     """Reads JSON output files and stores them in the database."""
@@ -291,10 +301,8 @@ def _run_scan_background(s_id: str, args: argparse.Namespace) -> None:
         c.execute("UPDATE scans SET status = 'running' WHERE uuid = ?", (s_id,))
         conn.commit()
 
-        if runner_func:
+        if _require_runner():
             runner_func(args)
-        else:
-            logging.error(f"[{s_id}] runner_func is None — scan cannot execute. Call init_runner() before starting scans.")
 
         # Process RecoverFs if present (extract tarball)
         process_recover_fs(args.output_dir)
@@ -320,12 +328,12 @@ def _run_scan_background(s_id: str, args: argparse.Namespace) -> None:
 
 
 @scan_bp.route('/scan', methods=['POST'])
-def scan():
+def scan() -> Response:
     concurrency_response = _check_concurrency()
     if concurrency_response is not None:
         return concurrency_response
 
-    data = request.json
+    data = request.get_json() or {}
 
     try:
         args_obj, scan_id, target_os, vol_version = _build_args_from_request(data)
@@ -345,8 +353,8 @@ def scan():
 
     return jsonify({"scan_id": scan_id, "status": "pending", "output_dir": args_obj.output_dir})
 
-@scan_bp.route('/status/<scan_id>', methods=['GET'])
-def get_status(scan_id):
+@scan_bp.route('/scans/<scan_id>/status', methods=['GET'])
+def get_status(scan_id: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -359,7 +367,7 @@ def get_status(scan_id):
     return jsonify({"error": "Scan not found"}), 404
 
 @scan_bp.route('/scans/<uuid>/log', methods=['GET'])
-def get_scan_log(uuid):
+def get_scan_log(uuid: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -377,8 +385,8 @@ def get_scan_log(uuid):
     return jsonify({"error": "Log file not created yet or not found"}), 404
 
 @scan_bp.route('/scans/<uuid>/modules', methods=['POST'])
-def update_scan_module_status(uuid):
-    data = request.json
+def update_scan_module_status(uuid: str) -> Response:
+    data = request.get_json() or {}
     module = data.get('module')
     status = data.get('status')
     error = data.get('error')
@@ -408,7 +416,7 @@ def update_scan_module_status(uuid):
         conn.close()
 
 @scan_bp.route('/scans/<uuid>/modules', methods=['GET'])
-def get_scan_modules_status(uuid):
+def get_scan_modules_status(uuid: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -521,7 +529,7 @@ def get_scan_modules_status(uuid):
         conn.close()
 
 @scan_bp.route('/results/<uuid>', methods=['GET'])
-def get_scan_results(uuid):
+def get_scan_results(uuid: str) -> Response:
     module_param = request.args.get('module')
     if not module_param:
         return jsonify({"error": "Missing 'module' query parameter"}), 400
@@ -601,7 +609,7 @@ def get_scan_results(uuid):
         return jsonify(paginate_data(parsed_data))
 
 @scan_bp.route('/scans', methods=['GET'])
-def list_scans():
+def list_scans() -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -629,8 +637,8 @@ def list_scans():
     return jsonify(scans_list)
 
 @scan_bp.route('/scans/<uuid>', methods=['PUT'])
-def rename_scan(uuid):
-    data = request.json
+def rename_scan(uuid: str) -> Response:
+    data = request.get_json() or {}
     new_name = data.get('name')
     if not new_name:
         return jsonify({"error": "Name is required"}), 400
@@ -708,9 +716,28 @@ def download_scan_zip(uuid):
          logging.error(f"ZIP creation failed: {e}")
          return jsonify({"error": "Failed to generate ZIP archive"}), 500
 
+def _store_plugin_result(scan_id: str, module: str, output_dir: str) -> None:
+    """Persist a plugin's JSON output file into the scan_results table (upsert-style)."""
+    fpath = os.path.join(output_dir, f"{module}_output.json")
+    if not os.path.exists(fpath):
+        return
+    parsed_data = clean_and_parse_json(fpath)
+    content_str = json.dumps(parsed_data) if parsed_data else "{}"
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (scan_id, module))
+    if not c.fetchone():
+        c.execute(
+            "INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
+            (scan_id, module, content_str, time.time()),
+        )
+    conn.commit()
+    conn.close()
+
+
 @scan_bp.route('/scans/<uuid>/execute', methods=['POST'])
-def execute_plugin(uuid):
-    data = request.json
+def execute_plugin(uuid: str) -> Response:
+    data = request.get_json() or {}
     module = data.get('module')
     if not module:
         return jsonify({"error": "Missing 'module' parameter"}), 400
@@ -759,24 +786,9 @@ def execute_plugin(uuid):
 
     def background_single_run(s_id, args):
         try:
-             if runner_func:
-                 runner_func(args)
-             
-             # Need a quick local ingest instead of the huge helper due to scope changes.
-             # Actually I'd rather move ingestion to utils entirely but I'll write logic to load JSON and write DB block.
-             fpath = os.path.join(args.output_dir, f"{args.commands}_output.json")
-             if os.path.exists(fpath):
-                 parsed_data = clean_and_parse_json(fpath)
-                 content_str = json.dumps(parsed_data) if parsed_data else "{}"
-
-                 conn_bg = get_db_connection()
-                 c_bg = conn_bg.cursor()
-                 c_bg.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (s_id, args.commands))
-                 if not c_bg.fetchone():
-                     c_bg.execute("INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
-                                  (s_id, args.commands, content_str, time.time()))
-                 conn_bg.commit()
-                 conn_bg.close()
+            if _require_runner():
+                runner_func(args)
+            _store_plugin_result(s_id, args.commands, args.output_dir)
         except Exception as e:
             logging.error(f"Manual plugin execution failed: {e}")
 

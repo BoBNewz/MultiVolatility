@@ -3,13 +3,13 @@ import os
 import logging
 from multivol.multi_volatility_base import MultiVolatilityBase
 
-_base = MultiVolatilityBase()
 
 def get_strings(dump, dump_dir, output_dir, docker_image, lock=False, host_path=None):
+    base = MultiVolatilityBase()
     output_file = os.path.join(output_dir, "strings_output.txt")
-    host_output_dir = _base.resolve_path(os.path.abspath(output_dir), host_path)
+    host_output_dir = base.resolve_path(os.path.abspath(output_dir), host_path)
 
-    host_dump_path = _base.resolve_path(os.path.abspath(dump_dir), host_path)
+    host_dump_path = base.resolve_path(os.path.abspath(dump_dir), host_path)
     host_dump_dir = os.path.dirname(host_dump_path)
 
     volumes = {
@@ -39,5 +39,5 @@ def get_strings(dump, dump_dir, output_dir, docker_image, lock=False, host_path=
         container.remove()
 
     except Exception as e:
-        _base.safe_print(f"[!] Error running strings: {e}", lock)
+        base.safe_print(f"[!] Error running strings: {e}", lock)
         logging.error(f"strings container failed: {e}", exc_info=True)
