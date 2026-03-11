@@ -1,186 +1,493 @@
 {
   "command": "show",
-  "query": "Security",
+  "query": "Code quality",
   "status_filter": "open",
-  "total": 10,
+  "total": 37,
   "summary": {
     "by_tier": {
-      "T2": 1,
-      "T3": 9
+      "T2": 13,
+      "T3": 14,
+      "T4": 10
     },
     "by_detector": {
-      "security": 10
+      "stale_exclude": 10,
+      "orphaned": 10,
+      "smells": 10,
+      "dict_keys": 7
     },
-    "files": 6
+    "files": 20
   },
   "by_file": {
     "CLI/multivol/api_server/routes/scan.py": [
       {
-        "id": "security::CLI/multivol/api_server/routes/scan.py::security::B110::CLI/multivol/api_server/routes/scan.py::424",
-        "tier": 3,
-        "confidence": "low",
-        "summary": "[B110] Try, Except, Pass detected.",
+        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::phantom_read::mod_dict::module",
+        "tier": 2,
+        "confidence": "high",
+        "summary": "Dict key \"module\" read at line 373 but never written to `mod_dict`",
         "detail": {
-          "kind": "B110",
-          "severity": "low",
-          "line": 424,
-          "content": "423                                     container.remove()\n424                                 except Exception as rm_err:\n425                                     pass\n426                             ",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-          "test_name": "try_except_pass",
-          "source": "bandit"
+          "kind": "phantom_read",
+          "key": "module",
+          "line": 373,
+          "info": "Created at line 372 in get_scan_modules_status() \u2014 will raise KeyError or return None via .get()"
         }
       },
       {
-        "id": "security::CLI/multivol/api_server/routes/scan.py::security::B404::CLI/multivol/api_server/routes/scan.py::7",
-        "tier": 3,
-        "confidence": "low",
-        "summary": "[B404] Consider possible security implications associated with the subprocess module.",
+        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::phantom_read::scan_dict::uuid",
+        "tier": 2,
+        "confidence": "high",
+        "summary": "Dict key \"uuid\" read at line 562 but never written to `scan_dict`",
         "detail": {
-          "kind": "B404",
-          "severity": "low",
-          "line": 7,
-          "content": "6 import threading\n7 import subprocess\n8 import uuid\n",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-          "test_name": "blacklist",
-          "source": "bandit"
+          "kind": "phantom_read",
+          "key": "uuid",
+          "line": 562,
+          "info": "Created at line 561 in list_scans() \u2014 will raise KeyError or return None via .get()"
         }
       },
       {
-        "id": "security::CLI/multivol/api_server/routes/scan.py::security::B603::CLI/multivol/api_server/routes/scan.py::844",
-        "tier": 3,
-        "confidence": "low",
-        "summary": "[B603] subprocess call - check for execution of untrusted input.",
+        "id": "smells::CLI/multivol/api_server/routes/scan.py::empty_except",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "1x Empty except block (except: pass)",
         "detail": {
-          "kind": "B603",
-          "severity": "low",
-          "line": 844,
-          "content": "843             cmd = ['grep', '-i', '-n', '-m', str(limit), query, safe_path]\n844             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace')",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-          "test_name": "subprocess_without_shell_equals_true",
-          "source": "bandit"
+          "smell_id": "empty_except",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            424
+          ]
         }
-      }
-    ],
-    "CLI/multivol/api_server/app.py": [
+      },
       {
-        "id": "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::67",
+        "id": "smells::CLI/multivol/api_server/routes/scan.py::monster_function",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "1x Monster function (>150 LOC)",
+        "detail": {
+          "smell_id": "monster_function",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            119
+          ]
+        }
+      },
+      {
+        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::fetch_symbol",
         "tier": 3,
         "confidence": "medium",
-        "summary": "[B104] Possible binding to all interfaces.",
+        "summary": "Dict key \"fetch_symbol\" overwritten on `default_args` at line 701 (previously set at line 676, never read between)",
         "detail": {
-          "kind": "B104",
-          "severity": "medium",
-          "line": 67,
-          "content": "66         logging.info(\"Starting Flask in DEBUG mode...\")\n67         app.run(host='0.0.0.0', port=5001, debug=True)\n68     else:\n",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
-          "test_name": "hardcoded_bind_all_interfaces",
-          "source": "bandit"
+          "kind": "overwritten_key",
+          "key": "fetch_symbol",
+          "line": 701,
+          "info": "in execute_plugin()"
         }
       },
       {
-        "id": "security::CLI/multivol/api_server/app.py::security::B104::CLI/multivol/api_server/app.py::71",
+        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::linux",
         "tier": 3,
         "confidence": "medium",
-        "summary": "[B104] Possible binding to all interfaces.",
+        "summary": "Dict key \"linux\" overwritten on `default_args` at line 700 (previously set at line 676, never read between)",
         "detail": {
-          "kind": "B104",
-          "severity": "medium",
-          "line": 71,
-          "content": "70         logging.info(\"Starting production server (waitress) on port 5001 with 50GB and 24h timeout...\")\n71         serve(app, host='0.0.0.0', port=5001, threads=10, max_request_body_size=5368709120",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
-          "test_name": "hardcoded_bind_all_interfaces",
-          "source": "bandit"
+          "kind": "overwritten_key",
+          "key": "linux",
+          "line": 700,
+          "info": "in execute_plugin()"
+        }
+      },
+      {
+        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::default_args::windows",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Dict key \"windows\" overwritten on `default_args` at line 703 (previously set at line 676, never read between)",
+        "detail": {
+          "kind": "overwritten_key",
+          "key": "windows",
+          "line": 703,
+          "info": "in execute_plugin()"
+        }
+      },
+      {
+        "id": "dict_keys::CLI/multivol/api_server/routes/scan.py::overwritten_key::mod_dict::status",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Dict key \"status\" overwritten on `mod_dict` at line 418 (previously set at line 396, never read between)",
+        "detail": {
+          "kind": "overwritten_key",
+          "key": "status",
+          "line": 418,
+          "info": "in get_scan_modules_status()"
+        }
+      },
+      {
+        "id": "orphaned::CLI/multivol/api_server/routes/scan.py",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Orphaned file (982 LOC): zero importers, not an entry point",
+        "detail": {
+          "loc": 982
         }
       }
     ],
     "CLI/multivol/api_server/routes/memprocfs.py": [
       {
-        "id": "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::207",
-        "tier": 3,
-        "confidence": "low",
-        "summary": "[B110] Try, Except, Pass detected.",
+        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::empty_except",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "2x Empty except block (except: pass)",
         "detail": {
-          "kind": "B110",
-          "severity": "low",
-          "line": 207,
-          "content": "206                             return\n207                 except Exception:\n208                     pass\n209                 time.sleep(3)\n",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-          "test_name": "try_except_pass",
-          "source": "bandit"
+          "smell_id": "empty_except",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            207,
+            395
+          ]
         }
       },
       {
-        "id": "security::CLI/multivol/api_server/routes/memprocfs.py::security::B110::CLI/multivol/api_server/routes/memprocfs.py::395",
-        "tier": 3,
-        "confidence": "low",
-        "summary": "[B110] Try, Except, Pass detected.",
+        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::monster_function",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "1x Monster function (>150 LOC)",
         "detail": {
-          "kind": "B110",
-          "severity": "low",
-          "line": 395,
-          "content": "394             })\n395     except Exception:\n396         pass\n397 \n",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-          "test_name": "try_except_pass",
-          "source": "bandit"
+          "smell_id": "monster_function",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            77
+          ]
+        }
+      },
+      {
+        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::silent_except",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "3x Except handler silently suppresses error (pass/continue, no log)",
+        "detail": {
+          "smell_id": "silent_except",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            66,
+            207,
+            395
+          ]
+        }
+      },
+      {
+        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::stderr_traceback",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "1x traceback.print_exc() bypasses structured logging",
+        "detail": {
+          "smell_id": "stderr_traceback",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            236
+          ]
+        }
+      },
+      {
+        "id": "smells::CLI/multivol/api_server/routes/memprocfs.py::swallowed_error",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "3x Catch block that only logs (swallowed error)",
+        "detail": {
+          "smell_id": "swallowed_error",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            68,
+            134,
+            292
+          ]
+        }
+      },
+      {
+        "id": "orphaned::CLI/multivol/api_server/routes/memprocfs.py",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Orphaned file (398 LOC): zero importers, not an entry point",
+        "detail": {
+          "loc": 398
+        }
+      }
+    ],
+    "CLI/multivol/api_server/routes/dump.py": [
+      {
+        "id": "dict_keys::CLI/multivol/api_server/routes/dump.py::phantom_read::config::fetch_symbol",
+        "tier": 2,
+        "confidence": "high",
+        "summary": "Dict key \"fetch_symbol\" read at line 42 but never written to `config`",
+        "detail": {
+          "kind": "phantom_read",
+          "key": "fetch_symbol",
+          "line": 42,
+          "info": "Created at line 35 in background_dump_task() \u2014 will raise KeyError or return None via .get()"
+        }
+      },
+      {
+        "id": "smells::CLI/multivol/api_server/routes/dump.py::swallowed_error",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "1x Catch block that only logs (swallowed error)",
+        "detail": {
+          "smell_id": "swallowed_error",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            39
+          ]
+        }
+      },
+      {
+        "id": "orphaned::CLI/multivol/api_server/routes/dump.py",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Orphaned file (219 LOC): zero importers, not an entry point",
+        "detail": {
+          "loc": 219
+        }
+      }
+    ],
+    "CLI/multivol/api_server/database.py": [
+      {
+        "id": "smells::CLI/multivol/api_server/database.py::swallowed_error",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "2x Catch block that only logs (swallowed error)",
+        "detail": {
+          "smell_id": "swallowed_error",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            95,
+            101
+          ]
+        }
+      },
+      {
+        "id": "orphaned::CLI/multivol/api_server/database.py",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Orphaned file (110 LOC): zero importers, not an entry point",
+        "detail": {
+          "loc": 110
+        }
+      }
+    ],
+    "CLI/multivol/api_server/routes/files.py": [
+      {
+        "id": "smells::CLI/multivol/api_server/routes/files.py::swallowed_error",
+        "tier": 2,
+        "confidence": "medium",
+        "summary": "2x Catch block that only logs (swallowed error)",
+        "detail": {
+          "smell_id": "swallowed_error",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            126,
+            158
+          ]
+        }
+      },
+      {
+        "id": "orphaned::CLI/multivol/api_server/routes/files.py",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Orphaned file (279 LOC): zero importers, not an entry point",
+        "detail": {
+          "loc": 279
+        }
+      }
+    ],
+    "CLI/build": [
+      {
+        "id": "stale_exclude::CLI/build::CLI/build",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/build' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/build",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/dist": [
+      {
+        "id": "stale_exclude::CLI/dist::CLI/dist",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/dist' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/dist",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/multivol.egg-info": [
+      {
+        "id": "stale_exclude::CLI/multivol.egg-info::CLI/multivol.egg-info",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/multivol.egg-info' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/multivol.egg-info",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/multivol/api_server/auth.py": [
+      {
+        "id": "orphaned::CLI/multivol/api_server/auth.py",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Orphaned file (28 LOC): zero importers, not an entry point",
+        "detail": {
+          "loc": 28
         }
       }
     ],
     "CLI/multivol/api_server/routes/auth.py": [
       {
-        "id": "security::CLI/multivol/api_server/routes/auth.py::security::log_sensitive::CLI/multivol/api_server/routes/auth.py::22",
-        "tier": 2,
+        "id": "orphaned::CLI/multivol/api_server/routes/auth.py",
+        "tier": 3,
         "confidence": "medium",
-        "summary": "Sensitive data may be logged",
+        "summary": "Orphaned file (23 LOC): zero importers, not an entry point",
         "detail": {
-          "kind": "log_sensitive",
-          "severity": "medium",
-          "line": 22,
-          "content": "    logging.warning(\"Failed login attempt with invalid password.\")",
-          "remediation": "Remove sensitive data from log statements"
+          "loc": 23
         }
       }
     ],
-    "Dockerfiles/memprocfs/memprocfs_server.py": [
+    "CLI/multivol/api_server/routes/docker.py": [
       {
-        "id": "security::Dockerfiles/memprocfs/memprocfs_server.py::security::B104::Dockerfiles/memprocfs/memprocfs_server.py::324",
+        "id": "orphaned::CLI/multivol/api_server/routes/docker.py",
         "tier": 3,
         "confidence": "medium",
-        "summary": "[B104] Possible binding to all interfaces.",
+        "summary": "Orphaned file (111 LOC): zero importers, not an entry point",
         "detail": {
-          "kind": "B104",
-          "severity": "medium",
-          "line": 324,
-          "content": "323     # Use threaded=False to avoid threading conflicts with native VMM code\n324     app.run(host='0.0.0.0', port=5002, threaded=False)\n",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
-          "test_name": "hardcoded_bind_all_interfaces",
-          "source": "bandit"
+          "loc": 111
         }
       }
     ],
-    "MCP/multivol_mcp.py": [
+    "CLI/multivol/api_server/utils.py": [
       {
-        "id": "security::MCP/multivol_mcp.py::security::B104::MCP/multivol_mcp.py::341",
+        "id": "orphaned::CLI/multivol/api_server/utils.py",
         "tier": 3,
         "confidence": "medium",
-        "summary": "[B104] Possible binding to all interfaces.",
+        "summary": "Orphaned file (232 LOC): zero importers, not an entry point",
         "detail": {
-          "kind": "B104",
-          "severity": "medium",
-          "line": 341,
-          "content": "340 if __name__ == \"__main__\":\n341     mcp.run(transport=\"http\", host=\"0.0.0.0\", port=8000)\n",
-          "remediation": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
-          "test_name": "hardcoded_bind_all_interfaces",
-          "source": "bandit"
+          "loc": 232
+        }
+      }
+    ],
+    "CLI/multivol/multivol.py": [
+      {
+        "id": "orphaned::CLI/multivol/multivol.py",
+        "tier": 3,
+        "confidence": "medium",
+        "summary": "Orphaned file (362 LOC): zero importers, not an entry point",
+        "detail": {
+          "loc": 362
+        }
+      }
+    ],
+    "CLI/outputs": [
+      {
+        "id": "stale_exclude::CLI/outputs::CLI/outputs",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/outputs' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/outputs",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/storage": [
+      {
+        "id": "stale_exclude::CLI/storage::CLI/storage",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/storage' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/storage",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/volatility2_profiles": [
+      {
+        "id": "stale_exclude::CLI/volatility2_profiles::CLI/volatility2_profiles",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/volatility2_profiles' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/volatility2_profiles",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/volatility3_cache": [
+      {
+        "id": "stale_exclude::CLI/volatility3_cache::CLI/volatility3_cache",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/volatility3_cache' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/volatility3_cache",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/volatility3_plugins": [
+      {
+        "id": "stale_exclude::CLI/volatility3_plugins::CLI/volatility3_plugins",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/volatility3_plugins' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/volatility3_plugins",
+          "references": 0
+        }
+      }
+    ],
+    "CLI/volatility3_symbols": [
+      {
+        "id": "stale_exclude::CLI/volatility3_symbols::CLI/volatility3_symbols",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'CLI/volatility3_symbols' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "CLI/volatility3_symbols",
+          "references": 0
+        }
+      }
+    ],
+    "Web/node_modules": [
+      {
+        "id": "stale_exclude::Web/node_modules::Web/node_modules",
+        "tier": 4,
+        "confidence": "low",
+        "summary": "Excluded directory 'Web/node_modules' has 0 references from scanned code \u2014 may be stale",
+        "detail": {
+          "directory": "Web/node_modules",
+          "references": 0
         }
       }
     ]
   },
-  "total_matching": 22,
+  "total_matching": 91,
   "hidden": {
     "by_detector": {
-      "security": 12
+      "smells": 48,
+      "stale_exclude": 4,
+      "orphaned": 2
     },
-    "total": 12
+    "total": 54
   },
   "noise_budget": 10,
   "noise_global_budget": 0,

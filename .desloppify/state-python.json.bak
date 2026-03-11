@@ -9777,10 +9777,7 @@
     "test_strategy": {
       "score": 0,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "type_safety": {
       "score": 19.0,
@@ -10936,8 +10933,11 @@
     }
   },
   "reminder_history": {
-    "zone_classification": 1,
-    "report_scores": 1
+    "zone_classification": 2,
+    "report_scores": 2,
+    "stagnant_nudge": 2,
+    "wontfix_growing": 1,
+    "feedback_nudge": 1
   },
   "review_cache": {
     "files": {

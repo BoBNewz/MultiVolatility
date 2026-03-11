@@ -15,9 +15,12 @@ Endpoints:
 import os
 import sys
 import time
+import logging
 import threading
 import signal
 from flask import Flask, request, jsonify, Response
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
 app = Flask(__name__)
 
@@ -42,8 +45,8 @@ def wait_for_forensic(vmm, path, timeout=300, poll_interval=5):
             entries = vmm.vfs.list(path)
             if len(entries) > 0:
                 return True
-        except Exception:
-            pass
+        except Exception as e:
+            logging.debug(f"VFS path {path} not ready yet: {e}")
         time.sleep(poll_interval)
     return False
 
@@ -55,7 +58,8 @@ def list_files_recursive(vmm, vfs_root, file_list, max_depth=50, _depth=0):
 
     try:
         entries = vmm.vfs.list(vfs_root)
-    except Exception:
+    except Exception as e:
+        logging.debug(f"Could not list VFS path {vfs_root}: {e}")
         return
 
     for name in entries:
@@ -69,16 +73,14 @@ def list_files_recursive(vmm, vfs_root, file_list, max_depth=50, _depth=0):
             list_files_recursive(vmm, vfs_path, file_list, max_depth, _depth + 1)
         else:
             size = info.get('size', 0)
-            # Check for null-byte files (unrecoverable)
             if size > 0:
                 try:
-                    # Only read a small sample to check, not the entire file
                     sample_size = min(size, 4096)
                     data = vmm.vfs.read(vfs_path, sample_size, 0)
                     if data and is_null_bytes(data):
                         size = 0
-                except Exception:
-                    pass
+                except Exception as e:
+                    logging.debug(f"Could not read sample from {vfs_path}: {e}")
             file_list.append((vfs_path, size))
 
 
@@ -90,12 +92,12 @@ def do_list_files(vmm):
     raw_files = {}  # keyed by Windows path to deduplicate
 
     for source_name, vfs_root in [("ntfs", "/forensic/ntfs"), ("files", "/forensic/files")]:
-        print(f"[*] Waiting for {vfs_root}...", flush=True)
+        logging.info(f"Waiting for VFS path {vfs_root}...")
         if not wait_for_forensic(vmm, vfs_root, timeout=120):
-            print(f"[-] Timeout waiting for {vfs_root}", flush=True)
+            logging.warning(f"Timeout waiting for VFS path {vfs_root}")
             continue
 
-        print(f"[*] Listing {vfs_root}...", flush=True)
+        logging.info(f"Listing VFS path {vfs_root}...")
         file_list = []
         list_files_recursive(vmm, vfs_root, file_list)
 
@@ -134,7 +136,7 @@ def do_list_files(vmm):
     results = list(raw_files.values())
     # Sort by Name
     results.sort(key=lambda x: x["Name"].lower())
-    print(f"[+] Listed {len(results)} unique files", flush=True)
+    logging.info(f"Listed {len(results)} unique files")
     return results
 
 
@@ -167,10 +169,10 @@ def init_vmm():
             return jsonify({"status": "already_initialized"})
 
         try:
-            print(f"[*] Initializing MemProcFS with forensic mode for {dump_path}...", flush=True)
+            logging.info(f"Initializing MemProcFS with forensic mode for {dump_path}...")
             vmm_handle = memprocfs.Vmm(['-device', dump_path, '-forensic', '1'])
             file_cache = None  # Reset cache
-            print(f"[+] VMM initialized successfully", flush=True)
+            logging.info("VMM initialized successfully")
             return jsonify({"status": "initialized"})
         except Exception as e:
             return jsonify({"error": f"Failed to initialize VMM: {str(e)}"}), 500
@@ -278,8 +280,8 @@ def try_alternate_source(vfs_path):
         data = vmm_handle.vfs.read(alt_path, size, 0)
         if data and not is_null_bytes(data):
             return data
-    except Exception:
-        pass
+    except Exception as e:
+        logging.debug(f"Alternate path read failed for {alt_path}: {e}")
     return None
 
 
@@ -289,7 +291,7 @@ def shutdown():
     with vmm_lock:
         vmm_handle = None
         file_cache = None
-    print("[*] VMM handle released", flush=True)
+    logging.info("VMM handle released")
 
     # Schedule shutdown after response
     def do_shutdown():
@@ -313,11 +315,11 @@ if __name__ == '__main__':
         # Doing this in a Python daemon thread causes SIGSEGV when the
         # daemon thread is cleaned up while C threads are still running.
         try:
-            print(f"[*] Auto-initializing VMM for {dump_path}...", flush=True)
+            logging.info(f"Auto-initializing VMM for {dump_path}...")
             vmm_handle = memprocfs.Vmm(['-device', dump_path, '-forensic', '1'])
-            print(f"[+] VMM auto-initialized successfully", flush=True)
+            logging.info("VMM auto-initialized successfully")
         except Exception as e:
-            print(f"[-] Auto-init failed: {e}", flush=True)
+            logging.error(f"Auto-init failed: {e}")
             sys.exit(1)
 
     # Use threaded=False to avoid threading conflicts with native VMM code

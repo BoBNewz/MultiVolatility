@@ -485,7 +485,7 @@
               "count": 6,
               "total": 6
             },
-            "request": {
+            "jsonify": {
               "count": 6,
               "total": 6
             },
@@ -493,7 +493,7 @@
               "count": 6,
               "total": 6
             },
-            "jsonify": {
+            "request": {
               "count": 6,
               "total": 6
             },
@@ -501,7 +501,7 @@
               "count": 5,
               "total": 6
             },
-            "BASE_DIR": {
+            "json": {
               "count": 4,
               "total": 6
             },
@@ -509,11 +509,7 @@
               "count": 4,
               "total": 6
             },
-            "json": {
-              "count": 4,
-              "total": 6
-            },
-            "STORAGE_DIR": {
+            "BASE_DIR": {
               "count": 4,
               "total": 6
             },
@@ -521,11 +517,15 @@
               "count": 4,
               "total": 6
             },
-            "sqlite3": {
+            "STORAGE_DIR": {
               "count": 4,
               "total": 6
             },
             "time": {
+              "count": 4,
+              "total": 6
+            },
+            "sqlite3": {
               "count": 4,
               "total": 6
             }
@@ -578,15 +578,15 @@
               "count": 4,
               "total": 5
             },
+            "MultiVolatilityBase": {
+              "count": 3,
+              "total": 5
+            },
             "logging": {
               "count": 3,
               "total": 5
             },
             "time": {
-              "count": 3,
-              "total": 5
-            },
-            "MultiVolatilityBase": {
               "count": 3,
               "total": 5
             }
@@ -2681,5 +2681,357 @@
     "commit_default_branch": "",
     "commit_message_template": "desloppify: {status} {count} issue(s) \u2014 {summary}",
     "trust_plugins": false
-  }
+  },
+  "prepared_packet_contract": {
+    "path": "/Users/max/Desktop/Tools/MultiVolatility",
+    "dimensions": [],
+    "retrospective": false,
+    "retrospective_max_issues": 30,
+    "retrospective_max_batch_items": 20,
+    "config_hash": "d1f01b08f5e943f63e4d0055d87f133d22c725759ae7059cbcbdaaf6dfb52d7d"
+  },
+  "narrative": {
+    "phase": "regression",
+    "headline": "\u26a0 22 security issues \u2014 review before other cleanup. All T1 items cleared!",
+    "dimensions": {
+      "lowest_dimensions": [
+        {
+          "name": "Test health",
+          "strict": 0.0,
+          "failing": 30,
+          "impact": 0.0
+        },
+        {
+          "name": "Test strategy",
+          "strict": 0.0,
+          "failing": 0,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        },
+        {
+          "name": "Type safety",
+          "strict": 19.0,
+          "failing": 0,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        }
+      ],
+      "biggest_gap_dimensions": [
+        {
+          "name": "Test health",
+          "lenient": 18.5,
+          "strict": 0.0,
+          "gap": 18.5,
+          "wontfix_count": 0
+        },
+        {
+          "name": "Duplication",
+          "lenient": 99.2,
+          "strict": 93.4,
+          "gap": 5.8,
+          "wontfix_count": 0
+        },
+        {
+          "name": "Code quality",
+          "lenient": 73.5,
+          "strict": 70.7,
+          "gap": 2.8,
+          "wontfix_count": 0
+        }
+      ],
+      "stagnant_dimensions": [
+        {
+          "name": "File health",
+          "strict": 68.5,
+          "stuck_scans": 4
+        },
+        {
+          "name": "Test strategy",
+          "strict": 0.0,
+          "stuck_scans": 4
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "reorganize",
+        "detector": "orphaned",
+        "count": 12,
+        "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
+        "command": "desloppify show orphaned --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 1,
+        "lane": "restructure"
+      },
+      {
+        "type": "reorganize",
+        "detector": "facade",
+        "count": 1,
+        "description": "1 facade issues \u2014 flatten re-export facades or consolidate barrel files",
+        "command": "desloppify show facade --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 2,
+        "lane": "restructure"
+      },
+      {
+        "type": "refactor",
+        "detector": "structural",
+        "count": 9,
+        "description": "9 structural issues \u2014 review large files \u2014 split only when responsibilities are clearly separable",
+        "command": "desloppify show structural --status open",
+        "impact": 0.0,
+        "dimension": "File health",
+        "priority": 3,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "dict_keys",
+        "count": 7,
+        "description": "7 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
+        "command": "desloppify show dict_keys --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 4,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "test_coverage",
+        "count": 14,
+        "description": "14 test_coverage issues \u2014 add tests for untested production modules \u2014 prioritize by import count",
+        "command": "desloppify show test_coverage --status open",
+        "impact": 0.0,
+        "dimension": "Test health",
+        "priority": 5,
+        "lane": "test_coverage"
+      },
+      {
+        "type": "refactor",
+        "detector": "responsibility_cohesion",
+        "count": 1,
+        "description": "1 responsibility_cohesion issues \u2014 split modules with too many responsibilities \u2014 extract focused sub-modules",
+        "command": "desloppify show responsibility_cohesion --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 6,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "boilerplate_duplication",
+        "count": 1,
+        "description": "1 boilerplate_duplication issues \u2014 extract shared boilerplate into reusable helpers or base classes",
+        "command": "desloppify show boilerplate_duplication --status open",
+        "impact": 0.0,
+        "dimension": "Duplication",
+        "priority": 7,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "smells",
+        "count": 70,
+        "description": "70 smells issues \u2014 inspect with `desloppify next` and fix manually",
+        "command": "desloppify show smells --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 8,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "global_mutable_config",
+        "count": 5,
+        "description": "5 global_mutable_config issues \u2014 refactor module-level mutable state \u2014 use explicit init functions or dependency injection",
+        "command": "desloppify show global_mutable_config --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 9,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "stale_exclude",
+        "count": 14,
+        "description": "14 stale_exclude issues \u2014 remove stale exclusion or verify it's still needed",
+        "command": "desloppify show stale_exclude --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 10,
+        "lane": "refactor_1"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "security",
+        "count": 22,
+        "description": "22 security issues \u2014 review and fix security issues \u2014 prioritize by severity",
+        "command": "desloppify show security --status open",
+        "impact": 0.0,
+        "dimension": "Security",
+        "priority": 11,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "subjective_review",
+        "count": 16,
+        "description": "16 files need design review \u2014 run holistic review to refresh subjective scores",
+        "command": "desloppify review --prepare",
+        "impact": 0.0,
+        "dimension": "Test health",
+        "priority": 12,
+        "lane": "refactor_0"
+      }
+    ],
+    "strategy": {
+      "fixer_leverage": {
+        "auto_fixable_count": 0,
+        "total_count": 172,
+        "coverage": 0.0,
+        "impact_ratio": 0.0,
+        "recommendation": "none"
+      },
+      "lanes": {
+        "restructure": {
+          "actions": [
+            1,
+            2
+          ],
+          "file_count": 13,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "refactor_0": {
+          "actions": [
+            3,
+            4,
+            6,
+            7,
+            8,
+            9,
+            11,
+            12
+          ],
+          "file_count": 19,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "refactor_1": {
+          "actions": [
+            10
+          ],
+          "file_count": 14,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "test_coverage": {
+          "actions": [
+            5
+          ],
+          "file_count": 14,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        }
+      },
+      "can_parallelize": true,
+      "hint": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify."
+    },
+    "tools": {
+      "fixers": [],
+      "move": {
+        "available": true,
+        "relevant": true,
+        "reason": "12 orphaned files",
+        "usage": "desloppify move <source> <dest> [--dry-run]"
+      },
+      "plan": {
+        "command": "desloppify plan",
+        "description": "Generate prioritized markdown cleanup plan"
+      },
+      "badge": {
+        "generated": true,
+        "in_readme": false,
+        "path": "scorecard.png",
+        "recommendation": "Add to README: <img src=\"scorecard.png\" width=\"100%\">"
+      }
+    },
+    "debt": {
+      "overall_gap": 1.0,
+      "wontfix_count": 0,
+      "worst_dimension": "Test health",
+      "worst_gap": 18.5,
+      "trend": "growing"
+    },
+    "milestone": "All T1 items cleared!",
+    "primary_action": {
+      "command": "desloppify show orphaned --status open",
+      "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
+    },
+    "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify.",
+    "verification_step": {
+      "command": "desloppify scan",
+      "reason": "revalidate after changes"
+    },
+    "risk_flags": [
+      {
+        "type": "wontfix_gap",
+        "severity": "medium",
+        "message": "Strict/lenient gap is 1.0 pts with 0 wontfix issues"
+      }
+    ],
+    "strict_target": {
+      "target": 95.0,
+      "current": 46.4,
+      "gap": 48.6,
+      "state": "below",
+      "warning": null
+    },
+    "reminders": [
+      {
+        "type": "stagnant_nudge",
+        "message": "File health has been stuck at 68.5% for 4 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "stagnant_nudge",
+        "message": "Test strategy has been stuck at 0.0% for 4 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "wontfix_growing",
+        "message": "Wontfix debt is growing. Review stale decisions: `desloppify show --status wontfix`.",
+        "command": "desloppify show --status wontfix",
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "zone_classification",
+        "message": "6 of 26 files classified as non-production (2 config, 4 test). Override with `desloppify zone set <file> production` if any are misclassified.",
+        "command": "desloppify zone show",
+        "priority": 2,
+        "severity": "medium"
+      }
+    ],
+    "reminder_history": {
+      "zone_classification": 3,
+      "report_scores": 2,
+      "stagnant_nudge": 4,
+      "wontfix_growing": 2,
+      "feedback_nudge": 1
+    }
+  },
+  "next_command": "desloppify review --prepare"
 }

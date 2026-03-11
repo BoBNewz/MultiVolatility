@@ -9633,162 +9633,102 @@
         "Delegation Density": 95.0,
         "Definition Directness": 60.0,
         "Type Discipline": 72.0
-      },
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      }
     },
     "ai_generated_debt": {
       "score": 59.9,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "api_surface_coherence": {
       "score": 42.7,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "authorization_consistency": {
       "score": 75.4,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "contract_coherence": {
       "score": 48.0,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:50+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "convention_outlier": {
       "score": 65.8,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:50+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "cross_module_architecture": {
       "score": 49.7,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "dependency_health": {
       "score": 66.0,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "design_coherence": {
       "score": 37.7,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "error_consistency": {
       "score": 38.6,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "high_level_elegance": {
       "score": 52.2,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "incomplete_migration": {
       "score": 63.8,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "initialization_coupling": {
       "score": 44.1,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "logic_clarity": {
       "score": 62.1,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "low_level_elegance": {
       "score": 43.0,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "mid_level_elegance": {
       "score": 40.9,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "naming_quality": {
       "score": 55.6,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "package_organization": {
       "score": 63.8,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "test_strategy": {
       "score": 0,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     },
     "type_safety": {
       "score": 19.0,
       "source": "holistic",
-      "assessed_at": "2026-03-11T16:16:19+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "review_issue_fixed",
-      "stale_since": "2026-03-11T17:07:51+00:00"
+      "assessed_at": "2026-03-11T16:16:19+00:00"
     }
   },
   "scan_history": [

@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import json
 import sqlite3
@@ -7,10 +8,11 @@ import threading
 import subprocess
 import uuid
 import glob
+import yaml
 import docker
 import logging
 from typing import Optional, Callable
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
 from multivol.api_server.config import STORAGE_DIR, BASE_DIR
@@ -115,32 +117,44 @@ def ingest_results_to_db(scan_id, output_dir):
     conn.close()
     logging.debug(f"Ingestion complete for {scan_id}")
 
-@scan_bp.route('/scan', methods=['POST'])
-def scan():
-    # Check for existing running/pending scans to prevent concurrency
+def _check_concurrency() -> Optional[Response]:
+    """Return a 429 Response if a scan is already running/pending, else return None."""
     try:
         conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT uuid FROM scans WHERE status IN ('pending', 'running')")
         existing_scan = c.fetchone()
         conn.close()
-        
+
         if existing_scan:
             return jsonify({"error": "A scan is already in progress. Please wait for it to complete."}), 429
     except Exception as e:
         logging.error(f"Failed to check concurrency: {e}")
-        # Fail open or closed? Closed seems safer for stability.
+        # Fail closed for stability.
         return jsonify({"error": f"Database error checking concurrency: {e}"}), 500
 
-    data = request.json
-    
-    # Determine default image based on mode from request
-    req_mode = data.get('mode', 'vol3') # Default to vol3 if not specified (though validation requires it)
+    return None
+
+
+def _build_args_from_request(data: dict) -> tuple:
+    """
+    Build an argparse.Namespace from the request payload, generate a scan_id,
+    create the output directory, and validate the dump path.
+
+    Returns (args_obj, scan_id, target_os, vol_version).
+    Raises ValueError with a user-facing message on input validation failure.
+    Raises other exceptions for system-level errors (e.g. makedirs failure).
+    """
+    # Basic validation
+    if "dump" not in data or "mode" not in data:
+        raise ValueError("Missing required fields: dump, mode")
+
+    # Determine default image based on mode
+    req_mode = data.get('mode', 'vol3')
     default_image = "sp00kyskelet0n/volatility3"
     if req_mode == "vol2":
         default_image = "sp00kyskelet0n/volatility2"
 
-    # Define default arguments matching CLI defaults and requirements
     default_args = {
         "profiles_path": os.path.join(BASE_DIR, "volatility2_profiles"),
         "symbols_path": os.path.join(BASE_DIR, "volatility3_symbols"),
@@ -155,47 +169,43 @@ def scan():
         "mode": None,
         "profile": None,
         "processes": None,
-        "host_path": os.environ.get("HOST_PATH"), # Added for DooD support via Env
-        "debug": True, # Enable command logging for API
+        "host_path": os.environ.get("HOST_PATH"),
+        "debug": True,
         "fetch_symbol": False,
         "custom_symbol": None,
         "image": default_image
     }
-    
+
     args_dict = default_args.copy()
     args_dict.update(data)
-    
-    # Basic Validation
-    if "dump" not in data or "mode" not in data:
-         return jsonify({"error": "Missing required fields: dump, mode"}), 400
 
     # Ensure mutual exclusion for OS flags
     is_linux = bool(data.get("linux"))
     is_windows = bool(data.get("windows"))
-    
+
     if is_linux == is_windows:
-        return jsonify({"error": "You must specify either 'linux': true or 'windows': true, but not both or neither."}), 400
+        raise ValueError("You must specify either 'linux': true or 'windows': true, but not both or neither.")
 
     # Default fetch_symbol to True for Linux if not explicitly provided
     if is_linux and "fetch_symbol" not in data:
         args_dict["fetch_symbol"] = True
 
     args_obj = argparse.Namespace(**args_dict)
-    
+
     scan_id = str(uuid.uuid4())
-    args_obj.scan_id = scan_id # Pass scan_id to runner for status updates
+    args_obj.scan_id = scan_id
+
     # Construct output directory with UUID
     base_name = f"volatility2_{scan_id}" if args_obj.mode == "vol2" else f"volatility3_{scan_id}"
-    # Use absolute path for output_dir to avoid CWD ambiguity and ensure persistence
     final_output_dir = os.path.join(BASE_DIR, "outputs", base_name)
     args_obj.output_dir = final_output_dir
-    
-    # Ensure directory exists immediately (even if empty) to prevent "No output dir" errors on early failure
+
+    # Ensure directory exists immediately to prevent "No output dir" errors on early failure
     try:
         os.makedirs(final_output_dir, exist_ok=True)
     except Exception as e:
         logging.error(f"Failed to create output dir {final_output_dir}: {e}")
-        return jsonify({"error": f"Failed to create output directory: {e}"}), 500
+        raise
 
     # Determine OS and Volatility Version for DB
     target_os = "windows" if args_obj.windows else ("linux" if args_obj.linux else "unknown")
@@ -203,20 +213,25 @@ def scan():
 
     # Normalize dump path: if it's a bare filename, look it up under storage
     if not os.path.isabs(args_obj.dump) and not args_obj.dump.startswith('/'):
-         args_obj.dump = os.path.join(STORAGE_DIR, args_obj.dump)
+        args_obj.dump = os.path.join(STORAGE_DIR, args_obj.dump)
 
     if not os.path.exists(args_obj.dump):
-        return jsonify({"error": f"Dump file not found at {args_obj.dump}"}), 400
+        raise ValueError(f"Dump file not found at {args_obj.dump}")
 
-    case_name = data.get("name") # Optional custom case name
+    return args_obj, scan_id, target_os, vol_version
 
-    # Determine command list for pre-population
+
+def _load_command_list(args_obj: argparse.Namespace, target_os: str) -> list:
+    """
+    Determine which plugin commands to run from the args or a YAML plugin list.
+    Mutates args_obj.commands to the resolved comma-joined list when populated.
+    Returns the list of command strings (may be empty on error).
+    """
     try:
         command_list = []
         if args_obj.commands:
             command_list = args_obj.commands.split(",")
         else:
-            import yaml
             scan_type = "light" if args_obj.light else "full"
             yaml_name = f"{args_obj.mode}_{target_os}.{scan_type}.yaml"
             yaml_path = os.path.join(BASE_DIR, "multivol", "plugins_list", yaml_name)
@@ -226,67 +241,109 @@ def scan():
                     command_list = yaml_data.get("modules", [])
             else:
                 logging.warning(f"Plugin list not found: {yaml_path}")
-        
-        # Inject explicit commands into args for CLI
+
+        # Inject explicit commands into args for the CLI runner
         if command_list:
             args_obj.commands = ",".join(command_list)
-            
+
     except Exception as e:
         logging.error(f"Failed to determine commands: {e}")
         command_list = []
 
+    return command_list
+
+
+def _insert_scan_record(
+    args_obj: argparse.Namespace,
+    scan_id: str,
+    command_list: list,
+    case_name: Optional[str],
+    vol_version: str,
+    target_os: str,
+    data: dict,
+) -> None:
+    """Insert the scan row and pre-populate per-module status rows."""
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at, image, name, config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version, args_obj.dump, final_output_dir, time.time(), args_obj.image, case_name, json.dumps(data)))
-    
-    # Pre-populate module status
+    c.execute(
+        "INSERT INTO scans (uuid, status, mode, os, volatility_version, dump_path, output_dir, created_at, image, name, config_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (scan_id, "pending", "light" if args_obj.light else "full", target_os, vol_version,
+         args_obj.dump, args_obj.output_dir, time.time(), args_obj.image, case_name, json.dumps(data)),
+    )
+
     if command_list:
         for cmd in command_list:
-             c.execute("INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, 'PENDING', ?)", (scan_id, cmd, time.time()))
+            c.execute(
+                "INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, 'PENDING', ?)",
+                (scan_id, cmd, time.time()),
+            )
 
     conn.commit()
     conn.close()
 
-    def background_scan(s_id, args):
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        try:
-            c.execute("UPDATE scans SET status = 'running' WHERE uuid = ?", (s_id,))
-            conn.commit()
-            
-            # Execute the runner
-            if runner_func:
-                runner_func(args)
-            else:
-                logging.error(f"[{s_id}] runner_func is None — scan cannot execute. Call init_runner() before starting scans.")
-            
-            # Process RecoverFs if present (Extract tarball)
-            process_recover_fs(args.output_dir)
-            
-            # Ingest results to DB
-            ingest_results_to_db(s_id, args.output_dir)
-            
-            # Sweep Logic: Mark any still-pending modules as FAILED
-            # This handles cases where containers crashed or produced no output
-            c.execute("UPDATE scan_module_status SET status = 'FAILED', error_message = 'Module failed to produce output', updated_at = ? WHERE scan_id = ? AND status IN ('PENDING', 'RUNNING')", (time.time(), s_id))
-            conn.commit()
-            
-            c.execute("UPDATE scans SET status = 'completed' WHERE uuid = ?", (s_id,))
-            conn.commit()
-        except Exception as e:
-            logging.error(f"Scan failed: {e}")
-            c.execute("UPDATE scans SET status = 'failed', error = ? WHERE uuid = ?", (str(e), s_id))
-            conn.commit()
-        finally:
-            conn.close()
 
-    thread = threading.Thread(target=background_scan, args=(scan_id, args_obj))
+def _run_scan_background(s_id: str, args: argparse.Namespace) -> None:
+    """Background thread body: run the scan, ingest results, and update DB status."""
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    try:
+        c.execute("UPDATE scans SET status = 'running' WHERE uuid = ?", (s_id,))
+        conn.commit()
+
+        if runner_func:
+            runner_func(args)
+        else:
+            logging.error(f"[{s_id}] runner_func is None — scan cannot execute. Call init_runner() before starting scans.")
+
+        # Process RecoverFs if present (extract tarball)
+        process_recover_fs(args.output_dir)
+
+        # Ingest results to DB
+        ingest_results_to_db(s_id, args.output_dir)
+
+        # Sweep: mark any still-pending modules as FAILED (container crash / no output)
+        c.execute(
+            "UPDATE scan_module_status SET status = 'FAILED', error_message = 'Module failed to produce output', updated_at = ? WHERE scan_id = ? AND status IN ('PENDING', 'RUNNING')",
+            (time.time(), s_id),
+        )
+        conn.commit()
+
+        c.execute("UPDATE scans SET status = 'completed' WHERE uuid = ?", (s_id,))
+        conn.commit()
+    except Exception as e:
+        logging.error(f"Scan failed: {e}")
+        c.execute("UPDATE scans SET status = 'failed', error = ? WHERE uuid = ?", (str(e), s_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+@scan_bp.route('/scan', methods=['POST'])
+def scan():
+    concurrency_response = _check_concurrency()
+    if concurrency_response is not None:
+        return concurrency_response
+
+    data = request.json
+
+    try:
+        args_obj, scan_id, target_os, vol_version = _build_args_from_request(data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Failed to set up scan: {e}")
+        return jsonify({"error": f"Failed to set up scan: {e}"}), 500
+
+    case_name = data.get("name")
+    command_list = _load_command_list(args_obj, target_os)
+    _insert_scan_record(args_obj, scan_id, command_list, case_name, vol_version, target_os, data)
+
+    thread = threading.Thread(target=_run_scan_background, args=(scan_id, args_obj))
     thread.daemon = True
     thread.start()
 
-    return jsonify({"scan_id": scan_id, "status": "pending", "output_dir": final_output_dir})
+    return jsonify({"scan_id": scan_id, "status": "pending", "output_dir": args_obj.output_dir})
 
 @scan_bp.route('/status/<scan_id>', methods=['GET'])
 def get_status(scan_id):
@@ -373,8 +430,7 @@ def get_scan_modules_status(uuid):
                 module_name = mod_dict['module']
                 
                 if mod_dict['status'] in ['PENDING', 'RUNNING']:
-                    import re as re_module
-                    sanitized_name = re_module.sub(r'[^a-zA-Z0-9_.-]', '', module_name)
+                    sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', module_name)
                     container_names = [f"vol3_{uuid[:8]}_{sanitized_name}", f"vol2_{uuid[:8]}_{sanitized_name}"]
                     
                     try:
@@ -411,9 +467,7 @@ def get_scan_modules_status(uuid):
                                                 c.execute("INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
                                                           (uuid, module_name, content_str, time.time()))
                                         except Exception as e:
-                                            logging.error(f"Failed to ingest {module_name}: {e}")
-                                            import traceback
-                                            traceback.print_exc()
+                                            logging.error(f"Failed to ingest {module_name}: {e}", exc_info=True)
                                 
                                 mod_dict['status'] = 'COMPLETED'
                                 c.execute("UPDATE scan_module_status SET status = 'COMPLETED', updated_at = ? WHERE scan_id = ? AND module = ?",
@@ -425,9 +479,7 @@ def get_scan_modules_status(uuid):
                                     logging.debug(f"Container already removed or removal failed: {rm_err}")
                                     
                     except Exception as e:
-                        logging.error(f"Exception checking container {container_names}: {e}")
-                        import traceback
-                        logging.error(traceback.format_exc())
+                        logging.error(f"Exception checking container {container_names}: {e}", exc_info=True)
                 
                 status_list.append(mod_dict)
             

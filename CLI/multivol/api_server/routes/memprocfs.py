@@ -70,6 +70,126 @@ def cleanup_container(container_name):
 
 
 # ──────────────────────────────────────────────
+# Helpers for start_memprocfs
+# ──────────────────────────────────────────────
+
+def _get_or_check_active_session(uuid: str) -> Optional[Response]:
+    """
+    If a session exists and its container is still running, return a 200
+    already_running response.  If the container has died, evict the stale
+    session entry and return None so the caller can start fresh.
+    Returns None when no session exists at all.
+    """
+    with sessions_lock:
+        if uuid not in active_sessions:
+            return None
+        session = active_sessions[uuid]
+        try:
+            client = docker.from_env()
+            container = client.containers.get(session['container_name'])
+            if container.status == 'running':
+                return jsonify({"status": "already_running", "port": session.get('port')})
+        except Exception:
+            del active_sessions[uuid]
+    return None
+
+
+def _lookup_scan_for_memprocfs(uuid: str) -> tuple:
+    """
+    Fetch the scan row, validate OS and dump file presence.
+    Returns (scan, dump_path, dump_filename) on success.
+    Raises ValueError with a (message, status_code) args tuple on failure.
+    """
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM scans WHERE uuid = ?", (uuid,))
+    scan = c.fetchone()
+    conn.close()
+
+    if not scan:
+        raise ValueError("Scan not found", 404)
+    if scan['os'] != 'windows':
+        raise ValueError("MemProcFS is only supported for Windows scans", 400)
+
+    dump_path = scan['dump_path']
+    if not dump_path or not os.path.exists(dump_path):
+        raise ValueError(f"Dump file not found: {dump_path}", 404)
+
+    return scan, dump_path, os.path.basename(dump_path)
+
+
+def _register_module_status(uuid: str) -> None:
+    """Insert or update scan_module_status for MODULE_NAME to 'RUNNING'."""
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        c.execute(
+            "SELECT id FROM scan_module_status WHERE scan_id = ? AND module = ?",
+            (uuid, MODULE_NAME)
+        )
+        if not c.fetchone():
+            c.execute(
+                "INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, 'RUNNING', ?)",
+                (uuid, MODULE_NAME, time.time())
+            )
+        else:
+            c.execute(
+                "UPDATE scan_module_status SET status = 'RUNNING', updated_at = ? WHERE scan_id = ? AND module = ?",
+                (time.time(), uuid, MODULE_NAME)
+            )
+        conn.commit()
+    except Exception as e:
+        logging.error(f"Failed to update module status: {e}")
+    finally:
+        conn.close()
+
+
+def _detect_network(client) -> str:
+    """Return the Docker network name shared with the multivol-api container, or 'bridge'."""
+    try:
+        api_container = client.containers.get('multivol-api')
+        api_networks = list(api_container.attrs['NetworkSettings']['Networks'].keys())
+        return api_networks[0] if api_networks else 'bridge'
+    except Exception:
+        return 'bridge'
+
+
+def _wait_for_sidecar(container_name: str, uuid: str) -> None:
+    """Poll the sidecar's /health endpoint and update module status when ready or timed out."""
+    max_wait = 500
+    start = time.time()
+    sidecar_url = f"http://{container_name}:5002"
+
+    while time.time() - start < max_wait:
+        try:
+            resp = http_requests.get(f"{sidecar_url}/health", timeout=3)
+            if resp.status_code == 200 and resp.json().get('vmm_active'):
+                conn = get_db_connection()
+                c = conn.cursor()
+                c.execute(
+                    "UPDATE scan_module_status SET status = 'COMPLETED', updated_at = ? WHERE scan_id = ? AND module = ?",
+                    (time.time(), uuid, MODULE_NAME)
+                )
+                conn.commit()
+                conn.close()
+                logging.info(f"MemProcFS sidecar ready for {uuid}")
+                return
+        except Exception as poll_err:
+            logging.debug(f"Sidecar health check not ready yet: {poll_err}")
+        time.sleep(3)
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute(
+        "UPDATE scan_module_status SET status = 'FAILED', error_message = 'Sidecar initialization timeout', updated_at = ? WHERE scan_id = ? AND module = ?",
+        (time.time(), uuid, MODULE_NAME)
+    )
+    conn.commit()
+    conn.close()
+
+
+# ──────────────────────────────────────────────
 # Routes
 # ──────────────────────────────────────────────
 
@@ -79,159 +199,52 @@ def start_memprocfs(uuid):
     Start a MemProcFS sidecar container for a Windows scan.
     The sidecar auto-initializes with the dump file and keeps the VMM handle alive.
     """
-    # Check if already running
-    with sessions_lock:
-        if uuid in active_sessions:
-            session = active_sessions[uuid]
-            # Verify container is still alive
-            try:
-                client = docker.from_env()
-                container = client.containers.get(session['container_name'])
-                if container.status == 'running':
-                    return jsonify({
-                        "status": "already_running",
-                        "port": session['port']
-                    })
-            except Exception:
-                # Container died, clean up
-                del active_sessions[uuid]
+    already_running = _get_or_check_active_session(uuid)
+    if already_running is not None:
+        return already_running
 
-    # Get scan info from DB
-    conn = get_db_connection()
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    c.execute("SELECT * FROM scans WHERE uuid = ?", (uuid,))
-    scan = c.fetchone()
-
-    if not scan:
-        conn.close()
-        return jsonify({"error": "Scan not found"}), 404
-
-    if scan['os'] != 'windows':
-        conn.close()
-        return jsonify({"error": "MemProcFS is only supported for Windows scans"}), 400
-
-    dump_path = scan['dump_path']
-    if not dump_path or not os.path.exists(dump_path):
-        conn.close()
-        return jsonify({"error": f"Dump file not found: {dump_path}"}), 404
-
-    # Register module in scan_module_status
     try:
-        c.execute("SELECT id FROM scan_module_status WHERE scan_id = ? AND module = ?", (uuid, MODULE_NAME))
-        if not c.fetchone():
-            c.execute(
-                "INSERT INTO scan_module_status (scan_id, module, status, updated_at) VALUES (?, ?, 'RUNNING', ?)",
-                (uuid, MODULE_NAME, time.time())
-            )
-            conn.commit()
-        else:
-            c.execute(
-                "UPDATE scan_module_status SET status = 'RUNNING', updated_at = ? WHERE scan_id = ? AND module = ?",
-                (time.time(), uuid, MODULE_NAME)
-            )
-            conn.commit()
-    except Exception as e:
-        logging.error(f"Failed to update module status: {e}")
-    finally:
-        conn.close()
+        _scan, dump_path, dump_filename = _lookup_scan_for_memprocfs(uuid)
+    except ValueError as exc:
+        message, status_code = exc.args
+        return jsonify({"error": message}), status_code
 
-    # Start the sidecar container
+    _register_module_status(uuid)
+
     safe_uuid = re.sub(r'[^a-zA-Z0-9]', '', uuid)[:12]
     container_name = f"memprocfs_{safe_uuid}"
-
-    # Clean up any stale container with same name
     cleanup_container(container_name)
 
     try:
         client = docker.from_env()
+        network_name = _detect_network(client)
+        host_dump_dir = resolve_host_path(os.path.dirname(dump_path))
 
-        # Detect our own network to connect the sidecar to
-        try:
-            api_container = client.containers.get('multivol-api')
-            api_networks = list(api_container.attrs['NetworkSettings']['Networks'].keys())
-            network_name = api_networks[0] if api_networks else 'bridge'
-        except Exception:
-            network_name = 'bridge'
-
-        # Resolve host path for the dump file directory
-        dump_dir = os.path.dirname(dump_path)
-        dump_filename = os.path.basename(dump_path)
-        host_dump_dir = resolve_host_path(dump_dir)
-
-        container = client.containers.run(
+        client.containers.run(
             image=MEMPROCFS_IMAGE,
             name=container_name,
             detach=True,
-            network=network_name,  # Same network as API for Docker DNS
-            volumes={
-                host_dump_dir: {'bind': '/src', 'mode': 'ro'},
-            },
-            environment={
-                'DUMP_PATH': f'/src/{dump_filename}',
-                'AUTO_INIT': 'true'
-            },
-            remove=False  # We manage lifecycle ourselves
+            network=network_name,
+            volumes={host_dump_dir: {'bind': '/src', 'mode': 'ro'}},
+            environment={'DUMP_PATH': f'/src/{dump_filename}', 'AUTO_INIT': 'true'},
+            remove=False,
         )
 
         with sessions_lock:
-            active_sessions[uuid] = {
-                'container_name': container_name,
-                'started_at': time.time()
-            }
+            active_sessions[uuid] = {'container_name': container_name, 'started_at': time.time()}
 
-        # Wait for sidecar to become healthy
-        def wait_and_update_status():
-            """Wait for sidecar health, then mark module as ready."""
-            max_wait = 500
-            start = time.time()
-            sidecar_url = f"http://{container_name}:5002"
+        threading.Thread(
+            target=_wait_for_sidecar, args=(container_name, uuid), daemon=True
+        ).start()
 
-            while time.time() - start < max_wait:
-                try:
-                    resp = http_requests.get(f"{sidecar_url}/health", timeout=3)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        if data.get('vmm_active'):
-                            # VMM is ready
-                            conn2 = get_db_connection()
-                            c2 = conn2.cursor()
-                            c2.execute(
-                                "UPDATE scan_module_status SET status = 'COMPLETED', updated_at = ? WHERE scan_id = ? AND module = ?",
-                                (time.time(), uuid, MODULE_NAME)
-                            )
-                            conn2.commit()
-                            conn2.close()
-                            logging.info(f"MemProcFS sidecar ready for {uuid}")
-                            return
-                except Exception as poll_err:
-                    logging.debug(f"Sidecar health check not ready yet: {poll_err}")
-                time.sleep(3)
-            # Mark as failed
-            conn2 = get_db_connection()
-            c2 = conn2.cursor()
-            c2.execute(
-                "UPDATE scan_module_status SET status = 'FAILED', error_message = 'Sidecar initialization timeout', updated_at = ? WHERE scan_id = ? AND module = ?",
-                (time.time(), uuid, MODULE_NAME)
-            )
-            conn2.commit()
-            conn2.close()
-
-        thread = threading.Thread(target=wait_and_update_status, daemon=True)
-        thread.start()
-
-        return jsonify({
-            "status": "starting",
-            "container": container_name
-        })
+        return jsonify({"status": "starting", "container": container_name})
 
     except docker.errors.ImageNotFound:
         return jsonify({
             "error": f"MemProcFS image '{MEMPROCFS_IMAGE}' not found. Build it first: docker build -t {MEMPROCFS_IMAGE} ./Dockerfiles/memprocfs/"
         }), 500
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logging.error(f"Failed to start sidecar: {e}", exc_info=True)
         return jsonify({"error": f"Failed to start sidecar: {str(e)}"}), 500
 
 

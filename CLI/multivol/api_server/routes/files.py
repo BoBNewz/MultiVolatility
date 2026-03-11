@@ -250,7 +250,6 @@ def delete_evidence(filename):
     filename = secure_filename(filename)
     path = os.path.join(STORAGE_DIR, filename)
     if os.path.exists(path):
-        import shutil
         try:
             if os.path.isdir(path):
                 shutil.rmtree(path)
