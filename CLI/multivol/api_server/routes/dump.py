@@ -15,14 +15,14 @@ from multivol.api_server.config import STORAGE_DIR
 
 dump_bp = Blueprint('dump_bp', __name__)
 
-dump_tasks = {}
+dump_tasks: dict = {}
+dump_tasks_lock = threading.Lock()
 
 def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
-    """
-    Executes a Volatility3 dump command.
-    """
+    """Run a Volatility3 memory dump in a background thread, writing output to task_id's entry."""
     logging.debug(f"[{task_id}] Starting background dump task for scan: {scan['uuid']}")
-    dump_tasks[task_id] = {'status': 'running'}
+    with dump_tasks_lock:
+        dump_tasks[task_id] = {'status': 'running'}
     
     try:
         uploaded_path = scan['dump_path']
@@ -36,8 +36,8 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
         if 'config_json' in scan.keys() and scan['config_json']:
              try:
                  config = json.loads(scan['config_json'])
-             except:
-                 pass
+             except Exception:
+                 logging.warning("Failed to parse config_json for scan %s; using empty config.", scan.get('uuid', '?'), exc_info=True)
 
         if scan['os'] == 'linux' and config.get('fetch_symbol'):
              cmd.extend(["--remote-isf-url", "https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"])
@@ -120,25 +120,29 @@ def background_dump_task(task_id, scan, virt_addr, image_tag, file_path=None):
             
         os.rmdir(task_out_dir)
 
-        dump_tasks[task_id]['status'] = 'completed'
-        dump_tasks[task_id]['output_path'] = f"/evidence/{created_files[0]}/download"
+        with dump_tasks_lock:
+            dump_tasks[task_id]['status'] = 'completed'
+            dump_tasks[task_id]['output_path'] = f"/evidence/{created_files[0]}/download"
 
     except Exception as e:
-        dump_tasks[task_id]['status'] = 'failed'
-        dump_tasks[task_id]['error'] = str(e)
+        with dump_tasks_lock:
+            dump_tasks[task_id]['status'] = 'failed'
+            dump_tasks[task_id]['error'] = str(e)
     finally:
         conn = get_db_connection()
         c = conn.cursor()
-        if dump_tasks[task_id]['status'] == 'completed':
+        with dump_tasks_lock:
+            task_status = dump_tasks[task_id]['status']
+            task_error = dump_tasks[task_id].get('error', 'Unknown error')
+        if task_status == 'completed':
             output_path = os.path.join(case_extract_dir, created_files[0]) if created_files else None
             c.execute("UPDATE dump_tasks SET status = 'completed', output_path = ? WHERE task_id = ?", (output_path, task_id))
         else:
-            error_msg = dump_tasks[task_id].get('error', 'Unknown error')
-            c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?", (error_msg, task_id))
+            c.execute("UPDATE dump_tasks SET status = 'failed', error = ? WHERE task_id = ?", (task_error, task_id))
         conn.commit()
         conn.close()
 
-@dump_bp.route('/scan/<scan_id>/dump-file', methods=['POST'])
+@dump_bp.route('/scans/<scan_id>/dump-file', methods=['POST'])
 def dump_file_from_memory(scan_id):
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row

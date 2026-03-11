@@ -1,0 +1,67 @@
+{
+  "batch": "authorization_consistency",
+  "batch_index": 10,
+  "assessments": {
+    "authorization_consistency": 80.0
+  },
+  "dimension_notes": {
+    "authorization_consistency": {
+      "evidence": [
+        "CLI/multivol/api_server/app.py line 36: `app.before_request(check_authorization)` — single hook covers all 33+ route handlers across all blueprints uniformly",
+        "CLI/multivol/api_server/auth.py: whitelist contains exactly two carve-outs: OPTIONS (CORS preflight) and /auth/login — no undocumented bypasses observed",
+        "docker-compose.yml lines 10, 25, 41: API_TOKEN and VITE_API_TOKEN are hardcoded to 'multivol_default_secret_token' matching the config.py fallback default — the token is baked into the frontend build artifact and exposed in the static JS bundle",
+        "CLI/multivol/api_server/config.py line 21: fallback default `multivol_default_secret_token` and compose file both use the same literal, establishing a never-rotate pattern",
+        "Dockerfiles/memprocfs/memprocfs_server.py: entirely unauthenticated internal sidecar (all five endpoints: /health, /init, /list, /read, /shutdown) — but this is an internal Docker network service and qualifies as internal service-to-service behind network-level auth",
+        "CLI/multivol/api_strings_extension.py: references `app` and `DB_PATH` globals without any import — dead/orphaned code that cannot be registered to any Flask app instance; not an active auth concern",
+        "MCP/multivol_mcp.py: separate MCP service uses its own StaticTokenAuth with MCP_TOKEN — consistent with the two-service model, each service has its own auth"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "The auth token is compiled into the frontend JS bundle via VITE_API_TOKEN build arg, effectively making it public to any browser user. The same default credential value appears in config.py fallback and docker-compose.yml environment blocks, creating a never-rotate default that would be identical for all default deployments."
+    }
+  },
+  "dimension_judgment": {
+    "authorization_consistency": {
+      "strengths": [
+        "Single `app.before_request(check_authorization)` hook applies uniformly to all 33+ route handlers across five blueprints — no per-route decorator drift possible",
+        "Auth logic centralized in a single `auth.py` module with a clean whitelist (only /auth/login and OPTIONS) — no magic literals or per-route permission strings scattered across route files",
+        "MCP and API servers each have their own self-contained token auth mechanisms with environment-variable-driven credentials — no cross-service credential sharing or magic literals in route handlers",
+        "CORS configuration explicitly names `Authorization` header — no inadvertent bypass via preflight"
+      ],
+      "issue_character": "The auth consistency within the main API is exemplary; the issues are peripheral to the main codebase — they concern how the default credential propagates across deployment artifacts (config fallback, compose env, frontend build arg) rather than any per-route inconsistency.",
+      "score_rationale": "The main API auth posture is strong: a single centralized hook, minimal whitelist, no per-route drift across 33+ handlers. A developer reviewing auth coverage can verify it in one place. The score is held below 90 by the default credential pattern — the same literal appears in config.py, docker-compose.yml, and the frontend build arg, meaning auth token secrecy is structurally undermined in default deployments, and any developer cloning the repo and running docker-compose gets a publicly known token baked into the frontend bundle. This is closer to the 80 anchor (solid but uneven) than the 90 anchor (mostly consistent with limited documented exceptions)."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "authorization_consistency",
+      "identifier": "default_token_baked_into_frontend",
+      "summary": "API auth token compiled into frontend JS bundle via VITE_API_TOKEN build arg, exposing it to all browser users",
+      "related_files": [
+        "docker-compose.yml",
+        "CLI/multivol/api_server/config.py"
+      ],
+      "evidence": [
+        "docker-compose.yml line 25: `VITE_API_TOKEN=multivol_default_secret_token` passed as Vite build arg — Vite embeds this into the compiled static bundle",
+        "CLI/multivol/api_server/config.py line 21: fallback `API_TOKEN = os.getenv(\"API_TOKEN\", \"multivol_default_secret_token\")` uses the same literal, so changing the compose value still matches the server fallback",
+        "docker-compose.yml line 10: `API_TOKEN=multivol_default_secret_token` — both API server and frontend share the same well-known literal"
+      ],
+      "suggestion": "Remove VITE_API_TOKEN from the web build args entirely; the frontend should obtain a token dynamically via the /auth/login endpoint using APP_PASSWORD. This keeps the API token server-side only. If a build-time token is truly needed, generate it with a random default (e.g., `secrets.token_hex(32)`) in config.py rather than a fixed string, and do not pin it in docker-compose.yml.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "hardcoded_default_credentials"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "The tool appears designed as a personal/local forensics utility where convenience outweighs credential hygiene — the default credential pattern is intentional for ease of use, not an oversight",
+      "The frontend-token pattern suggests the auth model was designed top-down (share one token everywhere) rather than as a true login flow, even though a /auth/login endpoint exists"
+    ],
+    "likely_symptoms": [],
+    "possible_false_positives": [
+      "memprocfs_server.py no-auth — this is a Docker sidecar and qualifies as internal service-to-service behind network-level auth per the dimension skip rules"
+    ]
+  }
+}

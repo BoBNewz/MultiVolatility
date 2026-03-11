@@ -6,28 +6,30 @@ from datetime import datetime
 from rich.console import Console
 from rich.theme import Theme
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
 
 try:
-    from .multi_volatility2 import multi_volatility2
-    from .multi_volatility3 import multi_volatility3
+    from .multi_volatility2 import MultiVolatility2
+    from .multi_volatility3 import MultiVolatility3
+    from .multi_volatility_base import Vol2RunConfig, Vol3RunConfig
     from .strings import get_strings
 except ImportError:
-    from multi_volatility2 import multi_volatility2
-    from multi_volatility3 import multi_volatility3
+    from multi_volatility2 import MultiVolatility2
+    from multi_volatility3 import MultiVolatility3
+    from multi_volatility_base import Vol2RunConfig, Vol3RunConfig
     from strings import get_strings
 
 
 
-# Wrapper for Volatility 3 to use with imap
 
-
-# Wrapper for Volatility 3 to use with imap
 def vol3_wrapper(packed_args):
     instance, args = packed_args
     return instance.execute_command_volatility3(*args)
 
-def runner(arguments):
+def vol2_wrapper(packed_args):
+    instance, args = packed_args
+    return instance.execute_command_volatility2(*args)
+
+def run_analysis(arguments):
     # Ensure required directories exist for output, symbols, profiles, and plugins
     os.makedirs(os.path.join(os.getcwd(), "volatility3_symbols"), exist_ok=True)
     os.makedirs(os.path.join(os.getcwd(), "volatility2_profiles"), exist_ok=True)
@@ -48,37 +50,37 @@ def runner(arguments):
 
     # Handle Volatility2 mode
     if arguments.mode == "vol2":
-        volatility2_instance = multi_volatility2()
+        volatility2_instance = MultiVolatility2()
         # Determine commands to run based on arguments
         if arguments.commands:
             commands = arguments.commands.split(",")
         elif arguments.windows:
             if arguments.light:
-                commands = volatility2_instance.getCommands("windows.light")
+                commands = volatility2_instance.get_commands("windows.light")
             else:
-                commands = volatility2_instance.getCommands("windows.full")
+                commands = volatility2_instance.get_commands("windows.full")
         elif arguments.linux:
             if arguments.light:
-                commands = volatility2_instance.getCommands("linux.light")
+                commands = volatility2_instance.get_commands("linux.light")
             else:
-                commands = volatility2_instance.getCommands("linux.full")
+                commands = volatility2_instance.get_commands("linux.full")
 
     # Handle Volatility3 mode
     elif arguments.mode == "vol3":
-        volatility3_instance = multi_volatility3()
+        volatility3_instance = MultiVolatility3()
         # Determine commands to run based on arguments
         if arguments.commands:
             commands = arguments.commands.split(",")
         elif arguments.windows:
             if arguments.light:
-                commands = volatility3_instance.getCommands("windows.light")
+                commands = volatility3_instance.get_commands("windows.light")
             else:
-                commands = volatility3_instance.getCommands("windows.full")
+                commands = volatility3_instance.get_commands("windows.full")
         elif arguments.linux:
             if arguments.light:
-                commands = volatility3_instance.getCommands("linux.light")
+                commands = volatility3_instance.get_commands("linux.light")
             else:
-                commands = volatility3_instance.getCommands("linux.full")
+                commands = volatility3_instance.get_commands("linux.full")
 
     # Limit the number of parallel processes
     # Default to len(commands) (unlimited) if processes arg is not set or None
@@ -87,7 +89,7 @@ def runner(arguments):
         # Default to CPU count to avoid system thrashing with too many Docker containers
         try:
             max_processes = os.cpu_count() or 4
-        except:
+        except Exception:
             max_processes = 4
     else:
         max_processes = min(max_procs, len(commands))
@@ -136,28 +138,44 @@ def runner(arguments):
     # Use multiprocessing to run commands in parallel
     with multiprocessing.Pool(processes=max_processes) as pool:
         if arguments.mode == "vol2":
-            pool.starmap(
-                volatility2_instance.execute_command_volatility2, 
-                [(cmd, 
-                os.path.basename(arguments.dump), 
-                os.path.abspath(arguments.dump), 
-                arguments.profiles_path, 
-                arguments.image, 
-                arguments.profile, 
-                output_dir, # output_dir
-                arguments.format,
-                False, # quiet
-                lock,  # lock
-                arguments.host_path,
-                getattr(arguments, "debug", False)
-                ) for cmd in commands]
-            )
-            # Vol2 Starmap doesn't use wrapper, so we can't easily report running/completed per module unless we wrap it too.
-            # For now we focus on Vol3
-            # But we should probably fix Vol2 too.
-            # TODO: Add wrapper for Vol2 or update vol2 logic.
-        else:
+            vol2_tasks = [(volatility2_instance, (cmd,
+                Vol2RunConfig(
+                    dump=os.path.basename(arguments.dump),
+                    dump_file_path=os.path.abspath(arguments.dump),
+                    profiles_path=arguments.profiles_path,
+                    docker_image=arguments.image,
+                    profile=arguments.profile,
+                    output_dir=output_dir,
+                    format=arguments.format,
+                    host_path=arguments.host_path,
+                    show_commands=getattr(arguments, "debug", False),
+                ),
+                False,  # quiet
+                lock,
+            )) for cmd in commands]
 
+            success_count = failed_count = 0
+            successful_modules = []
+            failed_modules = []
+            for result in pool.imap_unordered(vol2_wrapper, vol2_tasks):
+                command_name, is_success = result
+                if is_success:
+                    success_count += 1
+                    successful_modules.append(command_name)
+                else:
+                    failed_count += 1
+                    failed_modules.append(command_name)
+
+            console.print(f"\n[bold green]Scan Complete![/bold green] Success: {success_count}, Failed: {failed_count}")
+            if successful_modules:
+                console.print("\n[bold green]Successful Modules:[/bold green]")
+                for mod in successful_modules:
+                    console.print(f"  - [green]{mod}[/green]")
+            if failed_modules:
+                console.print("\n[bold red]Failed Modules:[/bold red]")
+                for mod in failed_modules:
+                    console.print(f"  - [red]{mod}[/red]")
+        else:
             # Enforce priority execution for Info module to ensure symbols are downloaded/cached
             if arguments.windows:
                 info_module = "windows.info.Info"
@@ -166,46 +184,49 @@ def runner(arguments):
             if arguments.windows or arguments.linux:
                 if info_module in commands:
                     commands.remove(info_module)
-                    volatility3_instance.execute_command_volatility3(info_module, 
-                                                                    os.path.basename(arguments.dump), 
-                                                                    os.path.abspath(arguments.dump), 
-                                                                    arguments.symbols_path, 
-                                                                    arguments.image,
-                                                                    os.path.abspath(arguments.cache_path),
-                                                                    os.path.abspath(arguments.plugins_dir),
-                                                                    output_dir,
-                                                                    arguments.format,
-                                                                    False, # quiet
-                                                                    lock,  # lock
-                                                                    arguments.host_path,
-                                                                    True if getattr(arguments, "fetch_symbol", False) else False,
-                                                                    getattr(arguments, "debug", False),
-                                                                    getattr(arguments, "custom_symbol", None),
-                                                                    getattr(arguments, "scan_id", None)
-                                                                )
+                    volatility3_instance.execute_command_volatility3(
+                        info_module,
+                        Vol3RunConfig(
+                            dump=os.path.basename(arguments.dump),
+                            dump_dir=os.path.abspath(arguments.dump),
+                            symbols_path=arguments.symbols_path,
+                            docker_image=arguments.image,
+                            cache_dir=os.path.abspath(arguments.cache_path),
+                            plugin_dir=os.path.abspath(arguments.plugins_dir),
+                            output_dir=output_dir,
+                            format=arguments.format,
+                            host_path=arguments.host_path,
+                            fetch_symbols=getattr(arguments, "fetch_symbol", False),
+                            show_commands=getattr(arguments, "debug", False),
+                            custom_symbol=getattr(arguments, "custom_symbol", None),
+                            scan_id=getattr(arguments, "scan_id", None),
+                        ),
+                        False,  # quiet
+                        lock,
+                    )
 
 
             
             # Prepare arguments for imap
             # We must pass the instance because wrapper is global and doesn't see local variable
-            # Signature: command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, 
-            #            quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None
-            tasks_args = [(volatility3_instance, (cmd, 
-                os.path.basename(arguments.dump), 
-                os.path.abspath(arguments.dump), 
-                arguments.symbols_path, 
-                arguments.image, 
-                os.path.abspath(arguments.cache_path),
-                os.path.abspath(arguments.plugins_dir), 
-                output_dir,
-                arguments.format,
-                False,  # quiet=False so we see the output as it happens
-                lock,   # lock
-                arguments.host_path,
-                getattr(arguments, "fetch_symbol", False),  # fetch_symbols
-                getattr(arguments, "debug", False),         # show_commands
-                getattr(arguments, "custom_symbol", None),  # custom_symbol
-                getattr(arguments, "scan_id", None)         # scan_id
+            tasks_args = [(volatility3_instance, (cmd,
+                Vol3RunConfig(
+                    dump=os.path.basename(arguments.dump),
+                    dump_dir=os.path.abspath(arguments.dump),
+                    symbols_path=arguments.symbols_path,
+                    docker_image=arguments.image,
+                    cache_dir=os.path.abspath(arguments.cache_path),
+                    plugin_dir=os.path.abspath(arguments.plugins_dir),
+                    output_dir=output_dir,
+                    format=arguments.format,
+                    host_path=arguments.host_path,
+                    fetch_symbols=getattr(arguments, "fetch_symbol", False),
+                    show_commands=getattr(arguments, "debug", False),
+                    custom_symbol=getattr(arguments, "custom_symbol", None),
+                    scan_id=getattr(arguments, "scan_id", None),
+                ),
+                False,  # quiet
+                lock,
                 )) for cmd in commands]
             
             # Progress counters
@@ -309,7 +330,7 @@ def main():
             from .api_server import run_api
         except ImportError:
             from api_server import run_api
-        run_api(runner, debug_mode=args.dev)
+        run_api(run_analysis, debug_mode=args.dev)
         sys.exit(0)
 
     if args.mode is None:
@@ -335,7 +356,7 @@ def main():
         sys.exit(1)
     
     # Start the runner with parsed arguments
-    runner(args)
+    run_analysis(args)
 
 if __name__ == "__main__":
     main()

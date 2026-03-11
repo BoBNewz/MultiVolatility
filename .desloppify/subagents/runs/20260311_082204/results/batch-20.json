@@ -1,0 +1,89 @@
+{
+  "batch": "incomplete_migration",
+  "batch_index": 20,
+  "assessments": {"incomplete_migration": 72.0},
+  "dimension_notes": {
+    "incomplete_migration": {
+      "evidence": [
+        "CLI/multivol/api_strings_extension.py has NO imports, references undefined `app` and `DB_PATH`, and contains route logic (get_strings_content, download_strings) that was fully migrated into CLI/multivol/api_server/routes/scan.py as Blueprint routes. The file is not imported anywhere in the codebase.",
+        "CLI/multivol/api_server/database.py CREATE TABLE still includes `filepath TEXT` (line 20) alongside `dump_path TEXT` (line 21). New database installations will have a dead `filepath` column; the migration shim at lines 79-83 that copies filepath->dump_path only applies to pre-migration databases.",
+        "CLI/multivol/api_server/utils.py resolve_host_path() contains a labeled fallback: `# Fallback to the old storage hack just in case` (line 28-33) that checks for `'storage'` in the container path — a compatibility shim for an older path convention.",
+        "CLI/multivol/multivol.py line 158: `# TODO: Add wrapper for Vol2 or update vol2 logic.` — the progress-bar wrapper (vol3_wrapper) is only wired for vol3; vol2 parallel execution is missing analogous progress integration.",
+        "database.py migration logic has 4 in-place ALTER TABLE shims (dump_path, config_json, case_name->name, mode) that run every startup — these are working but represent visible schema evolution debt."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "api_strings_extension.py is a dead pre-migration fragment that was never deleted after route logic was moved into the Blueprint system; the `filepath` ghost column in CREATE TABLE will be present in all fresh installations.",
+      "sub_axes": {}
+    }
+  },
+  "dimension_judgment": {
+    "incomplete_migration": {
+      "strengths": [
+        "The vol2/vol3 split is intentional and cleanly separated into distinct modules (multi_volatility2.py, multi_volatility3.py) with no cross-contamination of their APIs.",
+        "Database schema migration shims in init_db() are explicit and well-commented, logging each alteration — a developer can trace the schema's history.",
+        "Active code uses only the current `dump_path` column name consistently; no production query path reads the legacy `filepath` column."
+      ],
+      "issue_character": "The issues are isolated legacy artifacts left behind after two migrations (routes refactored into Blueprints, schema field renamed from filepath to dump_path and case_name to name) rather than a systemic pattern of old-and-new APIs coexisting in the same call paths.",
+      "score_rationale": "The codebase has a handful of concrete migration artifacts: an orphaned pre-Blueprint file (api_strings_extension.py) that is unreachable dead code, a ghost `filepath` column in the CREATE TABLE, and a labeled legacy shim in resolve_host_path. These are real incomplete-migration smells but they do not represent competing API patterns or deprecated symbols actively called by production code — they are inert leftovers. The codebase sits comfortably above the 60 'significant drag' anchor because no developer is confused by dual APIs in a live call path, but the dead file and ghost column keep it well below 85."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "orphaned_strings_extension",
+      "summary": "api_strings_extension.py is a pre-Blueprint migration fragment, unreachable and referencing undefined names",
+      "related_files": ["CLI/multivol/api_strings_extension.py", "CLI/multivol/api_server/routes/scan.py"],
+      "evidence": [
+        "File starts directly with `@app.route(...)` with no imports — `app`, `DB_PATH`, `sqlite3`, `send_file`, `jsonify`, `request` are all undefined within the file.",
+        "scan.py Blueprint at lines 900-981 contains identical route logic for `/results/<uuid>/strings` and `/results/<uuid>/strings/download` as proper registered Blueprint routes.",
+        "No import of api_strings_extension anywhere in the codebase (grep confirms zero references)."
+      ],
+      "suggestion": "Delete CLI/multivol/api_strings_extension.py entirely — its functionality already lives in scan.py as scan_bp routes.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "blueprint_refactor_cleanup"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "filepath_ghost_column_in_schema",
+      "summary": "CREATE TABLE still declares deprecated `filepath` column alongside its replacement `dump_path`",
+      "related_files": ["CLI/multivol/api_server/database.py"],
+      "evidence": [
+        "database.py line 20: `filepath TEXT,` still present in CREATE TABLE scans, while line 21 has `dump_path TEXT`.",
+        "Migration shim at lines 79-83 copies `filepath` -> `dump_path` for old databases, but for new installations both columns are created — `filepath` will always be NULL/empty.",
+        "No application code reads `scan['filepath']` anywhere; column is dead on fresh installs."
+      ],
+      "suggestion": "Remove `filepath TEXT,` from the CREATE TABLE definition. The migration shim (lines 76-83) can remain for upgrading existing databases but should check only for `dump_path` absence.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "blueprint_refactor_cleanup"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "old_storage_path_shim",
+      "summary": "resolve_host_path contains labeled 'old storage hack' fallback for a deprecated path layout",
+      "related_files": ["CLI/multivol/api_server/utils.py"],
+      "evidence": [
+        "utils.py lines 28-33: `# Fallback to the old storage hack just in case` block checks `if 'storage' in container_path` and reconstructs paths via `container_path.find('storage')` — explicit acknowledgment this is legacy.",
+        "The primary path translation logic using BASE_DIR precedes this block; the fallback is only reached when the new logic fails, suggesting it covers infrastructure setups that no longer exist."
+      ],
+      "suggestion": "Remove the 'old storage hack' fallback block (lines 28-33) once confident that all deployments use the current BASE_DIR-relative path convention. Add a warning log instead of silently falling through.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "path_convention_migration"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Blueprint refactor cleanup was incomplete: the source snippet file was not deleted after its logic was moved into scan_bp.",
+      "Schema migration was additive (ALTER TABLE) but the CREATE TABLE template was never updated to remove the deprecated column, leaving new-install schemas carrying dead fields."
+    ],
+    "likely_symptoms": ["orphaned_strings_extension"],
+    "possible_false_positives": []
+  }
+}

@@ -9,6 +9,7 @@ import uuid
 import glob
 import docker
 import logging
+from typing import Optional, Callable
 from flask import Blueprint, request, jsonify, send_file
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
@@ -61,7 +62,7 @@ def build_fs_tree(base_dir):
 
     return [root]
 
-runner_func = None # Needs to be initialized via init_runner
+runner_func: Optional[Callable[[argparse.Namespace], None]] = None
 def init_runner(runner_cb):
     global runner_func
     runner_func = runner_cb               
@@ -200,9 +201,7 @@ def scan():
     target_os = "windows" if args_obj.windows else ("linux" if args_obj.linux else "unknown")
     vol_version = args_obj.mode
 
-    # Fix dump path if it's just a filename (assume it's in storage)
-    # If it's an absolute path (from previous configs), we trust it?
-    # Actually, we should force it to check /storage if it looks like a filename
+    # Normalize dump path: if it's a bare filename, look it up under storage
     if not os.path.isabs(args_obj.dump) and not args_obj.dump.startswith('/'):
          args_obj.dump = os.path.join(STORAGE_DIR, args_obj.dump)
 
@@ -260,6 +259,8 @@ def scan():
             # Execute the runner
             if runner_func:
                 runner_func(args)
+            else:
+                logging.error(f"[{s_id}] runner_func is None — scan cannot execute. Call init_runner() before starting scans.")
             
             # Process RecoverFs if present (Extract tarball)
             process_recover_fs(args.output_dir)
@@ -315,10 +316,10 @@ def get_scan_log(uuid):
     log_file = os.path.join(scan['output_dir'], "scan.log")
     if os.path.exists(log_file):
         with open(log_file, 'r') as f:
-            return f.read()
-    return "Log file not created yet or not found.", 404
+            return jsonify({"log": f.read()})
+    return jsonify({"error": "Log file not created yet or not found"}), 404
 
-@scan_bp.route('/scan/<uuid>/modules', methods=['POST'])
+@scan_bp.route('/scans/<uuid>/modules', methods=['POST'])
 def update_scan_module_status(uuid):
     data = request.json
     module = data.get('module')
@@ -342,14 +343,14 @@ def update_scan_module_status(uuid):
                        (uuid, module, status, error, time.time()))
         
         conn.commit()
-        return jsonify({"success": True})
+        return jsonify({"status": "success"})
     except Exception as e:
         logging.error(f"Failed to log status: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
-@scan_bp.route('/scan/<uuid>/modules', methods=['GET'])
+@scan_bp.route('/scans/<uuid>/modules', methods=['GET'])
 def get_scan_modules_status(uuid):
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
@@ -385,7 +386,7 @@ def get_scan_modules_status(uuid):
                             try:
                                 container = docker_client.containers.get(c_name)
                                 break
-                            except:
+                            except docker.errors.NotFound:
                                 pass
                                 
                         if container:
@@ -511,7 +512,7 @@ def get_scan_results(uuid):
         try:
             data = json.loads(row['content'])
             return jsonify(paginate_data(data))
-        except:
+        except (json.JSONDecodeError, KeyError):
             return jsonify({"error": "Failed to parse stored content", "raw": row['content']}), 500
 
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))

@@ -1,0 +1,111 @@
+{
+  "batch": "type_safety",
+  "batch_index": 16,
+  "assessments": {"type_safety": 32.0},
+  "dimension_notes": {
+    "type_safety": {
+      "evidence": [
+        "MCP/multivol_mcp.py annotates all tool functions (e.g., `async def search_multivol_results(uuid: str, ...) -> dict`) — the sole well-typed subsystem",
+        "CLI/multivol/api_server/utils.py: all 6 public functions (`resolve_host_path`, `calculate_sha256`, `get_file_hash`, `clean_and_parse_json`, `process_recover_fs`, `cleanup_timeouts`) have zero parameter or return type annotations",
+        "CLI/multivol/api_server/auth.py: `check_authorization()` has no annotation; it returns `None`, `('', 200)`, or `(Response, 401)` — a three-way union left entirely implicit",
+        "CLI/multivol/api_server/app.py: `run_api(runner_cb, debug_mode=False)` — `runner_cb` is a callable but typed as nothing",
+        "CLI/multivol/api_server/routes/scan.py line 64: `runner_func = None` is a module-level callable slot with no `Optional[Callable[..., Any]]` annotation",
+        "CLI/multivol/multi_volatility3.py `execute_command_volatility3` has 17 parameters, none annotated",
+        "CLI/multivol/multi_volatility2.py `execute_command_volatility2` has 12 parameters, none annotated",
+        "MCP/multivol_mcp.py `safe_request` is annotated `-> dict` but `response.json()` returns `Any` (list or dict depending on endpoint); callers at lines 85, 139, 142, 198-199, 212 all add `isinstance(data, list)` guards proving the annotation is wrong at runtime",
+        "No `Optional`, `Union`, `TypedDict`, or `Callable` imports found anywhere in the CLI subsystem — the absence is total"
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "sub_axes": {
+        "abstraction_leverage": 40.0,
+        "indirection_cost": 50.0,
+        "interface_honesty": 25.0,
+        "delegation_density": 45.0,
+        "definition_directness": 55.0,
+        "type_discipline": 20.0
+      }
+    }
+  },
+  "dimension_judgment": {
+    "type_safety": {
+      "strengths": [
+        "MCP/multivol_mcp.py consistently annotates all tool functions with parameter types and return types, including the correct `-> AccessToken | None` on `verify_token`",
+        "`build_url(path: str) -> str` is a precise, accurate annotation",
+        "MCP callers defensively check `isinstance(data, list)` before `.get()`, showing awareness of runtime type variance even when the annotation doesn't capture it"
+      ],
+      "issue_character": "The CLI layer — the majority of the codebase — has opted out of type annotations entirely: every public utility function, auth helper, class method, and module-level callback slot is completely unannotated, and the one annotation that exists in the MCP layer (`safe_request -> dict`) is demonstrably inaccurate.",
+      "score_rationale": "The codebase sits well below the 60-point 'significant drag' anchor. Virtually the entire production surface area (utils.py, auth.py, app.py, multi_volatility2.py, multi_volatility3.py, all route handlers) carries no type information at all, giving a developer zero static-analysis safety net for the core logic. The MCP module pushes the score above the floor since it demonstrates that the team can annotate when motivated, but it is a small fraction of the codebase and contains at least one annotation lie (`safe_request -> dict` concealing list returns). A score of 32 reflects total absence in the dominant subsystem plus one inaccurate annotation where annotations do exist."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "type_safety",
+      "identifier": "safe_request_return_type_lie",
+      "summary": "`safe_request` annotated as `-> dict` but returns `list | dict` at runtime; callers add isinstance guards proving the annotation",
+      "related_files": ["MCP/multivol_mcp.py"],
+      "evidence": [
+        "Line 35: `async def safe_request(method: str, url: str, **kwargs) -> dict:`",
+        "Line 40: `return response.json()` — httpx's `.json()` returns `Any` (list or dict depending on endpoint)",
+        "Line 85: `results_list = data if isinstance(data, list) else data.get(...)` — caller cannot trust the annotation",
+        "Lines 139, 142, 198-199, 212: additional isinstance guards on the same return value throughout the file"
+      ],
+      "suggestion": "Change annotation to `-> list | dict` or `-> Any`; or narrow by having callers pass an expected type parameter. The most honest fix: `async def safe_request(...) -> Any`.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "annotation_lie"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "runner_func_untyped_callable_slot",
+      "summary": "Module-level `runner_func = None` is used as a callable but has no `Optional[Callable]` annotation",
+      "related_files": ["CLI/multivol/api_server/routes/scan.py", "CLI/multivol/api_server/app.py"],
+      "evidence": [
+        "scan.py line 64: `runner_func = None` — bare None assignment with comment only",
+        "scan.py line 67: `runner_func = runner_cb` — assigned a callback of unknown signature",
+        "scan.py lines 261-262: `if runner_func: runner_func(args)` — called without any type information",
+        "app.py line 54: `def run_api(runner_cb, debug_mode=False):` — `runner_cb` parameter untyped"
+      ],
+      "suggestion": "Annotate as `from typing import Callable, Optional; runner_func: Optional[Callable[[argparse.Namespace], None]] = None` and `run_api(runner_cb: Callable[[argparse.Namespace], None], debug_mode: bool = False) -> None:`.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "missing_annotations"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "cli_subsystem_unannotated_public_api",
+      "summary": "All public API functions in the CLI subsystem (utils.py, auth.py, multi_volatility2.py, multi_volatility3.py) have zero type annotations",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/auth.py",
+        "CLI/multivol/api_server/app.py",
+        "CLI/multivol/multi_volatility3.py",
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/strings.py",
+        "CLI/multivol/api_strings_extension.py"
+      ],
+      "evidence": [
+        "utils.py: `def resolve_host_path(container_path):`, `def get_file_hash(filepath):`, `def clean_and_parse_json(filepath):`, `def process_recover_fs(output_dir):`, `def cleanup_timeouts():` — all unannotated",
+        "auth.py: `def check_authorization():` returns `None | tuple[str, int] | tuple[Response, int]` — no annotation",
+        "multi_volatility3.py: `def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, ...)` — 17 parameters, none typed",
+        "No `from typing import` import exists anywhere in the CLI subsystem"
+      ],
+      "suggestion": "Add parameter and return type annotations to all public functions; start with the utility functions in utils.py (`-> str`, `-> dict | list`, `-> None`) and the execute_command methods whose signatures are stable. Introduce a `py.typed` marker and configure mypy to enforce annotation coverage.",
+      "confidence": "high",
+      "impact_scope": "codebase",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "missing_annotations"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "The CLI subsystem was written without any typing discipline from inception — no `from typing import` statements exist in any CLI file, suggesting type annotations were never part of the development workflow",
+      "The MCP module was written later or by someone with a different standard, creating a two-tier codebase where only the thin API adapter layer has types"
+    ],
+    "likely_symptoms": ["cli_subsystem_unannotated_public_api"],
+    "possible_false_positives": []
+  }
+}

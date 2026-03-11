@@ -2,7 +2,7 @@ import type { Scan } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
-export const getApiToken = () => localStorage.getItem('API_TOKEN') || import.meta.env.VITE_API_TOKEN || 'multivol_default_secret_token';
+export const getApiToken = () => localStorage.getItem('API_TOKEN') || import.meta.env.VITE_API_TOKEN || '';
 
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     const headers = new Headers(options.headers || {});
@@ -109,7 +109,7 @@ export const api = {
     },
 
     getScanModulesStatus: async (uuid: string): Promise<any[]> => {
-        const response = await fetchWithAuth(`${API_BASE_URL}/scan/${uuid}/modules`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/scans/${uuid}/modules`);
         if (!response.ok) return [];
         return response.json();
     },
@@ -208,7 +208,7 @@ export const api = {
     },
 
     startDumpTask: async (scanId: string, virtAddr: string, image: string, filePath?: string): Promise<{ task_id: string, status: string }> => {
-        const response = await fetchWithAuth(`${API_BASE_URL}/scan/${scanId}/dump-file`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/scans/${scanId}/dump-file`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ virt_addr: virtAddr, image: image, file_path: filePath })

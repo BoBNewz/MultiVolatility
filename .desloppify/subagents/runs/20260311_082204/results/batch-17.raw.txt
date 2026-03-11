@@ -1,0 +1,121 @@
+{
+  "batch": "ai_generated_debt",
+  "batch_index": 17,
+  "assessments": {"ai_generated_debt": 72.0},
+  "dimension_notes": {
+    "ai_generated_debt": {
+      "evidence": [
+        "CLI/multivol/multivol.py lines 49/66: '# Handle Volatility2 mode' / '# Handle Volatility3 mode' sit directly above 'if arguments.mode == \"vol2\":' and 'elif arguments.mode == \"vol3\":' — pure echo of code, no added insight",
+        "CLI/multivol/multivol.py lines 22/25: duplicate comment '# Wrapper for Volatility 3 to use with imap' appears twice in a row before vol3_wrapper()",
+        "CLI/multivol/api_server/utils.py line 37: docstring '\"\"\"Calculates SHA-256 hash of a file.\"\"\"' restates the function name calculate_sha256 verbatim",
+        "CLI/multivol/api_server/utils.py line 218: docstring '\"\"\"Marks scans running for > 1 hour as failed (timeout).\"\"\"' restates cleanup_timeouts() with no additional context",
+        "CLI/multivol/api_server/routes/dump.py: background_dump_task docstring '\"\"\"Executes a Volatility3 dump command.\"\"\"' echoes function name; the function body is ~80 lines of substantive logic that deserves a real description",
+        "CLI/multivol/api_server/database.py lines 100-102: bare 'except: pass' swallows any error from ALTER TABLE inside schema migration — defensive pattern that silently ignores failures in non-I/O pure SQLite DDL",
+        "CLI/multivol/api_server/utils.py lines 83-84 and 91: two consecutive bare 'except: pass' blocks in clean_and_parse_json — both are around json.loads() calls, not true I/O boundaries; over-defensive suppression of parse errors that the caller cannot distinguish from 'no data'",
+        "MCP/multivol_mcp.py: build_url(path) is a one-line pass-through f-string wrapper used in a single module with no added auth, logging, or transformation beyond string interpolation — could be inlined",
+        "CLI/multivol/multivol.py lines 83-84: '# Limit the number of parallel processes / Default to len(commands) (unlimited) if processes arg is not set or None' — two-line comment block describing the 8-line logic below it in near-identical terms"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "sub_axes": {
+        "abstraction_leverage": 72.0,
+        "indirection_cost": 78.0,
+        "interface_honesty": 74.0,
+        "delegation_density": 75.0,
+        "definition_directness": 65.0,
+        "type_discipline": 70.0
+      }
+    }
+  },
+  "dimension_judgment": {
+    "ai_generated_debt": {
+      "strengths": [
+        "Most comments explain WHY rather than WHAT: the HOST_PATH fallback rationale in utils.py, the UNIQUE index comment in database.py, and the tar extraction explanation in process_recover_fs all add genuine insight",
+        "Function names throughout are domain-appropriate (scan, dump, memprocfs, cleanup_container, ingest_results_to_db) — no generic 'handleData' or 'processItem' patterns in domain code",
+        "No noisy entry/exit debug logging: functions do not log 'entering X' or dump full objects at DEBUG; log calls are targeted and meaningful",
+        "Docstrings on complex functions (resolve_host_path, clean_and_parse_json, process_recover_fs, build_fs_tree) add real context beyond the name",
+        "No identical boilerplate error handling copied verbatim across files; each error-handling site has context-specific log messages"
+      ],
+      "issue_character": "AI-debt markers are scattered and shallow — a handful of restating comments, a few echo docstrings, two pass-through or near-pass-through wrappers, and over-broad bare-except suppression in non-boundary code — rather than a systemic structural pattern.",
+      "score_rationale": "The codebase reads as genuine domain engineering with light AI assistance visible in occasional comment and docstring noise. The restating comments in multivol.py and the echo docstrings on calculate_sha256/cleanup_timeouts/background_dump_task are mild friction but do not impede understanding. The more meaningful issue is the bare-except suppression in clean_and_parse_json and the schema migration, which is a defensive overengineering pattern that degrades debuggability. Against the global anchor of 80 (solid but uneven), the codebase sits slightly below: the positives are real and numerous but the silent-failure pattern and scattered comment noise constitute meaningful drag, landing this at 72."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "restating_comments_multivol",
+      "summary": "Restating section comments in multivol.py echo the if-branch conditions rather than explaining intent",
+      "related_files": ["CLI/multivol/multivol.py"],
+      "evidence": [
+        "Line 49: '# Handle Volatility2 mode' directly above 'if arguments.mode == \"vol2\":'",
+        "Line 66: '# Handle Volatility3 mode' directly above 'elif arguments.mode == \"vol3\":'",
+        "Lines 22 and 25: duplicate '# Wrapper for Volatility 3 to use with imap' comment appears twice consecutively"
+      ],
+      "suggestion": "Remove the mode-label comments or replace them with explanatory notes (e.g., what differs between the two branches). Delete one of the duplicate wrapper comments.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "echo_docstrings",
+      "summary": "Several docstrings restate the function name without adding insight",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/routes/dump.py"
+      ],
+      "evidence": [
+        "utils.py line 37: '\"\"\"Calculates SHA-256 hash of a file.\"\"\"' — identical to the name calculate_sha256",
+        "utils.py line 218: '\"\"\"Marks scans running for > 1 hour as failed (timeout).\"\"\"' — restates cleanup_timeouts",
+        "dump.py background_dump_task: '\"\"\"Executes a Volatility3 dump command.\"\"\"' — 80-line function deserves description of side effects and preconditions"
+      ],
+      "suggestion": "For calculate_sha256 and cleanup_timeouts, either delete the docstring or add meaningful content (e.g., exception behaviour, return type semantics). For background_dump_task, describe the DB side-effects and the threading contract.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "bare_except_suppression",
+      "summary": "Bare 'except: pass' around non-I/O logic silently swallows errors that callers cannot distinguish from legitimate empty results",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/database.py"
+      ],
+      "evidence": [
+        "utils.py lines 83-84: bare except around json.loads() — a failed parse is indistinguishable from 'no valid JSON start found'",
+        "utils.py lines 90-91: second bare except around json.loads() fallback path — same issue",
+        "database.py lines 100-102: bare 'except: pass' after ALTER TABLE in schema migration silently ignores any DDL error including corruption"
+      ],
+      "suggestion": "Replace bare excepts with 'except (json.JSONDecodeError, ValueError): pass' for the parse paths. In the migration, at minimum log the exception: 'except Exception as e: logging.warning(f\"ADD COLUMN name skipped: {e}\")'.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "build_url_passthrough",
+      "summary": "build_url() in the MCP module is a trivial one-line pass-through with no added logic",
+      "related_files": ["MCP/multivol_mcp.py"],
+      "evidence": [
+        "def build_url(path: str) -> str: return f\"{BASE_URL}:{PORT}{path}\" — single f-string, no auth, no validation, no transformation"
+      ],
+      "suggestion": "Either inline the f-string at each call site or keep the function but add a brief comment explaining why centralisation is preferred (e.g., future port/scheme switching). As-is it adds an indirection layer with no benefit.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Light AI assistance during initial scaffolding left echo docstrings and section-label comments that were never cleaned up in subsequent real-engineering iterations",
+      "Broad exception suppression copied as a defensive template across file-parsing paths without adapting the exception type to the actual operation"
+    ],
+    "likely_symptoms": [
+      "restating_comments_multivol",
+      "echo_docstrings"
+    ],
+    "possible_false_positives": []
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "batch": "contract_coherence",
+  "batch_index": 14,
+  "assessments": {"contract_coherence": 62.0},
+  "dimension_notes": {
+    "contract_coherence": {
+      "evidence": [
+        "get_file_hash (utils.py ~line 55) returns the literal string 'Error' on I/O failure instead of raising or returning None — callers like list_evidences treat it as a valid hash string without checking for the sentinel",
+        "execute_command_volatility3 and execute_command_volatility2 set self.output_file as a side effect mid-execution (multi_volatility3.py lines 89,93; multi_volatility2.py lines 88,92) — an 'execute' method that stores derived paths on the instance violates the contract of a stateless executor",
+        "routes/__init__.py creates api_blueprint and imports individual blueprints but never registers routes onto api_blueprint; app.py never uses api_blueprint — the module exports a blueprint integration point that is a dead artifact",
+        "clean_and_parse_json (utils.py) returns a list, a valid dict, or an error sentinel dict {'error':..., 'raw_output':...} — callers must probe for an 'error' key to distinguish success from failure, yet the docstring only says 'handling errors gracefully' without specifying the sentinel shape",
+        "process_recover_fs (utils.py ~line 145) overwrites the original input JSON file in-place with the transformed tree ('Save tree back directly over the raw JSON') — a function named process_recover_fs hiding destructive mutation of the source file violates caller expectations about idempotent processing"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "Four distinct contract violations across the utility and model layers: a sentinel-string error return in get_file_hash, hidden instance mutation in both execute_command methods, a dead/misleading api_blueprint export, and process_recover_fs silently overwriting its own input."
+    }
+  },
+  "dimension_judgment": {
+    "contract_coherence": {
+      "strengths": [
+        "Route handlers consistently return jsonify() with explicit HTTP status codes, so the Flask-level HTTP contract is uniformly honored",
+        "getCommands() raises FileNotFoundError on missing YAML — explicit error propagation matches the implied contract of a lookup function",
+        "check_authorization returns None on success and a Response tuple on failure, matching Flask's before_request contract exactly"
+      ],
+      "issue_character": "The contract violations are concentrated in utility/shared infrastructure (utils.py, the two execute_command methods, routes/__init__.py) rather than spread uniformly — they represent a pattern of implementation detail leaking through the contract boundary: sentinel returns, side-effect mutations, and dead API surface.",
+      "score_rationale": "The codebase honors HTTP-level contracts well and the high-traffic route layer is coherent. However, four concrete contract violations in core utilities drag the score down: get_file_hash lies about its return type via a 'Error' sentinel, both execute_command methods hide instance-state mutation inside an execute verb, routes/__init__.py exports an api_blueprint that is never populated or consumed, and process_recover_fs silently overwrites its input file. These are not cosmetic — callers of get_file_hash and clean_and_parse_json must defensively check for special sentinel values not declared in any annotation or docstring. Anchored against 80=solid-but-uneven: the route layer is solid, but the utility contracts are uneven enough to pull the score to the low-60s."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "contract_coherence",
+      "identifier": "get_file_hash_error_sentinel",
+      "summary": "get_file_hash returns literal string 'Error' on failure instead of raising or returning None",
+      "related_files": ["CLI/multivol/api_server/utils.py", "CLI/multivol/api_server/routes/files.py"],
+      "evidence": [
+        "utils.py: except Exception as e: logging.error(...); return 'Error' — the string 'Error' is indistinguishable from a valid hex hash to any caller that does not special-case it",
+        "list_evidences in files.py passes get_file_hash return directly as the 'hash' field in the response dict — a failure yields {'hash': 'Error'} silently returned to clients"
+      ],
+      "suggestion": "Return None on failure (and annotate -> Optional[str]) or raise the exception so callers can handle it explicitly; document the sentinel contract in the docstring if a sentinel is intentional",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "error_contract_mismatch"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "execute_command_self_output_file_mutation",
+      "summary": "execute_command_volatility3 and execute_command_volatility2 mutate self.output_file as a side effect of execution",
+      "related_files": ["CLI/multivol/multi_volatility3.py", "CLI/multivol/multi_volatility2.py"],
+      "evidence": [
+        "multi_volatility3.py lines 89,93: self.output_file = os.path.join(output_dir, ...) inside execute_command_volatility3",
+        "multi_volatility2.py lines ~88-92: same pattern in execute_command_volatility2",
+        "The method returns (command, success) — the output file path is a hidden secondary output stored on the instance, not communicated through the return value"
+      ],
+      "suggestion": "Remove self.output_file and instead return (command, success, output_file_path) as a tuple, or use a local variable and pass it through the return value; the instance should not accumulate transient per-call state",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "hidden_side_effect"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "api_blueprint_dead_export",
+      "summary": "routes/__init__.py exports api_blueprint that is never populated with routes and never consumed",
+      "related_files": ["CLI/multivol/api_server/routes/__init__.py", "CLI/multivol/api_server/app.py"],
+      "evidence": [
+        "routes/__init__.py: api_blueprint = Blueprint('api', __name__) — no routes are registered on it",
+        "The file then imports the individual blueprints (files_bp, docker_bp, etc.) but does not call api_blueprint.register_blueprint() on any of them",
+        "app.py imports blueprints directly and never imports or uses api_blueprint — the module-level API contract this file implies (a single aggregated blueprint) is entirely unfulfilled"
+      ],
+      "suggestion": "Either remove api_blueprint entirely and keep the current per-blueprint import pattern, or properly nest all route blueprints under api_blueprint and update app.py to register only api_blueprint",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "dead_api_surface"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "process_recover_fs_destructive_overwrite",
+      "summary": "process_recover_fs silently overwrites the original Volatility JSON output file in-place",
+      "related_files": ["CLI/multivol/api_server/utils.py"],
+      "evidence": [
+        "utils.py ~line 145: with open(json_path, 'w') as f: json.dump([tree], f, indent=2)  # comment: 'Save tree back directly over the raw JSON'",
+        "json_path is the input file passed to the function — callers expecting idempotent processing will find their raw output irreversibly transformed after the first call"
+      ],
+      "suggestion": "Write the processed tree to a separate file (e.g., recovered_fs_tree.json) and leave the original intact; update the docstring and any callers to reference the new output path",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "hidden_side_effect"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Utility functions were written to be convenient for internal callers, allowing implementation detail (sentinel returns, instance mutation) to leak into the public contract",
+      "The routes/__init__.py appears to be an early architectural sketch that was never completed or removed when app.py moved to direct blueprint registration"
+    ],
+    "likely_symptoms": ["get_file_hash_error_sentinel", "api_blueprint_dead_export"],
+    "possible_false_positives": []
+  }
+}

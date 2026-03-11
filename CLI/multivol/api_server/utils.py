@@ -4,13 +4,11 @@ import time
 import json
 import sqlite3
 import logging
+from typing import Optional, Union
 from multivol.api_server.database import get_db_connection
 
-def resolve_host_path(container_path):
-    """
-    Translates a path inside the container (e.g., /app/storage/...) 
-    to the equivalent path on the host, based on HOST_PATH env var.
-    """
+def resolve_host_path(container_path: str) -> str:
+    """Translate a container-side path to the host path using the HOST_PATH env var."""
     host_base = os.environ.get("HOST_PATH")
     if not host_base:
          logging.warning("HOST_PATH not set. Docker volumes might map incorrectly if not using named volumes.")
@@ -18,50 +16,49 @@ def resolve_host_path(container_path):
          
     try:
         from multivol.api_server.config import BASE_DIR
-        
+
         # If the container_path is inside BASE_DIR, we translate it
         if container_path.startswith(BASE_DIR):
              # e.g., /app/outputs/volatility3_1234 -> outputs/volatility3_1234
              rel_path = os.path.relpath(container_path, BASE_DIR)
              return os.path.join(host_base, rel_path)
-             
+
         # Fallback to the old storage hack just in case
         if 'storage' in container_path:
              rel_path = container_path[container_path.find('storage'):]
              return os.path.join(host_base, rel_path)
-    except:
-        pass
+    except Exception as e:
+        logging.warning(f"resolve_host_path fallback triggered: {e}")
     return container_path # Fallback
 
-def calculate_sha256(filepath):
-    """Calculates SHA-256 hash of a file."""
+def calculate_sha256(filepath: str) -> str:
+    """Calculate the SHA-256 hash of a file and return it as a hex string."""
     sha256_hash = hashlib.sha256()
     with open(filepath, "rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
 
-def get_file_hash(filepath):
-    """Gets cached hash or calculates it."""
+def get_file_hash(filepath: str) -> str:
+    """Gets cached hash or calculates it. Raises OSError if the file cannot be read."""
     hash_file = filepath + ".sha256"
     if os.path.exists(hash_file):
         try:
             with open(hash_file, 'r') as f:
                 return f.read().strip()
-        except:
-            pass
-    
+        except OSError as e:
+            logging.warning(f"Could not read cached hash for {filepath}: {e}")
+
     # Calculate and cache
+    file_hash = calculate_sha256(filepath)
     try:
-        file_hash = calculate_sha256(filepath)
         with open(hash_file, 'w') as f:
             f.write(file_hash)
-        return file_hash
-    except Exception as e:
-        logging.error(f"Failed to calc hash for {filepath}: {e}")
-        return "Error"
+    except OSError as e:
+        logging.warning(f"Could not write hash cache for {filepath}: {e}")
+    return file_hash
 
-def clean_and_parse_json(filepath):
+def clean_and_parse_json(filepath: str) -> Union[list, dict]:
     """Helper to parse JSON from Volatility output files, handling errors gracefully."""
     if not os.path.exists(filepath):
         logging.warning(f"File not found: {filepath}")
@@ -80,15 +77,15 @@ def clean_and_parse_json(filepath):
             try:
                 json_content = content[start_index:]
                 parsed_data = json.loads(json_content)
-            except:
-                pass # Try fallback
+            except json.JSONDecodeError:
+                pass  # Try fallback below
         
         if parsed_data is None:
              lines = content.splitlines()
              if len(lines) > 1:
                  try:
                     parsed_data = json.loads('\n'.join(lines[1:]))
-                 except:
+                 except json.JSONDecodeError:
                     pass
         
         if parsed_data is not None:
@@ -101,7 +98,7 @@ def clean_and_parse_json(filepath):
     except Exception as e:
         return {"error": f"Error reading file: {str(e)}"}
 
-def process_recover_fs(output_dir):
+def process_recover_fs(output_dir: str) -> None:
     """
     Reads the unstructured output of linux.pagecache.RecoverFs and 
     builds a structured JSON tree representing the file system.
@@ -214,7 +211,7 @@ def process_recover_fs(output_dir):
         import traceback
         logging.error(f"Failed to process RecoverFs:\n{traceback.format_exc()}")
 
-def cleanup_timeouts():
+def cleanup_timeouts() -> None:
     """Marks scans running for > 1 hour as failed (timeout)."""
     try:
         conn = get_db_connection()

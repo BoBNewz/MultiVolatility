@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 import logging
 from multivol.api_server.config import APP_PASSWORD, API_TOKEN
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint('auth_bp', __name__)
 
 @auth_bp.route('/auth/login', methods=['POST'])
 def login():
@@ -19,5 +19,5 @@ def login():
             "token": API_TOKEN
         })
     
-    logging.warning(f"Failed login attempt with password: {password}")
+    logging.warning("Failed login attempt with invalid password.")
     return jsonify({"success": False, "error": "Invalid password"}), 401

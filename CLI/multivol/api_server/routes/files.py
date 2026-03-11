@@ -39,54 +39,57 @@ def upload_file():
             logging.error(f"Failed to save file: {e}")
             return jsonify({"error": str(e)}), 500
 
-@files_bp.route('/symbols', methods=['GET', 'POST', 'DELETE'])
-def manage_symbols():
+@files_bp.route('/symbols', methods=['GET'])
+def list_symbols():
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
-    
-    if request.method == 'GET':
-        symbols = []
-        for root, dirs, files in os.walk(symbols_dir):
-            for file in files:
-                rel_path = os.path.relpath(os.path.join(root, file), symbols_dir)
-                symbols.append(rel_path)
-        return jsonify(symbols)
-        
-    elif request.method == 'POST':
-        if 'file' not in request.files:
-            return jsonify({"error": "No file uploaded"}), 400
-            
-        file = request.files['file']
-        path = request.form.get('path', '') # Allow specifying subdirectories
-        
-        filename = secure_filename(file.filename)
-        # Prevent traversal
-        safe_path = os.path.normpath(os.path.join(symbols_dir, path))
-        if not safe_path.startswith(symbols_dir):
-            return jsonify({"error": "Invalid path"}), 400
-            
-        os.makedirs(safe_path, exist_ok=True)
-        file.save(os.path.join(safe_path, filename))
-        
-        return jsonify({"message": "Symbol uploaded successfully"})
-        
-    elif request.method == 'DELETE':
-        path = request.args.get('path')
-        if not path:
-             return jsonify({"error": "Path required"}), 400
-             
-        # Prevent traversal
-        safe_path = os.path.normpath(os.path.join(symbols_dir, path))
-        if not safe_path.startswith(symbols_dir):
-            return jsonify({"error": "Invalid path"}), 400
-            
-        if os.path.exists(safe_path):
-            if os.path.isdir(safe_path):
-                 shutil.rmtree(safe_path)
-            else:
-                 os.remove(safe_path)
-            return jsonify({"message": "Deleted successfully"})
-        return jsonify({"error": "Not found"}), 404
+    symbols = []
+    for root, dirs, files in os.walk(symbols_dir):
+        for file in files:
+            rel_path = os.path.relpath(os.path.join(root, file), symbols_dir)
+            symbols.append(rel_path)
+    return jsonify(symbols)
+
+@files_bp.route('/symbols', methods=['POST'])
+def upload_symbol():
+    symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
+    os.makedirs(symbols_dir, exist_ok=True)
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files['file']
+    path = request.form.get('path', '')  # Allow specifying subdirectories
+
+    filename = secure_filename(file.filename)
+    # Prevent traversal
+    safe_path = os.path.normpath(os.path.join(symbols_dir, path))
+    if not safe_path.startswith(symbols_dir):
+        return jsonify({"error": "Invalid path"}), 400
+
+    os.makedirs(safe_path, exist_ok=True)
+    file.save(os.path.join(safe_path, filename))
+    return jsonify({"status": "success"})
+
+@files_bp.route('/symbols', methods=['DELETE'])
+def delete_symbol():
+    symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
+    os.makedirs(symbols_dir, exist_ok=True)
+    path = request.args.get('path')
+    if not path:
+        return jsonify({"error": "Path required"}), 400
+
+    # Prevent traversal
+    safe_path = os.path.normpath(os.path.join(symbols_dir, path))
+    if not safe_path.startswith(symbols_dir):
+        return jsonify({"error": "Invalid path"}), 400
+
+    if os.path.exists(safe_path):
+        if os.path.isdir(safe_path):
+            shutil.rmtree(safe_path)
+        else:
+            os.remove(safe_path)
+        return jsonify({"status": "success"})
+    return jsonify({"error": "Not found"}), 404
 
 @files_bp.route('/evidences', methods=['GET'])
 def list_evidences():
@@ -120,8 +123,8 @@ def list_evidences():
                 fname = os.path.basename(r['dump_path'])
                 case_map[fname] = r['name']
         conn.close()
-    except:
-        pass
+    except Exception:
+        logging.warning("Failed to load case names from DB for evidence listing.", exc_info=True)
 
     evidences = []
     
@@ -153,7 +156,7 @@ def list_evidences():
                              "type": "Extracted File"
                          })
              except Exception as e:
-                 print(f"Error reading subdir {path}: {e}")
+                 logging.error(f"Error reading subdir {path}: {e}")
             
              # Resolve Source Dump from DB using Folder Name matches
              source_dump = "Unknown Source"
@@ -174,7 +177,8 @@ def list_evidences():
                  else:
                      source_dump = dump_base
                  conn.close()
-             except:
+             except Exception:
+                 logging.warning("Failed to resolve source dump from DB; falling back to folder name.", exc_info=True)
                  source_dump = dump_base
 
              # If source dump exists in storage, add it to children list as requested
@@ -219,7 +223,7 @@ def list_evidences():
                 "name": item,
                 "size": os.path.getsize(path),
                 "type": "Memory Dump",
-                "hash": get_file_hash(path),
+                "hash": get_file_hash(path) if os.path.exists(path) else None,
                 "uploaded": time.strftime('%Y-%m-%d', time.localtime(os.path.getmtime(path))),
                 "is_source": True
             }

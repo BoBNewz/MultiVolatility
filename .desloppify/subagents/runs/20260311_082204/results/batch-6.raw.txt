@@ -1,0 +1,134 @@
+{
+  "batch": "abstraction_fitness",
+  "batch_index": 6,
+  "assessments": {
+    "abstraction_fitness": 72.0
+  },
+  "dimension_notes": {
+    "abstraction_fitness": {
+      "evidence": [
+        "resolve_path() is independently defined three times: as a module-level function in CLI/multivol/strings.py (line 6), as a class method on multi_volatility2 (line 15), and as a class method on multi_volatility3 (line 17). All three implement the same Docker DooD host-path translation logic with identical branching.",
+        "safe_print() is likewise triplicated: module-level in strings.py (line 20), method on multi_volatility2 (line 117), method on multi_volatility3 (line 202). The implementations are identical.",
+        "vol3_wrapper in multivol.py (lines 26-27) is a pure 2-line unpacking shim: `instance, args = packed_args; return instance.execute_command_volatility3(*args)`. It exists solely to satisfy pool.imap's single-argument contract — could be an inline lambda.",
+        "routes/__init__.py creates api_blueprint = Blueprint('api', __name__) that is never registered or used. app.py imports all blueprints directly. The intermediate aggregator Blueprint is a dead structural artifact.",
+        "execute_command_volatility3 in multi_volatility3.py carries 17 parameters (command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet, lock, host_path, fetch_symbols, show_commands, custom_symbol, scan_id, extra_args) — an implicit execution-config bag with no grouping struct.",
+        "multi_volatility2 and multi_volatility3 are parallel classes with identical helper methods (resolve_path, safe_print) and near-identical execute_command_* bodies. No shared base class or utility module absorbs the common structure.",
+        "Flask blueprint layer in CLI/multivol/api_server/routes/ is properly domain-bounded: files, scan, dump, docker, memprocfs, auth — each owns a clear slice without cross-imports.",
+        "MCP safe_request() in MCP/multivol_mcp.py adds real error-handling policy (httpx error wrapping, JSON decode guard) — not a pass-through.",
+        "utils.py is a bounded domain module with focused utilities (hash caching, JSON parsing, RecoverFs tree building, timeout cleanup) rather than a catch-all god module."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "sub_axes": {
+        "abstraction_leverage": 78.0,
+        "indirection_cost": 82.0,
+        "interface_honesty": 90.0,
+        "delegation_density": 95.0,
+        "definition_directness": 60.0,
+        "type_discipline": 72.0
+      }
+    }
+  },
+  "dimension_judgment": {
+    "abstraction_fitness": {
+      "strengths": [
+        "Flask blueprint layer is cleanly domain-bounded (files, scan, dump, docker, memprocfs, auth) with no cross-blueprint import cycles.",
+        "utils.py is a focused domain utility module — hash caching, JSON parsing, RecoverFs tree building, timeout cleanup — rather than a sprawling helper surface.",
+        "MCP's safe_request() earns its indirection by adding uniform error handling policy across all async HTTP calls.",
+        "No Protocol/ABC one-implementation abstractions exist anywhere in the codebase.",
+        "check_authorization in auth.py is a direct, honest function: it encodes real auth policy and is applied as a before_request hook without extra wrapping layers."
+      ],
+      "issue_character": "The issues are structurally localized to the CLI orchestration layer — multi_volatility2, multi_volatility3, and strings.py share identical helper functions without a common base, forming a copy-paste triplet rather than a shared abstraction.",
+      "score_rationale": "The API server layer is genuinely well-structured with direct domain blueprints and focused utilities, which pushes the score up. However the CLI orchestration layer has clear abstraction work undone: resolve_path and safe_print each appear three times with identical logic, the two Volatility class runners share no common base despite near-identical structure, and execute_command_volatility3's 17-parameter signature is an unstructured config bag. This pattern of earned-but-unextracted abstraction places the codebase around 70-75 — solid at the server layer but recurring friction in the CLI domain modules, consistent with the 'mixed' band where a developer encounters enough inconsistency to not fully trust patterns they've seen elsewhere."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "resolve_path_triplicated",
+      "summary": "resolve_path() is copy-pasted into strings.py, multi_volatility2, and multi_volatility3 with identical logic",
+      "related_files": [
+        "CLI/multivol/strings.py",
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "strings.py line 6 defines module-level resolve_path(path, host_path) with /storage branch and os.getcwd() branch.",
+        "multi_volatility2.py line 15 defines self.resolve_path(path, host_path) with /storage branch and api_server.config.BASE_DIR branch with os.getcwd() fallback.",
+        "multi_volatility3.py line 17 defines self.resolve_path(path, host_path) with identical branching. The three versions diverge only in a minor try/except around the config import."
+      ],
+      "suggestion": "Extract resolve_path into a shared CLI utility module (e.g., CLI/multivol/docker_utils.py) as a single module-level function. All three callers import and call the shared version. The multi_volatility2/3 class methods become thin delegators or are removed in favor of direct module import.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "cli_shared_helpers_not_extracted"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "safe_print_triplicated",
+      "summary": "safe_print() is independently defined in strings.py, multi_volatility2, and multi_volatility3 with identical bodies",
+      "related_files": [
+        "CLI/multivol/strings.py",
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "strings.py line 20: `def safe_print(message, lock): if lock: with lock: rprint(message) else: rprint(message)`",
+        "multi_volatility2.py line 117 and multi_volatility3.py line 202 are identical class method versions of the same logic.",
+        "The two class methods and the module function are byte-for-byte equivalent."
+      ],
+      "suggestion": "Move safe_print into the same shared CLI/multivol/docker_utils.py module as resolve_path. Both classes can call the module-level function directly, removing the method duplication.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "cli_shared_helpers_not_extracted"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "execute_command_wide_param_bag",
+      "summary": "execute_command_volatility3 takes 17 positional parameters forming an implicit execution-config bag",
+      "related_files": [
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "Signature: execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None, extra_args='') — 17 parameters.",
+        "The path-group (dump_dir, symbols_path, cache_dir, plugin_dir, output_dir, host_path) and the flag-group (quiet, show_commands, fetch_symbols) are implicit bags with no grouping struct."
+      ],
+      "suggestion": "Introduce a VolatilityRunConfig dataclass grouping the stable path parameters (dump, dump_dir, symbols_path, cache_dir, plugin_dir, output_dir, host_path) and an ExecutionOptions dataclass for flags (quiet, show_commands, fetch_symbols, scan_id). The function signature becomes execute_command_volatility3(self, command, config: VolatilityRunConfig, opts: ExecutionOptions). Apply the same refactor to execute_command_volatility2.",
+      "confidence": "medium",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "cli_shared_helpers_not_extracted"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "orphaned_api_blueprint",
+      "summary": "routes/__init__.py defines api_blueprint that is never registered, making it dead structural indirection",
+      "related_files": [
+        "CLI/multivol/api_server/routes/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "routes/__init__.py line 4: api_blueprint = Blueprint('api', __name__) — the blueprint object is created but never registered with app.register_blueprint() in app.py.",
+        "app.py registers all five blueprints (files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp, auth_bp) directly from their respective modules, bypassing routes/__init__.py entirely."
+      ],
+      "suggestion": "Either remove api_blueprint from routes/__init__.py (if app.py's direct imports are the intended pattern) or complete the aggregation by registering nested blueprints under api_blueprint and registering api_blueprint in app.py. The current state is a half-done structural decision that adds a misleading indirection layer.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "The CLI orchestration layer (multi_volatility2, multi_volatility3, strings) was built by parallel file duplication rather than extraction — shared helpers were never promoted to a common module.",
+      "The routes/__init__.py blueprint aggregation was started but not completed, leaving a dead structural artifact alongside the working direct-import pattern in app.py."
+    ],
+    "likely_symptoms": [
+      "vol3_wrapper pass-through is a symptom of the multiprocessing callsite constraint, not an abstraction design choice — low severity."
+    ],
+    "possible_false_positives": [
+      "facade_modules signal for multi_volatility3.py and multi_volatility2.py: these are not re-export facades — they import libraries for internal use and define domain classes. The high re_export_ratio is a scanner artifact from counting top-level import names."
+    ]
+  }
+}

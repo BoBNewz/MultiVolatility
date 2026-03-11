@@ -14,6 +14,7 @@ import sqlite3
 import threading
 import docker
 import logging
+from typing import Optional
 from flask import Blueprint, request, jsonify, Response
 import requests as http_requests
 from multivol.api_server.database import get_db_connection
@@ -34,8 +35,8 @@ SIDECAR_BASE_PORT = 15000  # Ephemeral port range start
 MODULE_NAME = "MemProcFS.FileList"
 
 
-def get_sidecar_url(scan_id):
-    """Get the sidecar URL for a scan session."""
+def get_sidecar_url(scan_id: str) -> Optional[str]:
+    """Return the sidecar base URL for a scan session, or None if no session is active."""
     with sessions_lock:
         session = active_sessions.get(scan_id)
         if not session:
@@ -91,7 +92,7 @@ def start_memprocfs(uuid):
                         "status": "already_running",
                         "port": session['port']
                     })
-            except:
+            except Exception:
                 # Container died, clean up
                 del active_sessions[uuid]
 
@@ -150,7 +151,7 @@ def start_memprocfs(uuid):
             api_container = client.containers.get('multivol-api')
             api_networks = list(api_container.attrs['NetworkSettings']['Networks'].keys())
             network_name = api_networks[0] if api_networks else 'bridge'
-        except:
+        except Exception:
             network_name = 'bridge'
 
         # Resolve host path for the dump file directory
@@ -203,7 +204,7 @@ def start_memprocfs(uuid):
                             conn2.close()
                             logging.info(f"MemProcFS sidecar ready for {uuid}")
                             return
-                except:
+                except Exception:
                     pass
                 time.sleep(3)
 
@@ -259,7 +260,7 @@ def get_memprocfs_files(uuid):
         conn.close()
         try:
             all_files = json.loads(cached['content'])
-        except:
+        except json.JSONDecodeError:
             all_files = None
 
     if all_files is None:
@@ -344,7 +345,7 @@ def download_memprocfs_file(uuid):
         if resp.status_code != 200:
             try:
                 return jsonify(resp.json()), resp.status_code
-            except:
+            except Exception:
                 return jsonify({"error": "Download failed"}), resp.status_code
 
         # Stream the response back to the client
@@ -391,7 +392,7 @@ def memprocfs_status(uuid):
                 "vmm_ready": health.get('vmm_active', False),
                 "files_cached": health.get('files_cached', False)
             })
-    except:
+    except Exception:
         pass
 
     return jsonify({"active": False})

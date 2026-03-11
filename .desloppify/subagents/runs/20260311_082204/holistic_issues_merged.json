@@ -1,0 +1,2021 @@
+{
+  "assessments": {
+    "abstraction_fitness": {
+      "score": 55.0,
+      "components": [
+        "Abstraction Leverage",
+        "Indirection Cost",
+        "Interface Honesty",
+        "Delegation Density",
+        "Definition Directness",
+        "Type Discipline"
+      ],
+      "component_scores": {
+        "Abstraction Leverage": 78.0,
+        "Indirection Cost": 82.0,
+        "Interface Honesty": 90.0,
+        "Delegation Density": 95.0,
+        "Definition Directness": 60.0,
+        "Type Discipline": 72.0
+      }
+    },
+    "ai_generated_debt": 59.9,
+    "api_surface_coherence": 42.7,
+    "authorization_consistency": 75.4,
+    "contract_coherence": 48.0,
+    "convention_outlier": 65.8,
+    "cross_module_architecture": 49.7,
+    "dependency_health": 66.0,
+    "design_coherence": 37.7,
+    "error_consistency": 38.6,
+    "high_level_elegance": 52.2,
+    "incomplete_migration": 63.8,
+    "initialization_coupling": 44.1,
+    "logic_clarity": 62.1,
+    "low_level_elegance": 43.0,
+    "mid_level_elegance": 40.9,
+    "naming_quality": 55.6,
+    "package_organization": 63.8,
+    "test_strategy": 0.0,
+    "type_safety": 19.0
+  },
+  "dimension_notes": {
+    "cross_module_architecture": {
+      "evidence": [
+        "CLI/multivol/api_strings_extension.py references @app.route and sqlite3.connect(DB_PATH) with no imports for either 'app' or 'DB_PATH' \u2014 these are globals from the old monolithic api.py that no longer exist in scope. The file is never imported anywhere in the current codebase.",
+        "CLI/multivol/multi_volatility2.py:24 and CLI/multivol/multi_volatility3.py:27 both do 'from api_server.config import BASE_DIR' inside a deferred try/except inside a function body, creating an upward layer dependency: CLI execution workers depend on the API server's config layer.",
+        "CLI/multivol/api_server/routes/memprocfs.py:29 declares 'active_sessions = {}' at module scope; CLI/multivol/api_server/routes/dump.py:18 declares 'dump_tasks = {}' at module scope. Both are mutated by route handlers across requests, creating cross-request shared mutable state at the route-module level.",
+        "dump.py maintains dual-truth state: an in-memory dict 'dump_tasks' and a 'dump_tasks' DB table both track task status. When the process restarts, in-memory state is lost while DB state persists, diverging the two sources.",
+        "CLI/multivol/api_server/utils.py:20 defers 'from multivol.api_server.config import BASE_DIR' inside the resolve_host_path() function body rather than at module top \u2014 a cycle-pressure proxy: utils.py already imports database.py at module scope, and database.py imports config.py, so there should be no circular issue; the deferral appears to be a leftover workaround.",
+        "CLI/multivol/api_server/routes/__init__.py imports all five blueprints (files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp), while CLI/multivol/api_server/app.py independently imports and registers the same set plus auth_bp. The routes/__init__.py re-export layer is redundant and never used by app.py."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "high_level_elegance": {
+      "evidence": [
+        "Top-level project structure (CLI/, Web/, MCP/, Dockerfiles/) maps cleanly to domain roles \u2014 CLI engine, web frontend, MCP integration, Docker worker images.",
+        "Within CLI/multivol/, api_server/ is a coherent sub-package for the Flask REST layer, with config, database, auth, utils, and routes/ correctly separated.",
+        "CLI/multivol/api_strings_extension.py uses bare @app.route decorators (no Flask app defined or imported in the file) and references DB_PATH and send_file which are also undefined \u2014 the file is structurally inert and cannot run. It lives at the CLI orchestration layer rather than in api_server/routes/ where it belongs.",
+        "CLI/multivol/api_server/__init__.py creates `api_blueprint = Blueprint('api', __name__)` and then imports all route blueprints, but this api_blueprint is never registered to any Flask app. app.py independently re-imports all the same blueprints and registers them directly. The __init__.py object is a phantom that adds noise without serving a role.",
+        "resolve_path() is duplicated identically in multi_volatility2.py (line 15) and multi_volatility3.py (line 17), and a third variant resolve_host_path() lives in api_server/utils.py. Three implementations of the same host-path translation logic exist with no shared owner.",
+        "multivol/__init__.py is entirely empty \u2014 it offers no public surface and contributes nothing to the package contract."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "convention_outlier": {
+      "evidence": [
+        "All 5 active route modules in CLI/multivol/api_server/routes/ use Blueprint pattern with `_bp` variable names and `get_db_connection()` from database.py",
+        "api_strings_extension.py uses bare `@app.route` decorator (not Blueprint), `sqlite3.connect(DB_PATH)` directly (bypassing get_db_connection()), and lives in CLI/multivol/ root instead of api_server/routes/",
+        "api_strings_extension.py is never imported by any source file in the project \u2014 it is a dead style island",
+        "CLI/multivol/multi_volatility2.py defines `class multi_volatility2:` and CLI/multivol/multi_volatility3.py defines `class multi_volatility3:` \u2014 snake_case class names violate Python's PascalCase class naming convention",
+        "auth_bp uses `Blueprint('auth', __name__)` (no _bp suffix in the string name) while all 5 other blueprints use `Blueprint('xxx_bp', __name__)` \u2014 minor inconsistency in blueprint registration string",
+        "Naming scan shows multivol/ has 14 snake_case and 2 camelCase function names; api_server/ and routes/ are purely snake_case \u2014 consistent with Python convention",
+        "Sibling behavior outliers for auth.py (missing os, docker, etc.) are functionally justified: it is a pure auth module with no file I/O or DB access"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "error_consistency": {
+      "evidence": [
+        "utils.py has 4 bare `except:` clauses (lines 32, 51, 83, 91) \u2014 all silently swallow failures with no logging",
+        "database.py line 101: `except: pass` swallows failure to ADD COLUMN 'name', leaves schema in unknown state with no signal to caller or logs",
+        "routes/files.py lines 123 and 177: bare `except: pass` on DB connections \u2014 case_map silently stays empty, evidence list misses case names",
+        "routes/memprocfs.py has 6 bare `except:` clauses \u2014 lines 94, 153, 206, 262, 347, 394 \u2014 mix of intentional fallbacks and silent error swallowing",
+        "get_file_hash() returns the string literal 'Error' on failure (utils.py line 59), mixing an error sentinel string into what callers expect to be a hex hash",
+        "multi_volatility2.execute_command_volatility2 catches Docker exceptions and only prints them \u2014 caller has no way to detect failure, scan proceeds as if command succeeded",
+        "Route handlers consistently use jsonify({'error': ...}) + HTTP status codes \u2014 the public API error contract is uniform and predictable",
+        "memprocfs get_memprocfs_files distinguishes ConnectionError vs Timeout vs generic Exception with appropriate 503/504/500 responses \u2014 specific error types used where it matters",
+        "Routes consistently close DB connections before returning error responses, preventing connection leaks on error paths"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "naming_quality": {
+      "evidence": [
+        "manage_symbols() in files.py handles GET/POST/DELETE for the symbols directory \u2014 'manage' reveals nothing about the multi-method dispatch inside",
+        "runner() in multivol.py is the top-level orchestration entry point; the name gives no hint it sets up directories, checks Docker images, runs parallel plugin pools, and invokes strings extraction",
+        "getCommands() in multi_volatility2.py uses camelCase while every other function in the codebase uses snake_case (get_file_hash, calculate_sha256, list_images, etc.)",
+        "dump_dir parameter in execute_command_volatility2 is described by an inline comment as 'actually the full file path from main.py' \u2014 the name actively contradicts its content",
+        "The 'hash' key in the evidence response dict from list_evidences() is assigned source_dump (a filename string like 'memorydump.raw'), not a hash value; same field is set to item (also a filename) in the second pass",
+        "process_recover_fs() in utils.py uses the generic 'process' verb; the function reads a volatility JSON output, restructures it into a tree, and overwrites the file \u2014 closer to build_recover_fs_tree()",
+        "show_commands parameter in execute_command_volatility2 controls debug print output; the equivalent flag is called debug throughout the rest of the codebase (--debug CLI arg, getattr(arguments, 'debug', False) call site)"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "abstraction_fitness": {
+      "evidence": [
+        "resolve_path() is independently defined three times: as a module-level function in CLI/multivol/strings.py (line 6), as a class method on multi_volatility2 (line 15), and as a class method on multi_volatility3 (line 17). All three implement the same Docker DooD host-path translation logic with identical branching.",
+        "safe_print() is likewise triplicated: module-level in strings.py (line 20), method on multi_volatility2 (line 117), method on multi_volatility3 (line 202). The implementations are identical.",
+        "vol3_wrapper in multivol.py (lines 26-27) is a pure 2-line unpacking shim: `instance, args = packed_args; return instance.execute_command_volatility3(*args)`. It exists solely to satisfy pool.imap's single-argument contract \u2014 could be an inline lambda.",
+        "routes/__init__.py creates api_blueprint = Blueprint('api', __name__) that is never registered or used. app.py imports all blueprints directly. The intermediate aggregator Blueprint is a dead structural artifact.",
+        "execute_command_volatility3 in multi_volatility3.py carries 17 parameters (command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet, lock, host_path, fetch_symbols, show_commands, custom_symbol, scan_id, extra_args) \u2014 an implicit execution-config bag with no grouping struct.",
+        "multi_volatility2 and multi_volatility3 are parallel classes with identical helper methods (resolve_path, safe_print) and near-identical execute_command_* bodies. No shared base class or utility module absorbs the common structure.",
+        "Flask blueprint layer in CLI/multivol/api_server/routes/ is properly domain-bounded: files, scan, dump, docker, memprocfs, auth \u2014 each owns a clear slice without cross-imports.",
+        "MCP safe_request() in MCP/multivol_mcp.py adds real error-handling policy (httpx error wrapping, JSON decode guard) \u2014 not a pass-through.",
+        "utils.py is a bounded domain module with focused utilities (hash caching, JSON parsing, RecoverFs tree building, timeout cleanup) rather than a catch-all god module."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "",
+      "sub_axes": {
+        "abstraction_leverage": 78.0,
+        "indirection_cost": 82.0,
+        "interface_honesty": 90.0,
+        "delegation_density": 95.0,
+        "definition_directness": 60.0,
+        "type_discipline": 72.0
+      }
+    },
+    "dependency_health": {
+      "evidence": [
+        "MCP/requirements.txt lists both 'requests' and 'httpx', but MCP/multivol_mcp.py only imports and uses httpx (async client); 'requests' is never imported in that file",
+        "CLI uses 'requests' (in memprocfs.py) while MCP uses 'httpx' \u2014 two HTTP client libraries across the project, albeit in separate packages",
+        "Top-level requirements.txt contains only 'pyyaml' and 'requests', a partial subset of CLI/requirements.txt \u2014 functions as a confusing artifact with unclear purpose",
+        "No version pinning in any requirements file (CLI/requirements.txt: flask, flask-cors, docker, rich, waitress, pyyaml, requests; MCP/requirements.txt: fastmcp, requests, httpx) \u2014 unpinned deps risk silent breakage on upgrades",
+        "werkzeug (used via 'from werkzeug.utils import secure_filename' in files.py) is not explicitly listed; it is an implicit transitive dependency of Flask"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "low_level_elegance": {
+      "evidence": [
+        "scan() route handler (scan.py:118) is 173 lines \u2014 builds a 20-key default_args dict, merges request data, validates, reads YAML for command lists, creates directories, inserts scan + per-module rows to DB, and spawns a background thread, all in one function body with no helper extraction.",
+        "process_recover_fs() (utils.py:98) is 113 lines combining four distinct phases: tarball extraction via subprocess, inode-to-filename mapping by scanning the output dir, JSON-node tree construction with nested loops, and writing the result back to disk.",
+        "Bare except: (no exception type) appears 12 times across seed files: utils.py:32,51,83,91; scan.py:388,514; files.py:123,177; multi_volatility3.py:157,197; multi_volatility2.py:78,108 \u2014 each silently swallows all exceptions including KeyboardInterrupt and SystemExit.",
+        "resolve_path() method bodies in multi_volatility2.py:15 and multi_volatility3.py:17 are near-identical, implementing the same storage-path and BASE_DIR fallback logic twice.",
+        "Validation guard (if 'dump' not in data or 'mode' not in data) at scan.py:~203 comes after 85 lines of default_args setup \u2014 a developer must scroll past the entire argument construction block to find what is actually required.",
+        "paginate_data() helper is defined inline inside get_scan_results() at scan.py:486, whereas build_fs_tree() is correctly extracted as a module-level function \u2014 inconsistent extraction style within the same file.",
+        "background_single_run closure defined inside execute_plugin() at scan.py:707 is ~45 lines of DB + Docker logic buried in a route handler, echoing the same pattern as background_scan in scan() and wait_and_update_status in memprocfs.py."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "mid_level_elegance": {
+      "evidence": [
+        "scan.py:182 \u2014 `args_obj = argparse.Namespace(**args_dict)` converts a JSON request body into a CLI argument namespace to hand off to runner_func; the runner was designed for argparse CLI use and is reused here without an intermediary data contract",
+        "scan.py:64-67 \u2014 `runner_func = None` global initialized via `init_runner(runner_cb)` called from app.py:58; if init_runner is never called the scan route silently skips execution (line 261: `if runner_func:` with no else branch)",
+        "utils.py:13-30 \u2014 resolve_host_path() translates container paths to host paths for Docker volumes; multi_volatility2.py:17-31 \u2014 resolve_path() implements the same Docker-in-Docker path translation with different fallback logic; two seam implementations for the same boundary concern",
+        "routes/__init__.py:3-10 \u2014 `api_blueprint = Blueprint('api', __name__)` is created and the sub-blueprint imports live here, but api_blueprint is never registered in app.py; app.py registers each blueprint directly, making this __init__ an orphaned seam stub",
+        "multi_volatility2.py:24 \u2014 `from api_server.config import BASE_DIR` inside resolve_path(); a core computation module reaching upward into the API server config layer",
+        "api_strings_extension.py:2,69 \u2014 uses `@app.route(...)` directly against the global Flask `app` object instead of a Blueprint; never imported by app.py, making it an orphaned file whose seam design (direct app extension) differs from every other route module"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "authorization_consistency": {
+      "evidence": [
+        "CLI/multivol/api_server/app.py line 36: `app.before_request(check_authorization)` \u2014 single hook covers all 33+ route handlers across all blueprints uniformly",
+        "CLI/multivol/api_server/auth.py: whitelist contains exactly two carve-outs: OPTIONS (CORS preflight) and /auth/login \u2014 no undocumented bypasses observed",
+        "docker-compose.yml lines 10, 25, 41: API_TOKEN and VITE_API_TOKEN are hardcoded to 'multivol_default_secret_token' matching the config.py fallback default \u2014 the token is baked into the frontend build artifact and exposed in the static JS bundle",
+        "CLI/multivol/api_server/config.py line 21: fallback default `multivol_default_secret_token` and compose file both use the same literal, establishing a never-rotate pattern",
+        "Dockerfiles/memprocfs/memprocfs_server.py: entirely unauthenticated internal sidecar (all five endpoints: /health, /init, /list, /read, /shutdown) \u2014 but this is an internal Docker network service and qualifies as internal service-to-service behind network-level auth",
+        "CLI/multivol/api_strings_extension.py: references `app` and `DB_PATH` globals without any import \u2014 dead/orphaned code that cannot be registered to any Flask app instance; not an active auth concern",
+        "MCP/multivol_mcp.py: separate MCP service uses its own StaticTokenAuth with MCP_TOKEN \u2014 consistent with the two-service model, each service has its own auth"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "The auth token is compiled into the frontend JS bundle via VITE_API_TOKEN build arg, effectively making it public to any browser user. The same default credential value appears in config.py fallback and docker-compose.yml environment blocks, creating a never-rotate default that would be identical for all default deployments."
+    },
+    "package_organization": {
+      "evidence": [
+        "CLI/multivol/ contains api_strings_extension.py which uses @app.route decorators \u2014 route handlers that belong in api_server/routes/, not in the core analysis package root",
+        "api_strings_extension.py is never imported anywhere in the production codebase (grep finds no references); it is an orphaned dead file in the wrong layer",
+        "api_strings_extension.py references 'app' (the Flask application object) without importing or defining it, confirming it was intended to live alongside app.py or as a routes/ module",
+        "routes/__init__.py creates api_blueprint = Blueprint('api', __name__) and re-imports all sub-blueprints, but app.py registers blueprints directly without using api_blueprint \u2014 the aggregator is dead scaffolding",
+        "Directory profiles confirm a clean three-tier layout: CLI/multivol/ (6 files, avg fan-in 0.5), api_server/ (5 files), routes/ (7 files) \u2014 no flat-directory overload",
+        "Coupling matrix shows only one cross-directory edge: CLI/multivol/ -> CLI/multivol/api_server/, a clean downstream import direction with no bidirectional violation",
+        "strings.py (Docker utility) and api_strings_extension.py (API route handler) serve different concerns but both sit in the multivol root; the route handler does not belong there"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "initialization_coupling": {
+      "evidence": [
+        "CLI/multivol/api_server/config.py lines 11-19: six os.makedirs() calls execute at import time, creating filesystem directories as a side effect of any import. Every module that imports config (auth.py, database.py, all route files) triggers this.",
+        "CLI/multivol/api_server/config.py lines 21-22: API_TOKEN and APP_PASSWORD snapshots os.getenv() at import time. Tests cannot override via environment variable after the module is imported.",
+        "CLI/multivol/api_server/routes/scan.py line 64: runner_func = None is module-level; if any scan endpoint is hit before init_runner() is called, the route silently does nothing (guarded by 'if runner_func:') rather than raising an error.",
+        "CLI/multivol/api_server/routes/dump.py line 18: dump_tasks = {} is a module-level mutable dict accessed from the background_dump_task thread AND from GET request handlers with no threading.Lock. This is a data race.",
+        "MCP/multivol_mcp.py lines 9-13 and 30-32: API_TOKEN, BASE_URL, PORT read from env at module scope; httpx.AsyncClient constructed at module scope with the frozen token baked in \u2014 any test or reconfiguration must reload the module.",
+        "Dockerfiles/memprocfs/memprocfs_server.py lines 27-29: vmm_handle, file_cache, vmm_lock are module-level globals; file_cache is accessed without the vmm_lock in the /list endpoint (lines 187-192), creating a TOCTOU window."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "design_coherence": {
+      "evidence": [
+        "execute_command_volatility3 has 17 parameters and contains at least 5 distinct responsibilities: (1) path resolution via DooD, (2) Docker volume map construction, (3) command string assembly (base_args, redirect shell wrapper), (4) container lifecycle management (name sanitization, stale container removal, run, wait), (5) post-processing output (stripping JSON preamble lines) and (6) multi-heuristic success validation. These are separate concerns collapsed into ~160 lines.",
+        "runner() in multivol.py is a ~220-line function mixing: directory scaffolding, command-list resolution (with duplicated vol2/vol3 branches), Docker image pull with Rich progress display, priority module execution (info module pre-run), multiprocessing pool dispatch with imap_unordered, and final summary printing. Each of these is a separate responsibility.",
+        "api_strings_extension.py is a genuine orphaned architecture fragment: it contains two Flask route handlers that reference bare `app` (undefined in this file) and `sqlite3.connect(DB_PATH)` (also undefined), using the old monolithic-app pattern rather than the blueprint pattern used everywhere else. It is never imported and has no effect at runtime, but its presence creates confusion about whether strings routes are active.",
+        "scan() in routes/scan.py uses argparse.Namespace as the data-carrier object to pass API request data into runner(). This is a CLI-layer abstraction leaking into the API dispatch layer: the API has to reverse-engineer argparse field names, use argparse.Namespace(**args_dict) to pack a dict, and then runner() uses getattr(..., 'fetch_symbol', False) guards that exist because the CLI may not always pass these fields. The proper carrier is a dataclass or typed dict.",
+        "list_volatility_plugins() in routes/docker.py writes a Python script to disk inside the outputs/ directory at request time, then mounts that file into a container. The script content is a multi-line string inside the route handler. This mixes file-system side effects and embedded source code into a route handler; the script should be a static file shipped with the project.",
+        "process_recover_fs in utils.py is a 100+-line function implementing recursive path-tree building from Volatility output \u2014 a domain-specific transformation that belongs in a dedicated module, not a general utilities file."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "contract_coherence": {
+      "evidence": [
+        "get_file_hash (utils.py ~line 55) returns the literal string 'Error' on I/O failure instead of raising or returning None \u2014 callers like list_evidences treat it as a valid hash string without checking for the sentinel",
+        "execute_command_volatility3 and execute_command_volatility2 set self.output_file as a side effect mid-execution (multi_volatility3.py lines 89,93; multi_volatility2.py lines 88,92) \u2014 an 'execute' method that stores derived paths on the instance violates the contract of a stateless executor",
+        "routes/__init__.py creates api_blueprint and imports individual blueprints but never registers routes onto api_blueprint; app.py never uses api_blueprint \u2014 the module exports a blueprint integration point that is a dead artifact",
+        "clean_and_parse_json (utils.py) returns a list, a valid dict, or an error sentinel dict {'error':..., 'raw_output':...} \u2014 callers must probe for an 'error' key to distinguish success from failure, yet the docstring only says 'handling errors gracefully' without specifying the sentinel shape",
+        "process_recover_fs (utils.py ~line 145) overwrites the original input JSON file in-place with the transformed tree ('Save tree back directly over the raw JSON') \u2014 a function named process_recover_fs hiding destructive mutation of the source file violates caller expectations about idempotent processing"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "Four distinct contract violations across the utility and model layers: a sentinel-string error return in get_file_hash, hidden instance mutation in both execute_command methods, a dead/misleading api_blueprint export, and process_recover_fs silently overwriting its own input."
+    },
+    "logic_clarity": {
+      "evidence": [
+        "CLI/multivol/multivol.py lines 86-91: os.cpu_count() wrapped in try/except where the except branch (max_processes = 4) is dead \u2014 os.cpu_count() never raises, it returns None at worst (already handled by `or 4`)",
+        "CLI/multivol/multi_volatility3.py lines 164-168: `success = False` initialized, then immediately `if exit_code != 0: success = False` \u2014 the if-branch is a no-op reassignment; the intent is only the else-branch",
+        "MCP/multivol_mcp.py get_multivol_results: after `if limit <= 0 or limit > 100: limit = 50`, the page calculation has `(offset // limit) + 1 if limit > 0 else 1` \u2014 the `else 1` branch is dead since limit is guaranteed >= 1 by the prior guard",
+        "CLI/multivol/api_server/routes/memprocfs.py start_memprocfs: when container exists but status != 'running', neither cleanup of active_sessions nor early return happens \u2014 stale session leaks into subsequent code path without cleanup"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "N/A \u2014 score is below 85"
+    },
+    "type_safety": {
+      "evidence": [
+        "MCP/multivol_mcp.py annotates all tool functions (e.g., `async def search_multivol_results(uuid: str, ...) -> dict`) \u2014 the sole well-typed subsystem",
+        "CLI/multivol/api_server/utils.py: all 6 public functions (`resolve_host_path`, `calculate_sha256`, `get_file_hash`, `clean_and_parse_json`, `process_recover_fs`, `cleanup_timeouts`) have zero parameter or return type annotations",
+        "CLI/multivol/api_server/auth.py: `check_authorization()` has no annotation; it returns `None`, `('', 200)`, or `(Response, 401)` \u2014 a three-way union left entirely implicit",
+        "CLI/multivol/api_server/app.py: `run_api(runner_cb, debug_mode=False)` \u2014 `runner_cb` is a callable but typed as nothing",
+        "CLI/multivol/api_server/routes/scan.py line 64: `runner_func = None` is a module-level callable slot with no `Optional[Callable[..., Any]]` annotation",
+        "CLI/multivol/multi_volatility3.py `execute_command_volatility3` has 17 parameters, none annotated",
+        "CLI/multivol/multi_volatility2.py `execute_command_volatility2` has 12 parameters, none annotated",
+        "MCP/multivol_mcp.py `safe_request` is annotated `-> dict` but `response.json()` returns `Any` (list or dict depending on endpoint); callers at lines 85, 139, 142, 198-199, 212 all add `isinstance(data, list)` guards proving the annotation is wrong at runtime",
+        "No `Optional`, `Union`, `TypedDict`, or `Callable` imports found anywhere in the CLI subsystem \u2014 the absence is total"
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "ai_generated_debt": {
+      "evidence": [
+        "CLI/multivol/multivol.py lines 49/66: '# Handle Volatility2 mode' / '# Handle Volatility3 mode' sit directly above 'if arguments.mode == \"vol2\":' and 'elif arguments.mode == \"vol3\":' \u2014 pure echo of code, no added insight",
+        "CLI/multivol/multivol.py lines 22/25: duplicate comment '# Wrapper for Volatility 3 to use with imap' appears twice in a row before vol3_wrapper()",
+        "CLI/multivol/api_server/utils.py line 37: docstring '\"\"\"Calculates SHA-256 hash of a file.\"\"\"' restates the function name calculate_sha256 verbatim",
+        "CLI/multivol/api_server/utils.py line 218: docstring '\"\"\"Marks scans running for > 1 hour as failed (timeout).\"\"\"' restates cleanup_timeouts() with no additional context",
+        "CLI/multivol/api_server/routes/dump.py: background_dump_task docstring '\"\"\"Executes a Volatility3 dump command.\"\"\"' echoes function name; the function body is ~80 lines of substantive logic that deserves a real description",
+        "CLI/multivol/api_server/database.py lines 100-102: bare 'except: pass' swallows any error from ALTER TABLE inside schema migration \u2014 defensive pattern that silently ignores failures in non-I/O pure SQLite DDL",
+        "CLI/multivol/api_server/utils.py lines 83-84 and 91: two consecutive bare 'except: pass' blocks in clean_and_parse_json \u2014 both are around json.loads() calls, not true I/O boundaries; over-defensive suppression of parse errors that the caller cannot distinguish from 'no data'",
+        "MCP/multivol_mcp.py: build_url(path) is a one-line pass-through f-string wrapper used in a single module with no added auth, logging, or transformation beyond string interpolation \u2014 could be inlined",
+        "CLI/multivol/multivol.py lines 83-84: '# Limit the number of parallel processes / Default to len(commands) (unlimited) if processes arg is not set or None' \u2014 two-line comment block describing the 8-line logic below it in near-identical terms"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "test_strategy": {
+      "evidence": [
+        "find /Users/max/Desktop/Tools/MultiVolatility -name 'test_*.py' -o -name '*_test.py' returns zero results",
+        "requirements.txt contains only 'pyyaml' and 'requests' \u2014 no pytest, coverage, or mock dependencies",
+        "No conftest.py, pytest.ini, setup.cfg, or tox.ini anywhere in the repository",
+        "31 Python files covering authentication, database schema migrations, Flask routing, Docker orchestration, and MCP tooling \u2014 all untested",
+        "CLI/multivol/api_server/utils.py contains process_recover_fs() \u2014 a 100+ line tree-building function with complex path logic \u2014 with no tests",
+        "CLI/multivol/api_server/database.py contains multi-step schema migration logic (ALTER TABLE, RENAME COLUMN, fallback paths) with no tests",
+        "CLI/multivol/api_server/auth.py check_authorization() \u2014 the single security gate for the entire API \u2014 has no tests"
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "architectural_change",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "api_surface_coherence": {
+      "evidence": [
+        "Route path inconsistency: create scan at POST /scan (singular), list at GET /scans (plural), get status at GET /status/<scan_id>, sub-resources split between /scan/<uuid>/modules and /scans/<uuid>/log, /scans/<uuid>/download \u2014 same resource addressed with both /scan/ and /scans/ prefixes",
+        "Path parameter name inconsistency: GET /status/<scan_id> uses 'scan_id' while all other scan routes use '<uuid>' as the path parameter name",
+        "Mutation response shapes are four distinct patterns: {'status': 'updated'} (rename), {'status': 'deleted'} (delete scan, delete evidence), {'success': True} (update_scan_module_status), {'message': 'Symbol uploaded successfully'} / {'message': 'Deleted successfully'} (symbols routes)",
+        "GET /scans/<uuid>/log returns raw plain text (f.read()) with plain string on 404 ('Log file not created yet or not found.') \u2014 only endpoint that is not JSON",
+        "manage_symbols() in files.py is a single function handling GET, POST, and DELETE with completely different logic branches \u2014 overloaded interface",
+        "POST /scan response includes 'output_dir' (internal server filesystem path), leaking implementation details to callers",
+        "Error responses are consistently {'error': '...'} with HTTP status codes across all endpoints"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": ""
+    },
+    "incomplete_migration": {
+      "evidence": [
+        "CLI/multivol/api_strings_extension.py has NO imports, references undefined `app` and `DB_PATH`, and contains route logic (get_strings_content, download_strings) that was fully migrated into CLI/multivol/api_server/routes/scan.py as Blueprint routes. The file is not imported anywhere in the codebase.",
+        "CLI/multivol/api_server/database.py CREATE TABLE still includes `filepath TEXT` (line 20) alongside `dump_path TEXT` (line 21). New database installations will have a dead `filepath` column; the migration shim at lines 79-83 that copies filepath->dump_path only applies to pre-migration databases.",
+        "CLI/multivol/api_server/utils.py resolve_host_path() contains a labeled fallback: `# Fallback to the old storage hack just in case` (line 28-33) that checks for `'storage'` in the container path \u2014 a compatibility shim for an older path convention.",
+        "CLI/multivol/multivol.py line 158: `# TODO: Add wrapper for Vol2 or update vol2 logic.` \u2014 the progress-bar wrapper (vol3_wrapper) is only wired for vol3; vol2 parallel execution is missing analogous progress integration.",
+        "database.py migration logic has 4 in-place ALTER TABLE shims (dump_path, config_json, case_name->name, mode) that run every startup \u2014 these are working but represent visible schema evolution debt."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "api_strings_extension.py is a dead pre-migration fragment that was never deleted after route logic was moved into the Blueprint system; the `filepath` ghost column in CREATE TABLE will be present in all fresh installations."
+    }
+  },
+  "dimension_judgment": {
+    "cross_module_architecture": {
+      "strengths": [
+        "The new api_server/ Blueprint decomposition has a consistent fan-in dependency direction: all route modules depend on config.py, database.py, and utils.py \u2014 never the reverse.",
+        "MCP/multivol_mcp.py is cleanly isolated behind an HTTP boundary \u2014 it imports nothing from the CLI package and coordinates only via the REST API.",
+        "config.py is a single authoritative source for all configuration values; no route module computes paths independently.",
+        "database.py provides a single get_db_connection() factory used consistently across all route modules (except the orphaned extension file)."
+      ],
+      "issue_character": "The issues are primarily migration residue and layer-inversion patterns: an orphaned code fragment from the old monolithic architecture still exists in-tree without imports or registration, two CLI worker modules reach upward into the API server config layer in deferred try/except workarounds, and route-level modules carry module-scope mutable state that creates implicit shared memory across requests.",
+      "score_rationale": "The core Blueprint architecture is well-structured with a clear and consistent dependency direction, earning credit against the 80-anchor ('mostly well-served with recurring friction'). However, the orphaned api_strings_extension.py shim persists without cleanup, two CLI workers invert the layer boundary by importing from api_server.config, and dual in-memory/DB state tracking in dump.py creates a hidden consistency hazard. These are real boundary-integrity problems, not just style issues \u2014 they would cause confusion for a developer trying to extend the scan or dump subsystems. This places the score below 70 ('enough inconsistency that you can't fully trust patterns you've seen elsewhere')."
+    },
+    "high_level_elegance": {
+      "strengths": [
+        "Top-level monorepo split (CLI/, Web/, MCP/, Dockerfiles/) maps directly to domain capabilities \u2014 a new engineer can explain each directory's role at a glance.",
+        "api_server/ is internally coherent: config, database, auth middleware, utils, and routes/ as a Blueprint sub-package is a recognizable and predictable Flask layout.",
+        "Blueprint registration in app.py is explicit and centralised \u2014 all route ownership is visible in one place."
+      ],
+      "issue_character": "Issues are concentrated in the multivol package layer where dead/orphaned code (api_strings_extension.py), a phantom object (api_blueprint in __init__.py), and duplicated cross-cutting logic (resolve_path triplicated) blur boundaries and mislead engineers about where capabilities live and who owns them.",
+      "score_rationale": "The coarse decomposition (CLI engine / web / Docker workers) is sound and trustworthy. However, within the CLI package a new engineer would be confused by api_strings_extension.py (inert Flask routes at the wrong layer with undefined symbols), the api_blueprint created in __init__.py that is never used, and path-translation logic duplicated three times with no clear owner. These are not isolated nits \u2014 they represent ownership ambiguity for an active concern (Docker volume path resolution) and a dead surface that implies missing functionality. This places the codebase in the 60-70 band: overall structure is navigable but the package internals have enough misleading artifacts that a developer cannot fully trust the decomposition signals."
+    },
+    "convention_outlier": {
+      "strengths": [
+        "Naming is overwhelmingly snake_case throughout all directories (multivol/, api_server/, routes/, MCP/) \u2014 consistent with Python convention",
+        "Blueprint pattern is applied uniformly across 5 of 6 route modules with consistent `_bp` variable naming and use of `get_db_connection()` from the shared utility",
+        "Import patterns across sibling route modules are functionally coherent \u2014 sibling outliers (auth.py missing docker/os/sqlite3) reflect genuine differences in module responsibility, not convention drift"
+      ],
+      "issue_character": "The issues are a localized style island (api_strings_extension.py diverging from the Blueprint/get_db_connection() pattern) plus a class-naming anti-convention in two files \u2014 not pervasive drift, but the style island is substantive.",
+      "score_rationale": "The codebase is broadly consistent on naming and structural patterns \u2014 a developer can rely on snake_case everywhere and the Blueprint pattern in routes/. What pulls the score below 80 is api_strings_extension.py: it registers routes via the raw app object instead of a Blueprint, reaches directly into sqlite3 instead of using get_db_connection(), and lives in the wrong directory \u2014 a genuine style island that breaks the established pattern. The two snake_case class names (multi_volatility2, multi_volatility3) are a secondary convention violation. Together these represent noticeable but contained convention drift, placing the score in the high-70s rather than the 80s."
+    },
+    "error_consistency": {
+      "strengths": [
+        "Route handlers uniformly return jsonify({'error': ...}) with semantically correct HTTP codes across all route files \u2014 the external API error contract is predictable",
+        "memprocfs.py get_memprocfs_files differentiates ConnectionError (503), Timeout (504), and generic Exception (500) rather than collapsing all failures to one response",
+        "cleanup_timeouts() in utils.py wraps database work in try/except with explicit logging \u2014 a top-level maintenance operation that handles failure gracefully",
+        "docker.errors.ImageNotFound is caught specifically in dump.py and docker.py, giving callers actionable error messages instead of generic 500s"
+      ],
+      "issue_character": "The route layer has consistent, predictable error handling, but the utility and helper layer is riddled with bare `except:` clauses that silently swallow failures \u2014 creating a two-tier system where public API errors are reliable but internal errors are invisible.",
+      "score_rationale": "The route boundary is genuinely solid: every route terminates with a meaningful JSON error and appropriate HTTP code, and specific exception types are used in performance-critical paths. However, the utility layer (utils.py, database.py, files.py) uses bare `except:` as a blanket silencer in at least 12 places, with failures swallowed without logging. A developer debugging why evidence files lose their case names, why a schema migration silently fails, or why a hash always reads 'Error' will find no trace in logs. This structural two-tier gap \u2014 reliable at the boundary, invisible inside \u2014 fits the 60 anchor: 'error behavior is unpredictable; failures are hard to trace in specific subsystems.' The route-layer consistency lifts it slightly above 60."
+    },
+    "naming_quality": {
+      "strengths": [
+        "Most route handlers follow a precise verb-noun pattern: upload_file, list_evidences, delete_evidence, download_evidence \u2014 callers can predict what each does without reading the body",
+        "calculate_sha256 / get_file_hash cleanly distinguish pure computation from cached retrieval; the naming distinction documents the caching contract",
+        "Background-thread helpers are consistently prefixed: background_dump_task, background_scan, background_single_run \u2014 the naming convention makes concurrency boundaries visible",
+        "cleanup_timeouts, ingest_results_to_db, resolve_host_path are highly specific and accurately describe what they do",
+        "Module-level constants (STORAGE_DIR, BASE_DIR, UPLOAD_FOLDER, SIDECAR_BASE_PORT) are all uppercase and unambiguous"
+      ],
+      "issue_character": "Naming issues are scattered rather than systemic \u2014 a few generic verbs (manage, runner, process), one convention outlier (camelCase getCommands), and two concrete name/behavior mismatches (dump_dir parameter, hash API field) that would trip developers reading or consuming this code.",
+      "score_rationale": "The codebase is mostly well-named: the majority of functions communicate intent at a glance and several naming patterns are applied consistently. However, a developer will encounter enough friction \u2014 a generic route handler that hides three HTTP methods, a parameter whose name contradicts its content (acknowledged by an inline comment), and an API field called 'hash' that returns a filename \u2014 to occasionally need to read implementations rather than trust names. This places the codebase in the 70-75 range: mixed, with real but non-pervasive issues rather than systemic unreliability."
+    },
+    "abstraction_fitness": {
+      "strengths": [
+        "Flask blueprint layer is cleanly domain-bounded (files, scan, dump, docker, memprocfs, auth) with no cross-blueprint import cycles.",
+        "utils.py is a focused domain utility module \u2014 hash caching, JSON parsing, RecoverFs tree building, timeout cleanup \u2014 rather than a sprawling helper surface.",
+        "MCP's safe_request() earns its indirection by adding uniform error handling policy across all async HTTP calls.",
+        "No Protocol/ABC one-implementation abstractions exist anywhere in the codebase.",
+        "check_authorization in auth.py is a direct, honest function: it encodes real auth policy and is applied as a before_request hook without extra wrapping layers."
+      ],
+      "issue_character": "The issues are structurally localized to the CLI orchestration layer \u2014 multi_volatility2, multi_volatility3, and strings.py share identical helper functions without a common base, forming a copy-paste triplet rather than a shared abstraction.",
+      "score_rationale": "The API server layer is genuinely well-structured with direct domain blueprints and focused utilities, which pushes the score up. However the CLI orchestration layer has clear abstraction work undone: resolve_path and safe_print each appear three times with identical logic, the two Volatility class runners share no common base despite near-identical structure, and execute_command_volatility3's 17-parameter signature is an unstructured config bag. This pattern of earned-but-unextracted abstraction places the codebase around 70-75 \u2014 solid at the server layer but recurring friction in the CLI domain modules, consistent with the 'mixed' band where a developer encounters enough inconsistency to not fully trust patterns they've seen elsewhere."
+    },
+    "dependency_health": {
+      "strengths": [
+        "Dependency set is lean and purposeful overall \u2014 flask ecosystem for API serving, docker SDK for container management, rich for CLI output, waitress for production WSGI \u2014 no obvious heavy deps pulled in for trivial use",
+        "CLI and MCP dependency sets are correctly separated into distinct requirements files, matching the modular architecture",
+        "httpx is an appropriate choice for MCP's async context (fastmcp is async-native); the selection is deliberate rather than cargo-culted",
+        "pyyaml is genuinely used for plugin list loading (multi_volatility3.py loads vol3_*.yaml files), justifying its presence"
+      ],
+      "issue_character": "Issues are localized and low-severity: one unused listed dependency in MCP, a stale/confusing top-level requirements artifact, no version pinning, and a transitive werkzeug dependency used but not declared \u2014 none of these are architectural problems.",
+      "score_rationale": "The dependency set is small and each library earns its place in the component that uses it. However, the MCP requirements file lists 'requests' despite the module exclusively using 'httpx', and the root-level requirements.txt is an unexplained artifact listing a partial subset of CLI dependencies that could mislead contributors. Universal absence of version pinning is a baseline hygiene gap that increases upgrade risk. These issues collectively sit at the '80: solid but uneven' anchor \u2014 a developer would mostly be well-served but would notice the redundant entry and the unpinned deps."
+    },
+    "low_level_elegance": {
+      "strengths": [
+        "Small, single-purpose helpers like calculate_sha256, is_null_bytes, wait_for_forensic, get_sidecar_url, and cleanup_container are concise and intention-revealing \u2014 a developer can read them and predict behaviour without checking further.",
+        "Guard clause (early return on missing param / missing file) is applied consistently across all route handlers, making failure paths immediately visible.",
+        "memprocfs_server.py route handlers are appropriately short and correctly delegate to module-level helpers (do_list_files, list_files_recursive, try_alternate_source), showing the right extraction instinct.",
+        "cleanup_timeouts() and ingest_results_to_db() are properly extracted module-level functions with bounded, explicit side effects.",
+        "auth.py and routes/auth.py are minimal and direct \u2014 each function does exactly one thing with no defensive sprawl."
+      ],
+      "issue_character": "Issues concentrate in the orchestration layer: the largest and most important functions (scan route, process_recover_fs, execute_command_volatility3) avoid all extraction, while a cross-cutting bare-except pattern masks errors throughout the utility and route code.",
+      "score_rationale": "The codebase has two distinct tiers: clean, well-bounded helpers that score near 90, and dense orchestration functions in the route handlers that score near 40. The scan() handler at 173 lines and process_recover_fs() at 113 lines are among the most-touched code paths and both resist comprehension without careful linear reading. Twelve bare-except blocks compound the problem by hiding errors rather than handling them. Against the 60-anchor ('must work hard to follow individual functions') and 80-anchor ('regularly encounters deep nesting, defensive sprawl'), the balance lands at 63: the good helpers prevent the score from dropping to 60, but the route-handler monoliths and defensive bare-excepts create enough regular friction to sit well below 70."
+    },
+    "mid_level_elegance": {
+      "strengths": [
+        "Auth boundary is clean: check_authorization is a single before_request hook in its own module with a clear interface \u2014 no auth logic leaks into route handlers",
+        "Database connection management is properly encapsulated in database.py with get_db_connection(); all route modules cross this boundary through a single function",
+        "Blueprint-based route decomposition provides explicit, named seams between domains (files, docker, scan, dump, memprocfs, auth) registered in one place (app.py)"
+      ],
+      "issue_character": "The seam problems are concentrated at the API-to-orchestration boundary: the handoff between HTTP routes and the underlying computation layer reuses CLI-era data shapes (argparse.Namespace) and injection patterns (runner_func global) that produce implicit contracts and silent failure modes; additional entropy appears as duplicated path-translation logic and orphaned seam stubs.",
+      "score_rationale": "The codebase sits in the 60 range on this dimension. Clean seams exist at the auth and database layers, but the most important cross-boundary handoff \u2014 from HTTP scan request to background runner \u2014 leaks CLI-era argparse.Namespace as the data bag, with no explicit typed contract between producer and consumer. The runner_func injection pattern adds a second implicit dependency that silently no-ops on misconfiguration. Duplicate Docker path-translation logic is textbook glue-code entropy. These are not isolated style choices; they are structural contracts a developer must discover by reading implementation, matching the anchor for 60: 'a developer making a cross-module change must understand surprising implicit contracts.'"
+    },
+    "authorization_consistency": {
+      "strengths": [
+        "Single `app.before_request(check_authorization)` hook applies uniformly to all 33+ route handlers across five blueprints \u2014 no per-route decorator drift possible",
+        "Auth logic centralized in a single `auth.py` module with a clean whitelist (only /auth/login and OPTIONS) \u2014 no magic literals or per-route permission strings scattered across route files",
+        "MCP and API servers each have their own self-contained token auth mechanisms with environment-variable-driven credentials \u2014 no cross-service credential sharing or magic literals in route handlers",
+        "CORS configuration explicitly names `Authorization` header \u2014 no inadvertent bypass via preflight"
+      ],
+      "issue_character": "The auth consistency within the main API is exemplary; the issues are peripheral to the main codebase \u2014 they concern how the default credential propagates across deployment artifacts (config fallback, compose env, frontend build arg) rather than any per-route inconsistency.",
+      "score_rationale": "The main API auth posture is strong: a single centralized hook, minimal whitelist, no per-route drift across 33+ handlers. A developer reviewing auth coverage can verify it in one place. The score is held below 90 by the default credential pattern \u2014 the same literal appears in config.py, docker-compose.yml, and the frontend build arg, meaning auth token secrecy is structurally undermined in default deployments, and any developer cloning the repo and running docker-compose gets a publicly known token baked into the frontend bundle. This is closer to the 80 anchor (solid but uneven) than the 90 anchor (mostly consistent with limited documented exceptions)."
+    },
+    "package_organization": {
+      "strengths": [
+        "Clean three-level hierarchy: core analysis (multivol/), API infrastructure (api_server/), route handlers (routes/) \u2014 separation of concerns maps to directory boundaries",
+        "Route handlers are grouped by functional domain in routes/: docker.py, scan.py, dump.py, files.py, memprocfs.py, auth.py \u2014 a developer can navigate to the right handler without guessing",
+        "Auth concern is properly split: api_server/auth.py holds middleware/guard logic while routes/auth.py holds the login endpoint, avoiding a single overloaded auth file",
+        "No flat-directory overload: all three directories stay well under 10 files with coherent ownership",
+        "Coupling direction is clean: the single cross-directory edge (multivol/ -> api_server/) runs downstream only with no reciprocal import"
+      ],
+      "issue_character": "Two isolated but concrete misplacements: an orphaned route handler stranded in the wrong package layer, and a dead blueprint aggregator that implies an indirection layer that does not actually exist.",
+      "score_rationale": "The codebase earns a solid score for its clean directory hierarchy, well-scoped route grouping, and correct coupling direction \u2014 all objective positives for navigation and ownership. What pulls it below 80 is the orphaned api_strings_extension.py, which places a Flask route handler (using @app.route on an unbound 'app') in the core analysis package root where no developer would look for it, and the dead api_blueprint in routes/__init__.py that implies a registration pattern that app.py does not follow. Neither issue is deep structural dysfunction, but both add navigation friction and suggest incomplete or inconsistent layering decisions."
+    },
+    "initialization_coupling": {
+      "strengths": [
+        "memprocfs.py correctly uses a threading.Lock (sessions_lock) to guard the active_sessions dict across all mutations.",
+        "DB initialization is explicitly called once via init_db() in app.py rather than happening as a side effect of importing database.py.",
+        "Environment variable reads are centralized in a single config.py module rather than scattered across route files.",
+        "init_runner() provides an explicit injection point for the runner callback rather than relying on global import order alone."
+      ],
+      "issue_character": "Issues are a mix of missing thread guards on shared mutable dicts and import-time filesystem/env side effects concentrated in config.py and the MCP server, rather than deep architectural coupling.",
+      "score_rationale": "The codebase avoids the worst anti-patterns (no DB connections at import time, no circular lazy imports) and centralizes env reads. However, dump_tasks has a real data race (unlocked dict shared between a background thread and request handlers), runner_func is a deferred-init global that silently no-ops on misconfiguration, config.py performs six os.makedirs() on every import making isolated unit tests impossible without filesystem mocking, and the MCP client bakes a frozen token into a module-level singleton. These are concrete developer-experience drag points that push the score well below solid \u2014 this is a 60-range codebase on this dimension."
+    },
+    "design_coherence": {
+      "strengths": [
+        "Flask Blueprint pattern used consistently across all route modules (files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp, auth_bp) \u2014 routes are organized by domain, not piled into one file.",
+        "Small, focused helper functions extracted in several places: resolve_host_path, get_sidecar_url, get_next_port, cleanup_container, safe_print, get_file_hash \u2014 all single-purpose and well-named.",
+        "get_db_connection() cleanly centralizes DB connection creation; init_db() cleanly centralizes schema creation and migration.",
+        "ingest_results_to_db in scan.py has a single, well-bounded responsibility and handles idempotency checks correctly.",
+        "memprocfs.py separates session tracking, container lifecycle, and HTTP proxying into distinct helper functions rather than one giant handler."
+      ],
+      "issue_character": "The design issues are concentrated in orchestration and execution layers \u2014 functions that compose multiple subsystems (Docker, DB, filesystem, output parsing) have accumulated responsibilities instead of delegating to purpose-built helpers, and one abandoned architectural fragment (api_strings_extension.py) reflects an incomplete migration.",
+      "score_rationale": "The route-level organization is solid and the helper extraction pattern shows genuine design awareness, which prevents the score from falling into the 40s. However, the core execution path \u2014 execute_command_volatility3 (17 params, 6 responsibilities), runner() (220 lines, 6 distinct phases), and scan() using argparse.Namespace as an API data carrier \u2014 represents real structural drag that a developer extending or debugging this code would encounter immediately. These are not cosmetic issues; they make the code harder to test, extend, and reason about. The score sits in the high-50s: below solid (80) because the most important functions in the system are structurally unsound, but above significant-drag (40-50) because the module-level organization is coherent."
+    },
+    "contract_coherence": {
+      "strengths": [
+        "Route handlers consistently return jsonify() with explicit HTTP status codes, so the Flask-level HTTP contract is uniformly honored",
+        "getCommands() raises FileNotFoundError on missing YAML \u2014 explicit error propagation matches the implied contract of a lookup function",
+        "check_authorization returns None on success and a Response tuple on failure, matching Flask's before_request contract exactly"
+      ],
+      "issue_character": "The contract violations are concentrated in utility/shared infrastructure (utils.py, the two execute_command methods, routes/__init__.py) rather than spread uniformly \u2014 they represent a pattern of implementation detail leaking through the contract boundary: sentinel returns, side-effect mutations, and dead API surface.",
+      "score_rationale": "The codebase honors HTTP-level contracts well and the high-traffic route layer is coherent. However, four concrete contract violations in core utilities drag the score down: get_file_hash lies about its return type via a 'Error' sentinel, both execute_command methods hide instance-state mutation inside an execute verb, routes/__init__.py exports an api_blueprint that is never populated or consumed, and process_recover_fs silently overwrites its input file. These are not cosmetic \u2014 callers of get_file_hash and clean_and_parse_json must defensively check for special sentinel values not declared in any annotation or docstring. Anchored against 80=solid-but-uneven: the route layer is solid, but the utility contracts are uneven enough to pull the score to the low-60s."
+    },
+    "logic_clarity": {
+      "strengths": [
+        "Guard clauses and early returns are used consistently across all Flask route handlers \u2014 errors checked first, happy path follows cleanly",
+        "Boolean short-circuit conditions in auth.py (`not provided_token or provided_token != API_TOKEN`) are correct and non-redundant",
+        "The memprocfs_server.py control flow (list \u2192 wait \u2192 deduplicate \u2192 return) is linear and easy to follow, with no hidden branches",
+        "The scan route's mutual exclusion check (`is_linux == is_windows` guard) cleanly prevents ambiguous OS state without extra nesting"
+      ],
+      "issue_character": "Issues are isolated redundancy and dead code rather than logic inversions or incorrect branching \u2014 the code does what it claims but carries unnecessary noise in a handful of spots; the memprocfs session gap is the only case where the missing branch causes a real (if minor) behavioral defect.",
+      "score_rationale": "The codebase sits solidly in the 70-80 band: most control flow is direct and trust-worthy, but a developer reading carefully will hit recurring simplification opportunities \u2014 a redundant assignment in the vol3 validation block, a dead except clause around os.cpu_count(), a dead ternary branch after a limit guard, and a missing else in the memprocfs session check that leaks stale state. None of these invert intent, but together they represent the kind of 'code that doesn't quite say what it means' friction that characterizes the 74 range rather than the 80 range."
+    },
+    "type_safety": {
+      "strengths": [
+        "MCP/multivol_mcp.py consistently annotates all tool functions with parameter types and return types, including the correct `-> AccessToken | None` on `verify_token`",
+        "`build_url(path: str) -> str` is a precise, accurate annotation",
+        "MCP callers defensively check `isinstance(data, list)` before `.get()`, showing awareness of runtime type variance even when the annotation doesn't capture it"
+      ],
+      "issue_character": "The CLI layer \u2014 the majority of the codebase \u2014 has opted out of type annotations entirely: every public utility function, auth helper, class method, and module-level callback slot is completely unannotated, and the one annotation that exists in the MCP layer (`safe_request -> dict`) is demonstrably inaccurate.",
+      "score_rationale": "The codebase sits well below the 60-point 'significant drag' anchor. Virtually the entire production surface area (utils.py, auth.py, app.py, multi_volatility2.py, multi_volatility3.py, all route handlers) carries no type information at all, giving a developer zero static-analysis safety net for the core logic. The MCP module pushes the score above the floor since it demonstrates that the team can annotate when motivated, but it is a small fraction of the codebase and contains at least one annotation lie (`safe_request -> dict` concealing list returns). A score of 32 reflects total absence in the dominant subsystem plus one inaccurate annotation where annotations do exist."
+    },
+    "ai_generated_debt": {
+      "strengths": [
+        "Most comments explain WHY rather than WHAT: the HOST_PATH fallback rationale in utils.py, the UNIQUE index comment in database.py, and the tar extraction explanation in process_recover_fs all add genuine insight",
+        "Function names throughout are domain-appropriate (scan, dump, memprocfs, cleanup_container, ingest_results_to_db) \u2014 no generic 'handleData' or 'processItem' patterns in domain code",
+        "No noisy entry/exit debug logging: functions do not log 'entering X' or dump full objects at DEBUG; log calls are targeted and meaningful",
+        "Docstrings on complex functions (resolve_host_path, clean_and_parse_json, process_recover_fs, build_fs_tree) add real context beyond the name",
+        "No identical boilerplate error handling copied verbatim across files; each error-handling site has context-specific log messages"
+      ],
+      "issue_character": "AI-debt markers are scattered and shallow \u2014 a handful of restating comments, a few echo docstrings, two pass-through or near-pass-through wrappers, and over-broad bare-except suppression in non-boundary code \u2014 rather than a systemic structural pattern.",
+      "score_rationale": "The codebase reads as genuine domain engineering with light AI assistance visible in occasional comment and docstring noise. The restating comments in multivol.py and the echo docstrings on calculate_sha256/cleanup_timeouts/background_dump_task are mild friction but do not impede understanding. The more meaningful issue is the bare-except suppression in clean_and_parse_json and the schema migration, which is a defensive overengineering pattern that degrades debuggability. Against the global anchor of 80 (solid but uneven), the codebase sits slightly below: the positives are real and numerous but the silent-failure pattern and scattered comment noise constitute meaningful drag, landing this at 72."
+    },
+    "test_strategy": {
+      "issue_character": "There is no test portfolio at all \u2014 zero test files, zero test infrastructure, and no test dependencies \u2014 making this a complete absence rather than a collection of test strategy defects.",
+      "score_rationale": "The global anchor for 20 is 'severely problematic \u2014 a developer would struggle to work here safely.' This codebase sits below even that anchor: there are literally no tests of any kind across 31 Python files that include authentication middleware, schema migrations, Docker orchestration, and complex JSON tree-building logic. A developer cannot validate any change without running the full application manually, and security-critical paths like check_authorization() have zero automated coverage. The score of 5.0 reflects a near-total absence of test strategy rather than a weak or uneven one."
+    },
+    "api_surface_coherence": {
+      "strengths": [
+        "Error responses are uniformly shaped as {'error': '...'} with appropriate HTTP status codes across all route files",
+        "All routes are synchronous Flask handlers \u2014 no mixed sync/async at the API layer",
+        "The memprocfs blueprint uses consistent RESTful sub-resource patterns (/memprocfs/<uuid>/start, /stop, /files, /status, /download)"
+      ],
+      "issue_character": "Issues are systemic naming and shape inconsistencies rooted in the scan resource: the URL namespace conflates /scan, /scans, /results, and /status for the same resource, mutation responses use four distinct key schemas, and one endpoint breaks the JSON contract entirely.",
+      "score_rationale": "A developer building against this API would be unable to predict URL patterns after seeing a few examples \u2014 the singular/plural split (/scan vs /scans) applied inconsistently, /status/<scan_id> using a different parameter name than all siblings, and four distinct mutation response shapes mean each endpoint must be individually verified. The log endpoint returning plain text silently breaks the JSON contract that every other endpoint honors. These are not isolated rough edges but recurring, codebase-wide friction. This aligns with the 60 anchor: 'APIs are hard to predict; a developer must read each endpoint's implementation to use it safely.'"
+    },
+    "incomplete_migration": {
+      "strengths": [
+        "The vol2/vol3 split is intentional and cleanly separated into distinct modules (multi_volatility2.py, multi_volatility3.py) with no cross-contamination of their APIs.",
+        "Database schema migration shims in init_db() are explicit and well-commented, logging each alteration \u2014 a developer can trace the schema's history.",
+        "Active code uses only the current `dump_path` column name consistently; no production query path reads the legacy `filepath` column."
+      ],
+      "issue_character": "The issues are isolated legacy artifacts left behind after two migrations (routes refactored into Blueprints, schema field renamed from filepath to dump_path and case_name to name) rather than a systemic pattern of old-and-new APIs coexisting in the same call paths.",
+      "score_rationale": "The codebase has a handful of concrete migration artifacts: an orphaned pre-Blueprint file (api_strings_extension.py) that is unreachable dead code, a ghost `filepath` column in the CREATE TABLE, and a labeled legacy shim in resolve_host_path. These are real incomplete-migration smells but they do not represent competing API patterns or deprecated symbols actively called by production code \u2014 they are inert leftovers. The codebase sits comfortably above the 60 'significant drag' anchor because no developer is confused by dual APIs in a live call path, but the dead file and ghost column keep it well below 85."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "orphaned_strings_extension_shim",
+      "summary": "api_strings_extension.py references app and DB_PATH from old monolithic architecture \u2014 never imported, unrunnable, blurs migration boundary",
+      "confidence": "high",
+      "suggestion": "Delete CLI/multivol/api_strings_extension.py. The strings routes are already handled in scan.py via the Blueprint pattern. If any strings endpoint is missing, add it to CLI/multivol/api_server/routes/scan.py using get_db_connection() and the existing Blueprint pattern.",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py"
+      ],
+      "evidence": [
+        "File uses @app.route('/results/<uuid>/strings', ...) and @app.route('/results/<uuid>/strings/download', ...) with no import of 'app'.",
+        "File calls sqlite3.connect(DB_PATH) with no import of 'DB_PATH'; both names were globals in the old CLI/build/lib/multivol/api.py monolith.",
+        "grep -r 'api_strings_extension' finds zero references across the production codebase \u2014 the file is dead code from the pre-Blueprint migration."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "cli_workers_import_api_config",
+      "summary": "multi_volatility2 and multi_volatility3 import from api_server.config inside CLI execution workers, inverting the layer boundary",
+      "confidence": "high",
+      "suggestion": "Remove the api_server.config dependency from both workers. Pass BASE_DIR (or the resolved host path) as a parameter from the caller (multivol.py's runner()), or read it directly from the same environment variable that config.py uses ('HOST_PATH'/'STORAGE_DIR'). This keeps the analysis workers decoupled from the API layer.",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "multi_volatility2.py:24: 'from api_server.config import BASE_DIR' inside resolve_path(), inside a try/except ImportError \u2014 caller falls back to os.getcwd() on failure.",
+        "multi_volatility3.py:27: same pattern with the same fallback.",
+        "These files are CLI analysis workers; having them depend on the API server's config module means running the CLI standalone requires api_server to be importable."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "route_module_mutable_state_dual_truth",
+      "summary": "dump.py maintains dual state (in-memory dict + DB table) for task tracking; memprocfs.py stores live session state at module scope without DB persistence",
+      "confidence": "high",
+      "suggestion": "For dump_tasks: remove the in-memory dict and query the DB table exclusively for status reads (the DB already has the right schema). For active_sessions in memprocfs.py: either persist session state in the DB (a 'memprocfs_sessions' table) and reconcile on startup by checking Docker for live containers, or move the dict to a dedicated service object passed through Flask's app.extensions context so it does not live at route-module scope.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/dump.py",
+        "CLI/multivol/api_server/routes/memprocfs.py"
+      ],
+      "evidence": [
+        "dump.py:18: 'dump_tasks = {}' module-level dict tracks in-flight task status; dump.py also writes the same status to a 'dump_tasks' DB table (lines 134, 137). On process restart, in-memory dict is empty but DB has completed/failed records \u2014 the two sources diverge.",
+        "memprocfs.py:29: 'active_sessions = {}' module-level dict is the sole source of truth for live container sessions; there is no DB-backed recovery \u2014 sessions are lost on restart with no cleanup of orphaned Docker containers.",
+        "Neither dict is reachable from outside the route module (no service layer), so any other module that needs to query or modify session/task state must import these route modules, pulling in Flask/Docker dependencies."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "routes_init_redundant_reexport",
+      "summary": "routes/__init__.py re-exports all blueprints that app.py already imports independently, creating a dead re-export layer with no consumers",
+      "confidence": "high",
+      "suggestion": "Either have app.py import from 'from multivol.api_server.routes import files_bp, docker_bp, ...' (using the __init__.py as the intended facade) and add auth_bp there too, or remove the re-exports from routes/__init__.py and leave direct imports in app.py. Pick one pattern consistently.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "routes/__init__.py imports files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp from their respective submodules.",
+        "app.py imports each blueprint directly from its submodule path (e.g. 'from multivol.api_server.routes.files import files_bp') and never imports from 'multivol.api_server.routes'.",
+        "The __init__.py re-export is not used by any consumer \u2014 it adds an indirection layer that will silently re-import all route modules whenever routes/__init__.py is touched."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "high_level_elegance",
+      "identifier": "api_strings_extension_orphan",
+      "summary": "api_strings_extension.py contains inert Flask routes at the wrong layer with undefined symbols",
+      "confidence": "high",
+      "suggestion": "Convert the two route functions to a Blueprint (e.g. strings_bp) and move the file to CLI/multivol/api_server/routes/strings.py, replacing the bare sqlite3 calls with get_db_connection() from api_server/database.py. Register the blueprint in app.py. If the functionality is intentionally deferred, delete the file to avoid misleading future engineers.",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py"
+      ],
+      "evidence": [
+        "File uses @app.route decorators but no Flask app object is created or imported \u2014 file cannot be executed.",
+        "References sqlite3.connect(DB_PATH) and send_file without importing or defining either.",
+        "File lives in CLI/multivol/ (orchestration layer) rather than CLI/multivol/api_server/routes/ where route Blueprints belong.",
+        "Not imported anywhere in the package \u2014 confirmed by grep across CLI/."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "high_level_elegance",
+      "identifier": "phantom_api_blueprint",
+      "summary": "api_server/__init__.py creates an api_blueprint that is never registered and double-imports all route blueprints",
+      "confidence": "high",
+      "suggestion": "Either (a) remove the api_blueprint creation and the blueprint imports from __init__.py entirely, leaving only `from .app import run_api` (the only useful export), or (b) use api_blueprint as the actual aggregator: register child blueprints onto it with url_prefix and register only api_blueprint in app.py, eliminating the duplicate import chain.",
+      "related_files": [
+        "CLI/multivol/api_server/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "__init__.py: `api_blueprint = Blueprint('api', __name__)` \u2014 object created but never passed to app.register_blueprint().",
+        "__init__.py imports files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp; app.py independently imports the same five blueprints plus auth_bp and registers them. Both imports are live but __init__.py's serve no functional purpose.",
+        "A new engineer reading __init__.py would expect api_blueprint to aggregate the sub-blueprints, but no such aggregation occurs."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "high_level_elegance",
+      "identifier": "resolve_path_triplicated",
+      "summary": "Docker host-path translation logic is duplicated identically in three places with no shared owner",
+      "confidence": "high",
+      "suggestion": "Extract one canonical resolve_host_path(path, host_base=None) function into CLI/multivol/api_server/utils.py (or a new CLI/multivol/docker_utils.py if CLI-layer access to api_server feels wrong). Have both multi_volatility2 and multi_volatility3 import and call it instead of defining their own methods.",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py",
+        "CLI/multivol/api_server/utils.py"
+      ],
+      "evidence": [
+        "multi_volatility2.py line 15 and multi_volatility3.py line 17 define structurally identical resolve_path(self, path, host_path) methods \u2014 both handle /storage prefix, BASE_DIR prefix, and os.getcwd() fallback.",
+        "api_server/utils.py line 9 defines resolve_host_path(container_path) which performs the same host-path translation using HOST_PATH env var.",
+        "No single module owns path resolution \u2014 ownership is split across orchestration classes and utility module."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "strings_extension_style_island",
+      "summary": "api_strings_extension.py registers routes via @app.route and bypasses get_db_connection(), breaking the Blueprint pattern used everywhere else",
+      "confidence": "high",
+      "suggestion": "Move the two handlers into CLI/multivol/api_server/routes/scan.py (or a new strings.py in routes/), convert them to use a Blueprint (`strings_bp = Blueprint('strings_bp', __name__)`), and replace `sqlite3.connect(DB_PATH)` with `get_db_connection()`. If the file is dead code, delete it.",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py",
+        "CLI/multivol/api_server/routes/scan.py"
+      ],
+      "evidence": [
+        "`@app.route('/results/<uuid>/strings', ...)` \u2014 bare app decorator instead of Blueprint",
+        "`conn = sqlite3.connect(DB_PATH)` at lines 8 and 71 \u2014 direct sqlite3 usage instead of `get_db_connection()` from database.py",
+        "File lives in CLI/multivol/ root alongside CLI orchestration files, not in CLI/multivol/api_server/routes/ where all other route modules live",
+        "No import of this file found in any source file \u2014 it may be dead code"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "snake_case_class_names",
+      "summary": "Classes multi_volatility2 and multi_volatility3 use snake_case names, violating Python's PascalCase class convention",
+      "confidence": "high",
+      "suggestion": "Rename `multi_volatility2` to `MultiVolatility2` and `multi_volatility3` to `MultiVolatility3` in their respective definition files and in all call sites (multivol.py uses `volatility2_instance = multi_volatility2()`).",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py",
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "`class multi_volatility2:` in multi_volatility2.py line 6 \u2014 should be PascalCase",
+        "`class multi_volatility3:` in multi_volatility3.py line 12 \u2014 should be PascalCase",
+        "All other identifiers in both files correctly use snake_case (functions, variables)"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "auth_blueprint_name_inconsistency",
+      "summary": "auth_bp registers as Blueprint('auth', ...) while all other blueprints use the '_bp' suffix in the registration string",
+      "confidence": "high",
+      "suggestion": "Change `Blueprint('auth', __name__)` to `Blueprint('auth_bp', __name__)` to match the pattern used by all sibling route blueprints.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/auth.py"
+      ],
+      "evidence": [
+        "`auth_bp = Blueprint('auth', __name__)` \u2014 registration string lacks '_bp' suffix",
+        "All other blueprints: `Blueprint('docker_bp', ...)`, `Blueprint('files_bp', ...)`, `Blueprint('dump_bp', ...)`, `Blueprint('memprocfs_bp', ...)`, `Blueprint('scan_bp', ...)`"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "bare_except_utility_layer",
+      "summary": "Bare `except:` clauses throughout utils.py silently swallow all exceptions including KeyboardInterrupt and SystemExit",
+      "confidence": "high",
+      "suggestion": "Replace bare `except:` with `except Exception:` throughout utils.py and add at minimum a `logging.debug(...)` call in each except block so failures are traceable. For get_file_hash the bare except should specifically catch OSError/IOError.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py"
+      ],
+      "evidence": [
+        "utils.py line 32: `except: pass` in resolve_host_path \u2014 any import error, attribute error, or OS error is silently ignored and the raw container path is returned",
+        "utils.py lines 51 and 83, 91: `except: pass` in get_file_hash and clean_and_parse_json \u2014 read failures and parse failures produce no logs and the function silently falls through to fallback behavior"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "get_file_hash_error_sentinel_string",
+      "summary": "get_file_hash() returns the string 'Error' on failure, mixing an error sentinel into a value callers treat as a hex hash",
+      "confidence": "high",
+      "suggestion": "Return None on hash failure and let callers decide how to handle missing hashes. In files.py, use `get_file_hash(path) or 'unavailable'` or omit the hash key entirely when None, rather than embedding a sentinel string in the JSON payload.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py"
+      ],
+      "evidence": [
+        "utils.py line 59: `return 'Error'` \u2014 callers in routes/files.py embed this directly into evidence JSON as the 'hash' field without checking for failure",
+        "routes/files.py child_file dict: `'hash': get_file_hash(path)` \u2014 the string 'Error' surfaces in the API response without any HTTP error signal"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "database_schema_migration_silent_failure",
+      "summary": "database.py schema migration swallows ADD COLUMN failure silently, leaving schema state unknown to callers",
+      "confidence": "high",
+      "suggestion": "Remove the bare `except: pass` and let the exception propagate from init_db(), or catch only `sqlite3.OperationalError` with an explicit re-check and log. The silent swallow hides a startup-time failure that will cause hard-to-diagnose query errors later.",
+      "related_files": [
+        "CLI/multivol/api_server/database.py"
+      ],
+      "evidence": [
+        "database.py lines 99-101: `try: c.execute('ALTER TABLE scans ADD COLUMN name TEXT') except: pass` \u2014 if this fails (e.g., locked DB, permissions), init_db() returns successfully with no indication of the problem",
+        "A following `conn.commit()` commits whatever partial state resulted, potentially leaving the application running against a schema that is missing a required column"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "execute_command_volatility2_swallows_docker_errors",
+      "summary": "execute_command_volatility2 catches Docker exceptions and only prints them \u2014 callers cannot detect that the command failed",
+      "confidence": "high",
+      "suggestion": "Re-raise the exception after logging, or return a boolean success flag that callers check. At minimum the calling scan orchestration code should set the module status to FAILED when the exception is caught here.",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py"
+      ],
+      "evidence": [
+        "multi_volatility2.py execute_command_volatility2: `except Exception as e: self.safe_print(f'[!] Error running {command}: {e}', lock)` \u2014 no re-raise, no return value change",
+        "The caller proceeds to time.sleep(0.5) and continues as if the command succeeded; no module status is set to FAILED; the scan appears to complete successfully with missing output"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "files_route_db_bare_except_silent",
+      "summary": "list_evidences silently drops DB errors with bare `except: pass`, causing evidence items to render with no case names and no log trace",
+      "confidence": "high",
+      "suggestion": "Replace both bare `except:` with `except Exception as e: logging.warning(f'DB error in list_evidences: {e}')` so failures leave a trace. The fallback behavior is acceptable but should be observable.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/files.py"
+      ],
+      "evidence": [
+        "routes/files.py line 123: bare `except: pass` wraps the entire case_map DB load \u2014 any sqlite3 error, missing table, or connection failure leaves case_map empty",
+        "routes/files.py line 177: bare `except: source_dump = dump_base` wraps a per-item DB lookup \u2014 failures are silently replaced with a fallback without logging",
+        "Both blocks affect the display name and grouping of evidence in the UI, but a developer investigating incorrect grouping will find no log entry"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "manage_symbols_generic_verb",
+      "summary": "manage_symbols() hides three-way HTTP dispatch behind an opaque 'manage' verb",
+      "confidence": "high",
+      "suggestion": "Split into three focused route handlers: list_symbols(), upload_symbol(), delete_symbol() \u2014 or at minimum rename to handle_symbols_request() and add a brief docstring enumerating the three methods and their parameters",
+      "related_files": [
+        "CLI/multivol/api_server/routes/files.py"
+      ],
+      "evidence": [
+        "def manage_symbols() at line 43 handles GET (list), POST (upload), and DELETE (remove) in a single function; 'manage' does not tell a reader which operations are supported or how to use the endpoint"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "runner_generic_orchestration_name",
+      "summary": "runner() in multivol.py is a generic name for the top-level analysis orchestration function",
+      "confidence": "medium",
+      "suggestion": "Rename to run_analysis() or orchestrate_scan() to communicate that this is the primary scan orchestration entry point, not a generic wrapper",
+      "related_files": [
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "def runner(arguments) at line 20 sets up directories, validates arguments, checks/pulls Docker images, runs a multiprocessing pool of Volatility commands, and invokes strings extraction \u2014 'runner' reveals none of this"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "get_commands_camel_case_outlier",
+      "summary": "getCommands() uses camelCase in a codebase where all other functions use snake_case",
+      "confidence": "high",
+      "suggestion": "Rename to get_commands() in both multi_volatility2.py and multi_volatility3.py and update all call sites in multivol.py",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py"
+      ],
+      "evidence": [
+        "def getCommands(self, opsys) at line 124 is the only camelCase method in the file; all sibling methods (resolve_path, execute_command_volatility2, safe_print) use snake_case; multi_volatility3.py also uses getCommands(), propagating the outlier"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "dump_dir_parameter_misnaming",
+      "summary": "dump_dir parameter in execute_command_volatility2 holds a full file path, not a directory",
+      "confidence": "high",
+      "suggestion": "Rename the parameter to dump_path or dump_file_path to match what it actually holds; update all call sites in multivol.py accordingly",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py"
+      ],
+      "evidence": [
+        "def execute_command_volatility2(self, command, dump, dump_dir, ...) at line 34; line 43 has an inline comment 'dump_dir here is actually the full file path from main.py'; it is passed to resolve_path(os.path.abspath(dump_dir), host_path) and bound as a Docker volume mapping to /dumps/{dump}"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "hash_field_holds_filename",
+      "summary": "'hash' key in evidence API response holds a filename string, not a hash value",
+      "confidence": "high",
+      "suggestion": "Rename the field to source_filename or dump_filename in the API response; if an actual file hash is needed for integrity verification, populate it from get_file_hash() and keep the field name 'hash'",
+      "related_files": [
+        "CLI/multivol/api_server/routes/files.py"
+      ],
+      "evidence": [
+        "In list_evidences(), the evidence group dict includes '\"hash\": source_dump' (line 198) and '\"hash\": item' (line 232) where both source_dump and item are filename strings like 'memorydump.vmem' \u2014 a developer consuming this API field would expect a SHA-256 or similar hash value"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "resolve_path_triplicated",
+      "summary": "resolve_path() is copy-pasted into strings.py, multi_volatility2, and multi_volatility3 with identical logic",
+      "confidence": "high",
+      "suggestion": "Extract resolve_path into a shared CLI utility module (e.g., CLI/multivol/docker_utils.py) as a single module-level function. All three callers import and call the shared version. The multi_volatility2/3 class methods become thin delegators or are removed in favor of direct module import.",
+      "related_files": [
+        "CLI/multivol/strings.py",
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "strings.py line 6 defines module-level resolve_path(path, host_path) with /storage branch and os.getcwd() branch.",
+        "multi_volatility2.py line 15 defines self.resolve_path(path, host_path) with /storage branch and api_server.config.BASE_DIR branch with os.getcwd() fallback.",
+        "multi_volatility3.py line 17 defines self.resolve_path(path, host_path) with identical branching. The three versions diverge only in a minor try/except around the config import."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "safe_print_triplicated",
+      "summary": "safe_print() is independently defined in strings.py, multi_volatility2, and multi_volatility3 with identical bodies",
+      "confidence": "high",
+      "suggestion": "Move safe_print into the same shared CLI/multivol/docker_utils.py module as resolve_path. Both classes can call the module-level function directly, removing the method duplication.",
+      "related_files": [
+        "CLI/multivol/strings.py",
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "strings.py line 20: `def safe_print(message, lock): if lock: with lock: rprint(message) else: rprint(message)`",
+        "multi_volatility2.py line 117 and multi_volatility3.py line 202 are identical class method versions of the same logic.",
+        "The two class methods and the module function are byte-for-byte equivalent."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "execute_command_wide_param_bag",
+      "summary": "execute_command_volatility3 takes 17 positional parameters forming an implicit execution-config bag",
+      "confidence": "medium",
+      "suggestion": "Introduce a VolatilityRunConfig dataclass grouping the stable path parameters (dump, dump_dir, symbols_path, cache_dir, plugin_dir, output_dir, host_path) and an ExecutionOptions dataclass for flags (quiet, show_commands, fetch_symbols, scan_id). The function signature becomes execute_command_volatility3(self, command, config: VolatilityRunConfig, opts: ExecutionOptions). Apply the same refactor to execute_command_volatility2.",
+      "related_files": [
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "Signature: execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None, extra_args='') \u2014 17 parameters.",
+        "The path-group (dump_dir, symbols_path, cache_dir, plugin_dir, output_dir, host_path) and the flag-group (quiet, show_commands, fetch_symbols) are implicit bags with no grouping struct."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "abstraction_fitness",
+      "identifier": "orphaned_api_blueprint",
+      "summary": "routes/__init__.py defines api_blueprint that is never registered, making it dead structural indirection",
+      "confidence": "high",
+      "suggestion": "Either remove api_blueprint from routes/__init__.py (if app.py's direct imports are the intended pattern) or complete the aggregation by registering nested blueprints under api_blueprint and registering api_blueprint in app.py. The current state is a half-done structural decision that adds a misleading indirection layer.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "routes/__init__.py line 4: api_blueprint = Blueprint('api', __name__) \u2014 the blueprint object is created but never registered with app.register_blueprint() in app.py.",
+        "app.py registers all five blueprints (files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp, auth_bp) directly from their respective modules, bypassing routes/__init__.py entirely."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "dependency_health",
+      "identifier": "mcp_unused_requests_dep",
+      "summary": "'requests' listed in MCP/requirements.txt but only 'httpx' is used \u2014 unused dependency",
+      "confidence": "high",
+      "suggestion": "Remove 'requests' from MCP/requirements.txt \u2014 httpx fully covers the async HTTP needs of this module",
+      "related_files": [
+        "MCP/requirements.txt",
+        "MCP/multivol_mcp.py"
+      ],
+      "evidence": [
+        "MCP/requirements.txt lists both 'requests' and 'httpx'",
+        "MCP/multivol_mcp.py imports only httpx (line 2: 'import httpx') and uses httpx.AsyncClient throughout; 'requests' is never imported or referenced"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "dependency_health",
+      "identifier": "stale_toplevel_requirements",
+      "summary": "Root-level requirements.txt is a confusing artifact listing only a partial subset of CLI dependencies",
+      "confidence": "high",
+      "suggestion": "Either remove the top-level requirements.txt entirely (each component has its own), or replace it with a clear comment explaining its scope (e.g. minimal shared dependencies) and keep it synchronized with the component files",
+      "related_files": [
+        "requirements.txt",
+        "CLI/requirements.txt"
+      ],
+      "evidence": [
+        "requirements.txt contains only 'pyyaml' and 'requests', which are a subset of CLI/requirements.txt",
+        "The file has no comment or README explanation; a new contributor would not know whether it represents the minimal install set, a legacy artifact, or the intended entry point"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "dependency_health",
+      "identifier": "no_version_pinning",
+      "summary": "No version pinning in any requirements file \u2014 upgrade-time breakage risk across all components",
+      "confidence": "high",
+      "suggestion": "Pin versions using either pip-compile (pip-tools) to generate a requirements.lock, or switch to poetry/uv with an auto-generated lockfile. At minimum, add lower-bound pins (e.g. 'flask>=2.3,<3') to guard against major-version breaking changes",
+      "related_files": [
+        "CLI/requirements.txt",
+        "MCP/requirements.txt",
+        "requirements.txt"
+      ],
+      "evidence": [
+        "CLI/requirements.txt: flask, flask-cors, docker, rich, waitress, pyyaml, requests \u2014 all unpinned",
+        "MCP/requirements.txt: fastmcp, httpx \u2014 all unpinned",
+        "No lock file (pip-compile output, poetry.lock, or Pipfile.lock) present in the repository"
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "low_level_elegance",
+      "identifier": "scan_route_monolith",
+      "summary": "scan() route handler is a 173-line monolith mixing argument setup, validation, YAML loading, DB writes, and thread spawning",
+      "confidence": "high",
+      "suggestion": "Extract at least three helpers: (1) build_scan_args(data) -> argparse.Namespace that constructs and validates the merged args object and raises ValueError on missing required fields \u2014 this moves validation first; (2) determine_command_list(args_obj, target_os) -> list that encapsulates the YAML-loading logic; (3) persist_scan_record(scan_id, args_obj, command_list, ...) that handles all DB inserts. The route handler then becomes: validate, build args, determine commands, create dir, persist, spawn thread.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py"
+      ],
+      "evidence": [
+        "scan() at line 118 builds a 20-key default_args dict, merges with request.json, validates required fields, reads YAML for command lists, creates the output directory, inserts a scan row plus per-module status rows, and spawns background_scan \u2014 all in one function body with no helper extraction.",
+        "The required-field validation guard (if 'dump' not in data or 'mode' not in data) appears at ~line 203, after 85 lines of argument construction that will be thrown away on a bad request."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "low_level_elegance",
+      "identifier": "process_recover_fs_monolith",
+      "summary": "process_recover_fs() is a 113-line function combining tarball extraction, inode mapping, tree construction, and file write-back",
+      "confidence": "high",
+      "suggestion": "Split into: _extract_recovered_fs_tarball(tar_path, extract_dir) for the subprocess call; _build_inode_map(output_dir) -> dict for scanning filenames; _build_fs_tree_from_nodes(data, inode_map) -> dict for the tree construction. process_recover_fs() becomes a thin coordinator that calls these three helpers and writes the result.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py"
+      ],
+      "evidence": [
+        "process_recover_fs() at utils.py:98 performs four distinct operations in sequence: subprocess tar extraction, inode-to-filename mapping via os.listdir, JSON-node tree construction via nested loops, and overwriting the source JSON file \u2014 each phase is 20-30 lines and could be named independently.",
+        "The tree-construction loop has three levels of nesting (for item in data \u2192 for part in parts \u2192 for child in children_list) which makes the path-tracking logic hard to verify."
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "low_level_elegance",
+      "identifier": "pervasive_bare_except",
+      "summary": "12 bare `except:` blocks across seed files silently swallow all exceptions including SystemExit and KeyboardInterrupt",
+      "confidence": "high",
+      "suggestion": "Replace bare except with the narrowest applicable exception type. For ImportError fallbacks: `except ImportError`. For JSON parse failures: `except (json.JSONDecodeError, ValueError)`. For docker container-not-found: `except docker.errors.NotFound`. For IO operations: `except OSError`. Where a fallback is intentional, add a logging.debug() call so the suppression is visible in debug mode.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/api_server/routes/files.py",
+        "CLI/multivol/multi_volatility3.py",
+        "CLI/multivol/multi_volatility2.py"
+      ],
+      "evidence": [
+        "utils.py:32 \u2014 bare except in resolve_host_path after importing config: swallows ImportError and any other exception with a silent fallback, making path translation failures invisible.",
+        "utils.py:83,91 \u2014 two consecutive bare excepts in clean_and_parse_json try/fallback chain: a caller receives parsed_data=None with no indication of what went wrong.",
+        "files.py:123 \u2014 bare except around the entire DB case-map loading block: if the DB is corrupt or schema-mismatched, the caller proceeds with an empty case_map silently.",
+        "multi_volatility3.py:157,197 and multi_volatility2.py:78,108 \u2014 bare excepts in resolve_path and container-cleanup code swallow docker SDK errors."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "low_level_elegance",
+      "identifier": "duplicate_resolve_path",
+      "summary": "resolve_path() method body is duplicated verbatim in multi_volatility2 and multi_volatility3 classes",
+      "confidence": "high",
+      "suggestion": "Extract the shared logic into a standalone module-level function in utils.py (or a new path_utils.py), then have both classes delegate to it. This also creates a natural place to unify with resolve_host_path() if the semantics are aligned.",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "multi_volatility2.resolve_path (line 15) and multi_volatility3.resolve_path (line 17) are identical: both check host_path, handle /storage prefix, try to import BASE_DIR from api_server.config, and fall back to os.getcwd()-relative path. Any bug fix or extension must be applied twice.",
+        "A third variant of the same logic exists as resolve_host_path() in utils.py with slightly different semantics, creating three implementations of path translation."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "low_level_elegance",
+      "identifier": "inline_closure_pattern",
+      "summary": "Multiple route handlers define substantial background-task closures inline (background_scan, background_single_run, wait_and_update_status) instead of extracting them",
+      "confidence": "medium",
+      "suggestion": "Promote each closure to a named module-level function that accepts its dependencies as explicit parameters (scan_id, args, runner_func, etc.). This makes the functions individually testable, removes implicit capture, and reduces route handler length. The closures' captured variables become explicit function parameters.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/api_server/routes/memprocfs.py"
+      ],
+      "evidence": [
+        "background_scan defined at scan.py:252 inside scan() captures s_id and args from outer scope; it is ~40 lines of DB update + runner invocation + error handling that could be a named module-level function.",
+        "background_single_run defined at scan.py:707 inside execute_plugin() is ~45 lines of Docker + DB logic buried in the route handler.",
+        "wait_and_update_status defined inside start_memprocfs() in memprocfs.py is ~30 lines with its own DB connection lifecycle and a 500-second polling loop."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "mid_level_elegance",
+      "identifier": "argparse_namespace_as_runner_dto",
+      "summary": "scan() route hands off an argparse.Namespace to the runner, coupling the API seam to CLI argument shapes",
+      "confidence": "high",
+      "suggestion": "Define a dataclass or TypedDict (e.g., ScanRequest) that captures all fields passed to the runner. The scan route constructs this object explicitly from validated JSON fields. The runner function signature accepts ScanRequest. This eliminates the CLI/API boundary bleed and makes the handoff contract explicit and type-checkable.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py"
+      ],
+      "evidence": [
+        "scan.py:182: `args_obj = argparse.Namespace(**args_dict)` \u2014 the HTTP JSON body is merged into a dict and wrapped in argparse.Namespace before being passed to runner_func",
+        "scan.py:185: `args_obj.scan_id = scan_id` \u2014 scan_id is monkey-patched onto the Namespace after construction, indicating the DTO shape is informal",
+        "scan.py:261: `runner_func(args)` \u2014 runner accepts the Namespace directly; it was designed for CLI argparse output, not API payloads"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "mid_level_elegance",
+      "identifier": "runner_func_silent_noop_injection",
+      "summary": "runner_func global starts as None; if init_runner() is not called, scans appear to succeed but never execute",
+      "confidence": "high",
+      "suggestion": "Replace the global+init_runner pattern with explicit dependency injection at app construction time: pass the runner callable into a ScanService or route factory, or raise immediately if runner_func is None when a scan request arrives (`if not runner_func: return jsonify({\"error\": \"Server not configured\"}), 503`). The current pattern produces false-positive 'completed' scans.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "scan.py:64: `runner_func = None` \u2014 module-level global initialized to None",
+        "scan.py:65-67: `def init_runner(runner_cb): global runner_func; runner_func = runner_cb` \u2014 late-binding injection with no guard",
+        "scan.py:261: `if runner_func: runner_func(args)` \u2014 silent no-op when runner_func is None; scan proceeds to mark itself completed with no actual analysis"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "mid_level_elegance",
+      "identifier": "duplicate_docker_path_translation",
+      "summary": "Docker host-path translation logic is implemented independently in utils.py and multi_volatility2.py with divergent fallback behavior",
+      "confidence": "high",
+      "suggestion": "Extract Docker path translation into a shared module (e.g., multivol/docker_paths.py) that neither api_server nor multi_volatility2 owns, so both can import without upward coupling. Consolidate the fallback logic in one place.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/multi_volatility2.py"
+      ],
+      "evidence": [
+        "utils.py:13-30: resolve_host_path() translates container paths to host paths using HOST_PATH env var and BASE_DIR",
+        "multi_volatility2.py:17-31: resolve_path() implements the same Docker-in-Docker translation with different /storage special-case logic and different ImportError fallback",
+        "Both functions exist because multi_volatility2 cannot call utils.resolve_host_path (it would introduce an upward dependency)"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "mid_level_elegance",
+      "identifier": "orphaned_api_blueprint_stub",
+      "summary": "routes/__init__.py creates api_blueprint which is never registered; all blueprints are registered directly in app.py, making this seam stub dead scaffolding",
+      "confidence": "high",
+      "suggestion": "Either complete the nesting (register all route blueprints under api_blueprint with a URL prefix, then register api_blueprint in app.py) or delete the api_blueprint object and the now-redundant sub-blueprint imports in __init__.py. The current state misleads a developer into thinking there is a parent blueprint grouping.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "routes/__init__.py:3: `api_blueprint = Blueprint('api', __name__)` \u2014 created but never used",
+        "app.py:27-32: all five route blueprints registered individually via app.register_blueprint(); api_blueprint never appears",
+        "routes/__init__.py imports sub-blueprints as side effects \u2014 the implied intent of nesting them under api_blueprint was abandoned"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "mid_level_elegance",
+      "identifier": "api_strings_extension_wrong_seam",
+      "summary": "api_strings_extension.py extends Flask app directly via @app.route instead of Blueprint, and is never imported \u2014 a dead seam artifact",
+      "confidence": "high",
+      "suggestion": "Delete api_strings_extension.py entirely \u2014 the route already exists in scan.py with the correct Blueprint-based seam. If the file was intended as a future extension point, the correct pattern is a Blueprint registered in app.py.",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py"
+      ],
+      "evidence": [
+        "api_strings_extension.py:2: `@app.route('/results/<uuid>/strings', ...)` \u2014 uses global app object, not a Blueprint",
+        "api_strings_extension.py is never imported in app.py or routes/__init__.py",
+        "The same functionality (get_strings_content) exists as a proper route in scan.py:901, making this file an orphaned duplicate with a different seam pattern"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "authorization_consistency",
+      "identifier": "default_token_baked_into_frontend",
+      "summary": "API auth token compiled into frontend JS bundle via VITE_API_TOKEN build arg, exposing it to all browser users",
+      "confidence": "high",
+      "suggestion": "Remove VITE_API_TOKEN from the web build args entirely; the frontend should obtain a token dynamically via the /auth/login endpoint using APP_PASSWORD. This keeps the API token server-side only. If a build-time token is truly needed, generate it with a random default (e.g., `secrets.token_hex(32)`) in config.py rather than a fixed string, and do not pin it in docker-compose.yml.",
+      "related_files": [
+        "docker-compose.yml",
+        "CLI/multivol/api_server/config.py"
+      ],
+      "evidence": [
+        "docker-compose.yml line 25: `VITE_API_TOKEN=multivol_default_secret_token` passed as Vite build arg \u2014 Vite embeds this into the compiled static bundle",
+        "CLI/multivol/api_server/config.py line 21: fallback `API_TOKEN = os.getenv(\"API_TOKEN\", \"multivol_default_secret_token\")` uses the same literal, so changing the compose value still matches the server fallback",
+        "docker-compose.yml line 10: `API_TOKEN=multivol_default_secret_token` \u2014 both API server and frontend share the same well-known literal"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "package_organization",
+      "identifier": "orphaned_strings_route_in_core_package",
+      "summary": "api_strings_extension.py is a Flask route handler stranded in the multivol core package root and never imported",
+      "confidence": "high",
+      "suggestion": "Stage 1: Convert api_strings_extension.py into a proper Blueprint module. Create CLI/multivol/api_server/routes/strings.py, move route handlers there, replace @app.route with @strings_bp.route, add strings_bp = Blueprint('strings_bp', __name__). Stage 2: Register the blueprint in app.py alongside the others: 'from multivol.api_server.routes.strings import strings_bp' and 'app.register_blueprint(strings_bp)'. Stage 3: Delete CLI/multivol/api_strings_extension.py. Validate: python -c 'from multivol.api_server.app import app' should succeed without errors.",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py",
+        "CLI/multivol/api_server/routes/files.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "CLI/multivol/api_strings_extension.py contains @app.route('/results/<uuid>/strings') and @app.route('/results/<uuid>/strings/download') \u2014 route handler decorators that require a Flask app object",
+        "The file uses 'app' as a free variable but never imports or defines it; it would raise NameError at module load time if imported",
+        "No import of api_strings_extension found anywhere in the production codebase \u2014 the file is entirely orphaned",
+        "The file pattern matches routes/files.py exactly (same DB_PATH, same sqlite3 access, same jsonify pattern); it belongs in api_server/routes/ as a blueprint"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "package_organization",
+      "identifier": "dead_api_blueprint_aggregator",
+      "summary": "routes/__init__.py creates an api_blueprint aggregator that is never registered and implies a false indirection layer",
+      "confidence": "high",
+      "suggestion": "Stage 1: Decide on one registration pattern. Preferred: remove api_blueprint from routes/__init__.py and leave it as an empty __init__.py (or remove the redundant blueprint imports), keeping direct registration in app.py as the single source of truth. Alternative: implement the aggregator pattern properly \u2014 have app.py import api_blueprint from routes and call app.register_blueprint(api_blueprint). Validate: python -c 'from multivol.api_server.app import app; print(list(app.blueprints.keys()))' should list the expected blueprints without ImportError or silent omissions.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "routes/__init__.py: api_blueprint = Blueprint('api', __name__) followed by imports of all sub-blueprints \u2014 implies blueprints will be nested under api_blueprint",
+        "app.py registers each blueprint directly (app.register_blueprint(files_bp), app.register_blueprint(docker_bp), etc.) without ever importing or using api_blueprint",
+        "The aggregator pattern is implemented in routes/__init__.py but the consumer (app.py) bypasses it entirely, making the indirection layer dead scaffolding that misleads readers"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "dump_tasks_unguarded_race",
+      "summary": "dump_tasks dict accessed from background thread and request handlers without a threading.Lock",
+      "confidence": "high",
+      "suggestion": "Add a threading.Lock() beside dump_tasks and wrap all reads and writes with 'with dump_tasks_lock:'. Alternatively, use a thread-safe queue or push all state to the DB (which already has SQLite serialisation).",
+      "related_files": [
+        "CLI/multivol/api_server/routes/dump.py"
+      ],
+      "evidence": [
+        "Line 18: dump_tasks = {} defined at module scope with no associated lock.",
+        "Line 25: background_dump_task writes dump_tasks[task_id] = {'status': 'running'} in a daemon thread.",
+        "Lines 123-128: same thread writes status/output_path/error keys.",
+        "Lines 183, 197: GET request handlers read dump_tasks[task_id] concurrently with no lock."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "runner_func_silent_noop",
+      "summary": "runner_func = None global silently swallows scan requests if init_runner() was never called",
+      "confidence": "high",
+      "suggestion": "Replace the silent 'if runner_func:' guard with 'if runner_func is None: raise RuntimeError(\"runner not initialized\")' or return an HTTP 503. Consider using a factory function or dependency-injection pattern instead of a module-level mutable.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "scan.py line 64: runner_func = None at module scope.",
+        "scan.py lines 261-262 and 709-710: 'if runner_func: runner_func(args)' \u2014 no else branch, no error raised.",
+        "app.py: run_api() calls init_runner() only when the server starts through that entry point; importing scan_bp in any other context leaves runner_func as None."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "config_makedirs_import_side_effect",
+      "summary": "config.py creates six filesystem directories as a side effect of being imported",
+      "confidence": "high",
+      "suggestion": "Move makedirs calls into an explicit ensure_dirs() function called once from app startup. Consider wrapping token reads in a lazy accessor or accepting them as arguments to run_api() to allow test overrides.",
+      "related_files": [
+        "CLI/multivol/api_server/config.py"
+      ],
+      "evidence": [
+        "Lines 11-19: os.makedirs(STORAGE_DIR, ...), os.makedirs(UPLOAD_FOLDER, ...) and four more are unconditional top-level statements.",
+        "Every module that does 'from multivol.api_server.config import ...' triggers these filesystem writes.",
+        "API_TOKEN and APP_PASSWORD are also frozen at import time from os.getenv(), preventing test-time override without module reload."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "mcp_client_module_scope_singleton",
+      "summary": "httpx.AsyncClient with frozen API_TOKEN constructed at MCP module scope",
+      "confidence": "high",
+      "suggestion": "Construct the httpx client lazily inside safe_request or during a startup hook, reading env vars at call time. At minimum, document that the token cannot be changed after import.",
+      "related_files": [
+        "MCP/multivol_mcp.py"
+      ],
+      "evidence": [
+        "Lines 9-13: API_TOKEN, BASE_URL, PORT all read from env at module load.",
+        "Lines 30-32: 'client = httpx.AsyncClient(headers={\"Authorization\": f\"Bearer {API_TOKEN}\"}, ...)' \u2014 client built once at import with the snapshot token.",
+        "Any reconfiguration (different token, different target URL) requires reloading the module or restarting the process."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "memprocfs_file_cache_toctou",
+      "summary": "file_cache global read outside vmm_lock in /list endpoint creating a TOCTOU window",
+      "confidence": "medium",
+      "suggestion": "Protect all reads and writes to file_cache with vmm_lock (or a dedicated cache_lock), or use an atomic replacement pattern (assign a new object reference rather than mutating).",
+      "related_files": [
+        "Dockerfiles/memprocfs/memprocfs_server.py"
+      ],
+      "evidence": [
+        "Line 29: file_cache = None at module scope.",
+        "Lines 187-192 in /list handler: 'if file_cache is not None: return jsonify(file_cache)' checked without holding vmm_lock, then 'file_cache = results' written without holding vmm_lock.",
+        "Line 172: /init endpoint resets 'file_cache = None' under vmm_lock, creating a window where one thread sees non-None cache while another thread is resetting it."
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "execute_command_vol3_mixed_responsibilities",
+      "summary": "execute_command_volatility3 has 17 parameters and collapses six distinct responsibilities into one body",
+      "confidence": "high",
+      "suggestion": "Extract at minimum: (1) a _build_vol3_command(args) -> str helper for command assembly, (2) a _run_container(client, name, image, volumes, cmd) -> exit_code helper for container lifecycle, (3) a _validate_vol3_output(filepath, format) -> bool helper for output validation. The caller signature can then be simplified to a small config object (dump path, output dir, plugin settings) rather than 17 positional args.",
+      "related_files": [
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "Parameters: command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet, lock, host_path, fetch_symbols, show_commands, custom_symbol, scan_id, extra_args \u2014 17 total.",
+        "The function body: resolves DooD paths (via resolve_path), builds a volume dict, assembles a shell command string with redirect, removes a stale container, runs the container, waits for exit, post-processes JSON (strips first 2 lines), then performs multi-heuristic success validation (exit code, error strings, JSON parse).",
+        "Post-processing the output file and validating success are separate concerns from executing the container and should be extracted."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "runner_mega_function",
+      "summary": "runner() in multivol.py is a 220-line function mixing six distinct phases with duplicated vol2/vol3 branching",
+      "confidence": "high",
+      "suggestion": "Extract at minimum: _resolve_commands(arguments, instance) -> list for command list building (eliminating the duplicated branching), _ensure_image(client, image_name, console) for the Docker pull/check block, and move the priority-module pre-execution into the pool setup so the two-phase execution pattern is explicit.",
+      "related_files": [
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "runner() does: (1) directory scaffolding, (2) command-list resolution with fully duplicated vol2/vol3/light/full branching, (3) Docker image check and pull with Rich progress, (4) priority module pre-execution (info_module first), (5) multiprocessing pool dispatch with imap_unordered, (6) strings execution and final summary printing.",
+        "The vol2 and vol3 command-list resolution blocks are identical in structure and could be expressed as a single lookup.",
+        "The Rich image-pull display block is ~30 lines of UI code inside an orchestration function."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "argparse_namespace_as_api_data_carrier",
+      "summary": "scan() uses argparse.Namespace as a data-transfer object, leaking CLI-layer abstractions into the API dispatch layer",
+      "confidence": "high",
+      "suggestion": "Define a ScanRequest dataclass (or TypedDict) that describes the fields runner() actually needs. Both the CLI main() and the API scan() should convert their respective input representations into this object before calling runner(). This removes the argparse.Namespace from the API path and makes runner()'s contract explicit.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "scan() builds args_dict from API request data, then calls argparse.Namespace(**args_dict) to produce args_obj, then passes it to runner() which was designed for CLI-parsed arguments.",
+        "runner() uses getattr(arguments, 'fetch_symbol', False), getattr(arguments, 'debug', False), getattr(arguments, 'custom_symbol', None) with defaults because the API may not populate all CLI fields \u2014 these guards exist because the data carrier is wrong.",
+        "argparse.Namespace has no type enforcement, no required-field guarantees, and no documentation of expected shape \u2014 it is an opaque dict with attribute access."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "orphaned_strings_extension_fragment",
+      "summary": "api_strings_extension.py is a dead code fragment using the old monolithic-app pattern, never integrated into the blueprint architecture",
+      "confidence": "high",
+      "suggestion": "Either (a) delete the file if strings routes are served elsewhere, or (b) migrate the two route handlers into an appropriate blueprint (routes/files.py or a new routes/strings.py) using get_db_connection() and register the blueprint in app.py.",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py"
+      ],
+      "evidence": [
+        "The file contains @app.route decorators but `app` is never defined or imported in the file.",
+        "It uses sqlite3.connect(DB_PATH) directly, but DB_PATH is not defined or imported; this is the pattern from the pre-blueprint monolithic app.",
+        "The file is not imported by any other module and has no entry point; its route handlers are silently dead.",
+        "The functionality (strings search and download) is conceptually valid but was never migrated to the blueprint pattern used in routes/files.py and routes/scan.py."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "inline_script_written_to_disk",
+      "summary": "list_volatility_plugins() writes a Python script string to disk at request time as part of handler logic",
+      "confidence": "high",
+      "suggestion": "Move the script to a static file (e.g., CLI/multivol/assets/list_plugins.py) and mount that file directly. The route handler only needs to know the asset path; it does not need to write files.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/docker.py"
+      ],
+      "evidence": [
+        "The route handler contains a multi-line textwrap.dedent() Python script string, writes it to outputs/list_plugins_script.py, then mounts that file into a Docker container.",
+        "This creates a file-system side effect (a Python file in the outputs directory) as part of handling a GET request.",
+        "The script content is static and never changes \u2014 it should be a static asset shipped with the project, not generated at runtime."
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "get_file_hash_error_sentinel",
+      "summary": "get_file_hash returns literal string 'Error' on failure instead of raising or returning None",
+      "confidence": "high",
+      "suggestion": "Return None on failure (and annotate -> Optional[str]) or raise the exception so callers can handle it explicitly; document the sentinel contract in the docstring if a sentinel is intentional",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/routes/files.py"
+      ],
+      "evidence": [
+        "utils.py: except Exception as e: logging.error(...); return 'Error' \u2014 the string 'Error' is indistinguishable from a valid hex hash to any caller that does not special-case it",
+        "list_evidences in files.py passes get_file_hash return directly as the 'hash' field in the response dict \u2014 a failure yields {'hash': 'Error'} silently returned to clients"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "execute_command_self_output_file_mutation",
+      "summary": "execute_command_volatility3 and execute_command_volatility2 mutate self.output_file as a side effect of execution",
+      "confidence": "high",
+      "suggestion": "Remove self.output_file and instead return (command, success, output_file_path) as a tuple, or use a local variable and pass it through the return value; the instance should not accumulate transient per-call state",
+      "related_files": [
+        "CLI/multivol/multi_volatility3.py",
+        "CLI/multivol/multi_volatility2.py"
+      ],
+      "evidence": [
+        "multi_volatility3.py lines 89,93: self.output_file = os.path.join(output_dir, ...) inside execute_command_volatility3",
+        "multi_volatility2.py lines ~88-92: same pattern in execute_command_volatility2",
+        "The method returns (command, success) \u2014 the output file path is a hidden secondary output stored on the instance, not communicated through the return value"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "api_blueprint_dead_export",
+      "summary": "routes/__init__.py exports api_blueprint that is never populated with routes and never consumed",
+      "confidence": "high",
+      "suggestion": "Either remove api_blueprint entirely and keep the current per-blueprint import pattern, or properly nest all route blueprints under api_blueprint and update app.py to register only api_blueprint",
+      "related_files": [
+        "CLI/multivol/api_server/routes/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "routes/__init__.py: api_blueprint = Blueprint('api', __name__) \u2014 no routes are registered on it",
+        "The file then imports the individual blueprints (files_bp, docker_bp, etc.) but does not call api_blueprint.register_blueprint() on any of them",
+        "app.py imports blueprints directly and never imports or uses api_blueprint \u2014 the module-level API contract this file implies (a single aggregated blueprint) is entirely unfulfilled"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "contract_coherence",
+      "identifier": "process_recover_fs_destructive_overwrite",
+      "summary": "process_recover_fs silently overwrites the original Volatility JSON output file in-place",
+      "confidence": "high",
+      "suggestion": "Write the processed tree to a separate file (e.g., recovered_fs_tree.json) and leave the original intact; update the docstring and any callers to reference the new output path",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py"
+      ],
+      "evidence": [
+        "utils.py ~line 145: with open(json_path, 'w') as f: json.dump([tree], f, indent=2)  # comment: 'Save tree back directly over the raw JSON'",
+        "json_path is the input file passed to the function \u2014 callers expecting idempotent processing will find their raw output irreversibly transformed after the first call"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "logic_clarity",
+      "identifier": "dead_except_cpu_count",
+      "summary": "os.cpu_count() wrapped in try/except whose except branch is unreachable dead code",
+      "confidence": "high",
+      "suggestion": "Remove the try/except entirely: `max_processes = os.cpu_count() or 4`",
+      "related_files": [
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "Lines 86-91: `try: max_processes = os.cpu_count() or 4  except: max_processes = 4` \u2014 os.cpu_count() returns None but never raises; the `or 4` already covers the None case, making the except branch permanently unreachable"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "logic_clarity",
+      "identifier": "redundant_success_false_assignment",
+      "summary": "`if exit_code != 0: success = False` is a no-op because success is already False at that point",
+      "confidence": "high",
+      "suggestion": "Replace the if/else structure with a direct guard: `if exit_code == 0: try: ... (set success = True) ... except: pass` \u2014 eliminates the dead if-branch and makes the intent (only set True on success) explicit",
+      "related_files": [
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "Line 164: `success = False` (initial assignment)",
+        "Lines 167-168: `if exit_code != 0: success = False` \u2014 the if-branch reassigns what is already False; the comment 'Check Exit Code first' describes intent, but the else-branch is the only branch that changes state"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "logic_clarity",
+      "identifier": "dead_else_in_page_calc",
+      "summary": "Dead `else 1` branch in page calculation after limit is already guaranteed positive",
+      "confidence": "high",
+      "suggestion": "Simplify to `page = (offset // limit) + 1` \u2014 the guard above makes the conditional redundant",
+      "related_files": [
+        "MCP/multivol_mcp.py"
+      ],
+      "evidence": [
+        "get_multivol_results: `if limit <= 0 or limit > 100: limit = 50` guarantees limit >= 1",
+        "Next line: `page = (offset // limit) + 1 if limit > 0 else 1` \u2014 the `else 1` branch is permanently unreachable after the prior guard"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "logic_clarity",
+      "identifier": "memprocfs_session_stale_leak",
+      "summary": "Missing else-branch when container exists but is not running leaves stale session in active_sessions",
+      "confidence": "high",
+      "suggestion": "Add an else branch after the status check: `else: del active_sessions[uuid]` \u2014 mirrors the existing except branch so any non-running container triggers the same cleanup path before proceeding",
+      "related_files": [
+        "CLI/multivol/api_server/routes/memprocfs.py"
+      ],
+      "evidence": [
+        "start_memprocfs: after `container = client.containers.get(session['container_name'])`, the code returns only if `container.status == 'running'`",
+        "If the container exists but is stopped/exited, neither `del active_sessions[uuid]` nor an early return happens \u2014 the stale session entry persists and the subsequent code path starts a new container without cleaning up the old session record"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "safe_request_return_type_lie",
+      "summary": "`safe_request` annotated as `-> dict` but returns `list | dict` at runtime; callers add isinstance guards proving the annotation",
+      "confidence": "high",
+      "suggestion": "Change annotation to `-> list | dict` or `-> Any`; or narrow by having callers pass an expected type parameter. The most honest fix: `async def safe_request(...) -> Any`.",
+      "related_files": [
+        "MCP/multivol_mcp.py"
+      ],
+      "evidence": [
+        "Line 35: `async def safe_request(method: str, url: str, **kwargs) -> dict:`",
+        "Line 40: `return response.json()` \u2014 httpx's `.json()` returns `Any` (list or dict depending on endpoint)",
+        "Line 85: `results_list = data if isinstance(data, list) else data.get(...)` \u2014 caller cannot trust the annotation",
+        "Lines 139, 142, 198-199, 212: additional isinstance guards on the same return value throughout the file"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "runner_func_untyped_callable_slot",
+      "summary": "Module-level `runner_func = None` is used as a callable but has no `Optional[Callable]` annotation",
+      "confidence": "high",
+      "suggestion": "Annotate as `from typing import Callable, Optional; runner_func: Optional[Callable[[argparse.Namespace], None]] = None` and `run_api(runner_cb: Callable[[argparse.Namespace], None], debug_mode: bool = False) -> None:`.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "scan.py line 64: `runner_func = None` \u2014 bare None assignment with comment only",
+        "scan.py line 67: `runner_func = runner_cb` \u2014 assigned a callback of unknown signature",
+        "scan.py lines 261-262: `if runner_func: runner_func(args)` \u2014 called without any type information",
+        "app.py line 54: `def run_api(runner_cb, debug_mode=False):` \u2014 `runner_cb` parameter untyped"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "cli_subsystem_unannotated_public_api",
+      "summary": "All public API functions in the CLI subsystem (utils.py, auth.py, multi_volatility2.py, multi_volatility3.py) have zero type annotations",
+      "confidence": "high",
+      "suggestion": "Add parameter and return type annotations to all public functions; start with the utility functions in utils.py (`-> str`, `-> dict | list`, `-> None`) and the execute_command methods whose signatures are stable. Introduce a `py.typed` marker and configure mypy to enforce annotation coverage.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/auth.py",
+        "CLI/multivol/api_server/app.py",
+        "CLI/multivol/multi_volatility3.py",
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/strings.py",
+        "CLI/multivol/api_strings_extension.py"
+      ],
+      "evidence": [
+        "utils.py: `def resolve_host_path(container_path):`, `def get_file_hash(filepath):`, `def clean_and_parse_json(filepath):`, `def process_recover_fs(output_dir):`, `def cleanup_timeouts():` \u2014 all unannotated",
+        "auth.py: `def check_authorization():` returns `None | tuple[str, int] | tuple[Response, int]` \u2014 no annotation",
+        "multi_volatility3.py: `def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, ...)` \u2014 17 parameters, none typed",
+        "No `from typing import` import exists anywhere in the CLI subsystem"
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "restating_comments_multivol",
+      "summary": "Restating section comments in multivol.py echo the if-branch conditions rather than explaining intent",
+      "confidence": "high",
+      "suggestion": "Remove the mode-label comments or replace them with explanatory notes (e.g., what differs between the two branches). Delete one of the duplicate wrapper comments.",
+      "related_files": [
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "Line 49: '# Handle Volatility2 mode' directly above 'if arguments.mode == \"vol2\":'",
+        "Line 66: '# Handle Volatility3 mode' directly above 'elif arguments.mode == \"vol3\":'",
+        "Lines 22 and 25: duplicate '# Wrapper for Volatility 3 to use with imap' comment appears twice consecutively"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "echo_docstrings",
+      "summary": "Several docstrings restate the function name without adding insight",
+      "confidence": "high",
+      "suggestion": "For calculate_sha256 and cleanup_timeouts, either delete the docstring or add meaningful content (e.g., exception behaviour, return type semantics). For background_dump_task, describe the DB side-effects and the threading contract.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/routes/dump.py"
+      ],
+      "evidence": [
+        "utils.py line 37: '\"\"\"Calculates SHA-256 hash of a file.\"\"\"' \u2014 identical to the name calculate_sha256",
+        "utils.py line 218: '\"\"\"Marks scans running for > 1 hour as failed (timeout).\"\"\"' \u2014 restates cleanup_timeouts",
+        "dump.py background_dump_task: '\"\"\"Executes a Volatility3 dump command.\"\"\"' \u2014 80-line function deserves description of side effects and preconditions"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "bare_except_suppression",
+      "summary": "Bare 'except: pass' around non-I/O logic silently swallows errors that callers cannot distinguish from legitimate empty results",
+      "confidence": "high",
+      "suggestion": "Replace bare excepts with 'except (json.JSONDecodeError, ValueError): pass' for the parse paths. In the migration, at minimum log the exception: 'except Exception as e: logging.warning(f\"ADD COLUMN name skipped: {e}\")'.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py",
+        "CLI/multivol/api_server/database.py"
+      ],
+      "evidence": [
+        "utils.py lines 83-84: bare except around json.loads() \u2014 a failed parse is indistinguishable from 'no valid JSON start found'",
+        "utils.py lines 90-91: second bare except around json.loads() fallback path \u2014 same issue",
+        "database.py lines 100-102: bare 'except: pass' after ALTER TABLE in schema migration silently ignores any DDL error including corruption"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "build_url_passthrough",
+      "summary": "build_url() in the MCP module is a trivial one-line pass-through with no added logic",
+      "confidence": "medium",
+      "suggestion": "Either inline the f-string at each call site or keep the function but add a brief comment explaining why centralisation is preferred (e.g., future port/scheme switching). As-is it adds an indirection layer with no benefit.",
+      "related_files": [
+        "MCP/multivol_mcp.py"
+      ],
+      "evidence": [
+        "def build_url(path: str) -> str: return f\"{BASE_URL}:{PORT}{path}\" \u2014 single f-string, no auth, no validation, no transformation"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "no_test_infrastructure",
+      "summary": "Zero test infrastructure: no test files, no test runner, no test dependencies across the entire Python codebase",
+      "confidence": "high",
+      "suggestion": "Add pytest and pytest-cov to requirements.txt (or a requirements-dev.txt), create a tests/ directory at the project root, and write at minimum unit tests for the auth middleware, schema migration logic, and JSON parsing helpers. A minimal CI step running pytest --cov should gate all future changes.",
+      "related_files": [
+        "requirements.txt",
+        "CLI/multivol/api_server/app.py",
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "requirements.txt lists only 'pyyaml' and 'requests' \u2014 pytest, coverage, and mock are absent",
+        "No test files (test_*.py or *_test.py) exist anywhere in the repository",
+        "No conftest.py, pytest.ini, or any test configuration file is present",
+        "31 Python files covering business logic, auth, routing, and DB migrations are entirely untested"
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "architectural_change"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "auth_middleware_untested",
+      "summary": "check_authorization() \u2014 the sole API security gate \u2014 has no automated tests",
+      "confidence": "high",
+      "suggestion": "Write pytest unit tests using Flask's test client that exercise: (1) valid Bearer token passes, (2) missing token returns 401, (3) OPTIONS request returns 200, (4) /auth/login path is exempt. Use monkeypatch or a fixture to inject a known API_TOKEN value.",
+      "related_files": [
+        "CLI/multivol/api_server/auth.py"
+      ],
+      "evidence": [
+        "check_authorization() is registered as app.before_request and gates all routes except /auth/login",
+        "Logic includes token extraction from both Authorization header and query param, OPTIONS bypass, and path-based bypass for /auth/login",
+        "All four branches (valid token, missing token, OPTIONS, login path) are security-critical and entirely untested"
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "schema_migration_untested",
+      "summary": "init_db() schema migration logic (ALTER TABLE, RENAME COLUMN, fallback branches) is untested",
+      "confidence": "high",
+      "suggestion": "Use an in-memory SQLite database (sqlite3.connect(':memory:')) in tests to verify: (1) schema is created correctly on first run, (2) each migration column is added when missing, (3) the case_name rename succeeds, and (4) the fallback ADD COLUMN fires when rename fails. Parameterize across old-schema states.",
+      "related_files": [
+        "CLI/multivol/api_server/database.py"
+      ],
+      "evidence": [
+        "init_db() runs four conditional migrations: adding dump_path, config_json, renaming case_name->name, and adding mode column",
+        "The RENAME COLUMN path has a broad except clause that swallows errors and falls through to an ADD COLUMN fallback",
+        "No tests verify that migrations run correctly on a fresh database, a legacy schema, or in the error-recovery branch"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "test_strategy",
+      "identifier": "process_recover_fs_untested",
+      "summary": "process_recover_fs() \u2014 100+ line tree-building function with fallback paths and inode mapping \u2014 has no tests",
+      "confidence": "high",
+      "suggestion": "Write unit tests using tmp_path fixtures that supply synthetic Volatility JSON node lists and verify the resulting tree structure. Test edge cases: deeply nested paths, duplicate path segments, missing inodes, and the early-return when the input file is absent.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py"
+      ],
+      "evidence": [
+        "process_recover_fs() builds a nested directory tree from Volatility JSON output, resolves inodes to extracted files, and overwrites the source JSON",
+        "Contains multiple conditional branches: non-existent json_path early return, dict-vs-list type check, tar extraction subprocess call, inode-to-filename mapping via string parsing",
+        "The function's output is written back to the input file, making its correctness critical for downstream consumers"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "scan_route_prefix_incoherence",
+      "summary": "Same scan resource addressed inconsistently via /scan, /scans, /results, and /status prefixes",
+      "confidence": "high",
+      "suggestion": "Consolidate all scan-resource routes under /scans: POST /scans (create), GET /scans (list), GET /scans/<uuid> (status), DELETE /scans/<uuid>, PUT /scans/<uuid>, GET /scans/<uuid>/results, GET /scans/<uuid>/modules, GET /scans/<uuid>/log. Rename the 'scan_id' path parameter to 'uuid' in get_status to match siblings.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py"
+      ],
+      "evidence": [
+        "POST /scan (create), GET /status/<scan_id> (status), GET /scans (list), PUT /scans/<uuid> (rename), DELETE /scans/<uuid> (delete), GET /results/<uuid> (results), GET /scan/<uuid>/modules (modules) \u2014 six different path roots for one resource",
+        "Path parameter named 'scan_id' in GET /status/<scan_id> but 'uuid' in all sibling routes"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "mutation_response_shape_fragmentation",
+      "summary": "Mutation endpoints return four distinct success shapes: {status}, {success}, {message}, and {status: success}",
+      "confidence": "high",
+      "suggestion": "Adopt a single mutation success shape, e.g. {\"ok\": true} or {\"status\": \"ok\"} optionally with a data payload. Apply it uniformly across all mutation endpoints in scan.py and files.py.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/api_server/routes/files.py"
+      ],
+      "evidence": [
+        "rename_scan returns {\"status\": \"updated\"}, delete_scan returns {\"status\": \"deleted\"} (scan.py lines 590, 615)",
+        "update_scan_module_status returns {\"success\": True} (scan.py line 345)",
+        "manage_symbols POST returns {\"message\": \"Symbol uploaded successfully\"}, DELETE returns {\"message\": \"Deleted successfully\"} (files.py)",
+        "upload_file returns {\"status\": \"success\", \"path\": ..., \"server_path\": ...} (files.py)",
+        "delete_evidence returns {\"status\": \"deleted\"} (files.py)"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "log_endpoint_returns_plain_text",
+      "summary": "GET /scans/<uuid>/log returns raw plain text instead of JSON, breaking the API's content-type contract",
+      "confidence": "high",
+      "suggestion": "Return JSON consistently: jsonify({\"log\": f.read()}) on success and jsonify({\"error\": \"Log file not created yet or not found\"}) on 404. Callers expecting JSON will otherwise receive a content-type mismatch.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py"
+      ],
+      "evidence": [
+        "Line 318: returns f.read() \u2014 a raw string, not jsonify()",
+        "Line 319: returns plain string 'Log file not created yet or not found.' with 404 status",
+        "All other endpoints in this module return jsonify(...) responses"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "manage_symbols_overloaded_interface",
+      "summary": "manage_symbols() bundles GET/POST/DELETE into one function with fully divergent code paths per method",
+      "confidence": "medium",
+      "suggestion": "Split into three focused route handlers: list_symbols(), upload_symbol(), delete_symbol(). Each handler is easier to understand, document, and add per-method authorization checks to.",
+      "related_files": [
+        "CLI/multivol/api_server/routes/files.py"
+      ],
+      "evidence": [
+        "@files_bp.route('/symbols', methods=['GET', 'POST', 'DELETE']) routes three semantically distinct operations into a single function body",
+        "GET lists files (pure read), POST uploads a file with path validation, DELETE removes by path \u2014 none share logic or parameters"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "orphaned_strings_extension",
+      "summary": "api_strings_extension.py is a pre-Blueprint migration fragment, unreachable and referencing undefined names",
+      "confidence": "high",
+      "suggestion": "Delete CLI/multivol/api_strings_extension.py entirely \u2014 its functionality already lives in scan.py as scan_bp routes.",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py",
+        "CLI/multivol/api_server/routes/scan.py"
+      ],
+      "evidence": [
+        "File starts directly with `@app.route(...)` with no imports \u2014 `app`, `DB_PATH`, `sqlite3`, `send_file`, `jsonify`, `request` are all undefined within the file.",
+        "scan.py Blueprint at lines 900-981 contains identical route logic for `/results/<uuid>/strings` and `/results/<uuid>/strings/download` as proper registered Blueprint routes.",
+        "No import of api_strings_extension anywhere in the codebase (grep confirms zero references)."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "filepath_ghost_column_in_schema",
+      "summary": "CREATE TABLE still declares deprecated `filepath` column alongside its replacement `dump_path`",
+      "confidence": "high",
+      "suggestion": "Remove `filepath TEXT,` from the CREATE TABLE definition. The migration shim (lines 76-83) can remain for upgrading existing databases but should check only for `dump_path` absence.",
+      "related_files": [
+        "CLI/multivol/api_server/database.py"
+      ],
+      "evidence": [
+        "database.py line 20: `filepath TEXT,` still present in CREATE TABLE scans, while line 21 has `dump_path TEXT`.",
+        "Migration shim at lines 79-83 copies `filepath` -> `dump_path` for old databases, but for new installations both columns are created \u2014 `filepath` will always be NULL/empty.",
+        "No application code reads `scan['filepath']` anywhere; column is dead on fresh installs."
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "old_storage_path_shim",
+      "summary": "resolve_host_path contains labeled 'old storage hack' fallback for a deprecated path layout",
+      "confidence": "medium",
+      "suggestion": "Remove the 'old storage hack' fallback block (lines 28-33) once confident that all deployments use the current BASE_DIR-relative path convention. Add a warning log instead of silently falling through.",
+      "related_files": [
+        "CLI/multivol/api_server/utils.py"
+      ],
+      "evidence": [
+        "utils.py lines 28-33: `# Fallback to the old storage hack just in case` block checks `if 'storage' in container_path` and reconstructs paths via `container_path.find('storage')` \u2014 explicit acknowledgment this is legacy.",
+        "The primary path translation logic using BASE_DIR precedes this block; the fallback is only reached when the new logic fails, suggesting it covers infrastructure setups that no longer exist."
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "review_quality": {
+    "batch_count": 20,
+    "dimension_coverage": 0.05,
+    "evidence_density": 2.056,
+    "high_score_missing_issue_note": 0,
+    "issue_pressure": 114.526,
+    "dimensions_with_issues": 20
+  },
+  "review_scope": {
+    "reviewed_files_count": 20,
+    "successful_batch_count": 20,
+    "full_sweep_included": false,
+    "total_files": 20,
+    "imported_dimensions": [
+      "abstraction_fitness",
+      "ai_generated_debt",
+      "api_surface_coherence",
+      "authorization_consistency",
+      "contract_coherence",
+      "convention_outlier",
+      "cross_module_architecture",
+      "dependency_health",
+      "design_coherence",
+      "error_consistency",
+      "high_level_elegance",
+      "incomplete_migration",
+      "initialization_coupling",
+      "logic_clarity",
+      "low_level_elegance",
+      "mid_level_elegance",
+      "naming_quality",
+      "package_organization",
+      "test_strategy",
+      "type_safety"
+    ]
+  },
+  "reviewed_files": [
+    "CLI/multivol/api_server/auth.py",
+    "CLI/multivol/api_server/database.py",
+    "CLI/multivol/api_server/routes/auth.py",
+    "CLI/multivol/api_server/routes/docker.py",
+    "CLI/multivol/api_server/routes/files.py",
+    "CLI/multivol/api_server/routes/memprocfs.py",
+    "CLI/multivol/api_server/utils.py",
+    "CLI/multivol/api_strings_extension.py",
+    "MCP/multivol_mcp.py",
+    "CLI/multivol/api_server/routes/__init__.py",
+    "CLI/multivol/__init__.py",
+    "CLI/multivol/multi_volatility2.py",
+    "CLI/multivol/api_server/__init__.py",
+    "CLI/multivol/api_server/app.py",
+    "CLI/multivol/api_server/routes/dump.py",
+    "CLI/multivol/multivol.py",
+    "CLI/multivol/api_server/routes/scan.py",
+    "Dockerfiles/memprocfs/memprocfs_server.py",
+    "CLI/multivol/multi_volatility3.py",
+    "CLI/multivol/strings.py"
+  ],
+  "provenance": {
+    "kind": "blind_review_batch_import",
+    "blind": true,
+    "runner": "dry-run",
+    "run_stamp": "20260311_082204",
+    "created_at": "2026-03-11T16:16:19+00:00",
+    "batch_count": 20,
+    "batch_indexes": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "packet_path": "/Users/max/Desktop/Tools/MultiVolatility/.desloppify/review_packet_blind.json",
+    "packet_sha256": "358af00114c0f655955d4c26f2f18d7915dfe020618060677227b688b1e9e81c"
+  },
+  "assessment_coverage": {
+    "scored_dimensions": [
+      "naming_quality",
+      "logic_clarity",
+      "type_safety",
+      "contract_coherence",
+      "error_consistency",
+      "abstraction_fitness",
+      "ai_generated_debt",
+      "high_level_elegance",
+      "mid_level_elegance",
+      "low_level_elegance",
+      "cross_module_architecture",
+      "initialization_coupling",
+      "convention_outlier",
+      "dependency_health",
+      "test_strategy",
+      "api_surface_coherence",
+      "authorization_consistency",
+      "incomplete_migration",
+      "package_organization",
+      "design_coherence"
+    ],
+    "selected_dimensions": [
+      "naming_quality",
+      "logic_clarity",
+      "type_safety",
+      "contract_coherence",
+      "error_consistency",
+      "abstraction_fitness",
+      "ai_generated_debt",
+      "high_level_elegance",
+      "mid_level_elegance",
+      "low_level_elegance",
+      "cross_module_architecture",
+      "initialization_coupling",
+      "convention_outlier",
+      "dependency_health",
+      "test_strategy",
+      "api_surface_coherence",
+      "authorization_consistency",
+      "incomplete_migration",
+      "package_organization",
+      "design_coherence"
+    ],
+    "imported_dimensions": [
+      "abstraction_fitness",
+      "ai_generated_debt",
+      "api_surface_coherence",
+      "authorization_consistency",
+      "contract_coherence",
+      "convention_outlier",
+      "cross_module_architecture",
+      "dependency_health",
+      "design_coherence",
+      "error_consistency",
+      "high_level_elegance",
+      "incomplete_migration",
+      "initialization_coupling",
+      "logic_clarity",
+      "low_level_elegance",
+      "mid_level_elegance",
+      "naming_quality",
+      "package_organization",
+      "test_strategy",
+      "type_safety"
+    ],
+    "missing_dimensions": []
+  }
+}

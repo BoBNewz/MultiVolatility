@@ -1,0 +1,117 @@
+{
+  "batch": "cross_module_architecture",
+  "batch_index": 1,
+  "assessments": {
+    "cross_module_architecture": 67.0
+  },
+  "dimension_notes": {
+    "cross_module_architecture": {
+      "evidence": [
+        "CLI/multivol/api_strings_extension.py references @app.route and sqlite3.connect(DB_PATH) with no imports for either 'app' or 'DB_PATH' — these are globals from the old monolithic api.py that no longer exist in scope. The file is never imported anywhere in the current codebase.",
+        "CLI/multivol/multi_volatility2.py:24 and CLI/multivol/multi_volatility3.py:27 both do 'from api_server.config import BASE_DIR' inside a deferred try/except inside a function body, creating an upward layer dependency: CLI execution workers depend on the API server's config layer.",
+        "CLI/multivol/api_server/routes/memprocfs.py:29 declares 'active_sessions = {}' at module scope; CLI/multivol/api_server/routes/dump.py:18 declares 'dump_tasks = {}' at module scope. Both are mutated by route handlers across requests, creating cross-request shared mutable state at the route-module level.",
+        "dump.py maintains dual-truth state: an in-memory dict 'dump_tasks' and a 'dump_tasks' DB table both track task status. When the process restarts, in-memory state is lost while DB state persists, diverging the two sources.",
+        "CLI/multivol/api_server/utils.py:20 defers 'from multivol.api_server.config import BASE_DIR' inside the resolve_host_path() function body rather than at module top — a cycle-pressure proxy: utils.py already imports database.py at module scope, and database.py imports config.py, so there should be no circular issue; the deferral appears to be a leftover workaround.",
+        "CLI/multivol/api_server/routes/__init__.py imports all five blueprints (files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp), while CLI/multivol/api_server/app.py independently imports and registers the same set plus auth_bp. The routes/__init__.py re-export layer is redundant and never used by app.py."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "cross_module_architecture": {
+      "strengths": [
+        "The new api_server/ Blueprint decomposition has a consistent fan-in dependency direction: all route modules depend on config.py, database.py, and utils.py — never the reverse.",
+        "MCP/multivol_mcp.py is cleanly isolated behind an HTTP boundary — it imports nothing from the CLI package and coordinates only via the REST API.",
+        "config.py is a single authoritative source for all configuration values; no route module computes paths independently.",
+        "database.py provides a single get_db_connection() factory used consistently across all route modules (except the orphaned extension file)."
+      ],
+      "issue_character": "The issues are primarily migration residue and layer-inversion patterns: an orphaned code fragment from the old monolithic architecture still exists in-tree without imports or registration, two CLI worker modules reach upward into the API server config layer in deferred try/except workarounds, and route-level modules carry module-scope mutable state that creates implicit shared memory across requests.",
+      "score_rationale": "The core Blueprint architecture is well-structured with a clear and consistent dependency direction, earning credit against the 80-anchor ('mostly well-served with recurring friction'). However, the orphaned api_strings_extension.py shim persists without cleanup, two CLI workers invert the layer boundary by importing from api_server.config, and dual in-memory/DB state tracking in dump.py creates a hidden consistency hazard. These are real boundary-integrity problems, not just style issues — they would cause confusion for a developer trying to extend the scan or dump subsystems. This places the score below 70 ('enough inconsistency that you can't fully trust patterns you've seen elsewhere')."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "orphaned_strings_extension_shim",
+      "summary": "api_strings_extension.py references app and DB_PATH from old monolithic architecture — never imported, unrunnable, blurs migration boundary",
+      "related_files": ["CLI/multivol/api_strings_extension.py"],
+      "evidence": [
+        "File uses @app.route('/results/<uuid>/strings', ...) and @app.route('/results/<uuid>/strings/download', ...) with no import of 'app'.",
+        "File calls sqlite3.connect(DB_PATH) with no import of 'DB_PATH'; both names were globals in the old CLI/build/lib/multivol/api.py monolith.",
+        "grep -r 'api_strings_extension' finds zero references across the production codebase — the file is dead code from the pre-Blueprint migration."
+      ],
+      "suggestion": "Delete CLI/multivol/api_strings_extension.py. The strings routes are already handled in scan.py via the Blueprint pattern. If any strings endpoint is missing, add it to CLI/multivol/api_server/routes/scan.py using get_db_connection() and the existing Blueprint pattern.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "migration_residue"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "cli_workers_import_api_config",
+      "summary": "multi_volatility2 and multi_volatility3 import from api_server.config inside CLI execution workers, inverting the layer boundary",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py"
+      ],
+      "evidence": [
+        "multi_volatility2.py:24: 'from api_server.config import BASE_DIR' inside resolve_path(), inside a try/except ImportError — caller falls back to os.getcwd() on failure.",
+        "multi_volatility3.py:27: same pattern with the same fallback.",
+        "These files are CLI analysis workers; having them depend on the API server's config module means running the CLI standalone requires api_server to be importable."
+      ],
+      "suggestion": "Remove the api_server.config dependency from both workers. Pass BASE_DIR (or the resolved host path) as a parameter from the caller (multivol.py's runner()), or read it directly from the same environment variable that config.py uses ('HOST_PATH'/'STORAGE_DIR'). This keeps the analysis workers decoupled from the API layer.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "migration_residue"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "route_module_mutable_state_dual_truth",
+      "summary": "dump.py maintains dual state (in-memory dict + DB table) for task tracking; memprocfs.py stores live session state at module scope without DB persistence",
+      "related_files": [
+        "CLI/multivol/api_server/routes/dump.py",
+        "CLI/multivol/api_server/routes/memprocfs.py"
+      ],
+      "evidence": [
+        "dump.py:18: 'dump_tasks = {}' module-level dict tracks in-flight task status; dump.py also writes the same status to a 'dump_tasks' DB table (lines 134, 137). On process restart, in-memory dict is empty but DB has completed/failed records — the two sources diverge.",
+        "memprocfs.py:29: 'active_sessions = {}' module-level dict is the sole source of truth for live container sessions; there is no DB-backed recovery — sessions are lost on restart with no cleanup of orphaned Docker containers.",
+        "Neither dict is reachable from outside the route module (no service layer), so any other module that needs to query or modify session/task state must import these route modules, pulling in Flask/Docker dependencies."
+      ],
+      "suggestion": "For dump_tasks: remove the in-memory dict and query the DB table exclusively for status reads (the DB already has the right schema). For active_sessions in memprocfs.py: either persist session state in the DB (a 'memprocfs_sessions' table) and reconcile on startup by checking Docker for live containers, or move the dict to a dedicated service object passed through Flask's app.extensions context so it does not live at route-module scope.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "cross_module_architecture",
+      "identifier": "routes_init_redundant_reexport",
+      "summary": "routes/__init__.py re-exports all blueprints that app.py already imports independently, creating a dead re-export layer with no consumers",
+      "related_files": [
+        "CLI/multivol/api_server/routes/__init__.py",
+        "CLI/multivol/api_server/app.py"
+      ],
+      "evidence": [
+        "routes/__init__.py imports files_bp, docker_bp, scan_bp, dump_bp, memprocfs_bp from their respective submodules.",
+        "app.py imports each blueprint directly from its submodule path (e.g. 'from multivol.api_server.routes.files import files_bp') and never imports from 'multivol.api_server.routes'.",
+        "The __init__.py re-export is not used by any consumer — it adds an indirection layer that will silently re-import all route modules whenever routes/__init__.py is touched."
+      ],
+      "suggestion": "Either have app.py import from 'from multivol.api_server.routes import files_bp, docker_bp, ...' (using the __init__.py as the intended facade) and add auth_bp there too, or remove the re-exports from routes/__init__.py and leave direct imports in app.py. Pick one pattern consistently.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Incomplete migration from the old monolithic api.py to the Blueprint architecture — several artifacts of the old pattern (api_strings_extension.py, api_server.config imports in CLI workers) were not cleaned up during refactoring.",
+      "State management was not extracted to a service layer during the modularization; route modules acquired responsibility for both HTTP handling and cross-request state, leading to module-scope mutable globals."
+    ],
+    "likely_symptoms": [
+      "The routes/__init__.py redundancy (issue routes_init_redundant_reexport) is likely a symptom of the same migration that left api_strings_extension.py — both suggest the refactor was not fully reconciled."
+    ],
+    "possible_false_positives": []
+  }
+}

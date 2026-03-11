@@ -10,6 +10,7 @@ API_TOKEN = os.getenv("API_TOKEN")
 MCP_TOKEN = os.getenv("MCP_TOKEN", "my-super-secret-token")
 BASE_URL = os.getenv("TARGET_URL", "http://api")
 PORT = os.getenv("TARGET_PORT", "5001")
+API_BASE = f"{BASE_URL}:{PORT}"
 
 class StaticTokenAuth(TokenVerifier):
     async def verify_token(self, token: str) -> AccessToken | None:
@@ -23,8 +24,6 @@ class StaticTokenAuth(TokenVerifier):
             )
         return None
 
-def build_url(path: str) -> str:
-    return f"{BASE_URL}:{PORT}{path}"
 
 # Use an async client for better concurrency and to avoid double-response issues in FastMCP
 client = httpx.AsyncClient(
@@ -75,9 +74,9 @@ async def search_multivol_results(uuid: str, module: str, regex_pattern: str, ma
             params = {"limit": chunk_size, "page": page, "q": regex_pattern}
             if context_lines > 0:
                 params["context"] = context_lines
-            data = await safe_request("GET", build_url(f"/results/{uuid}/strings"), params=params)
+            data = await safe_request("GET", f"{API_BASE}/results/{uuid}/strings", params=params)
         else:
-            data = await safe_request("GET", build_url(f"/results/{uuid}"), params={"module": module, "limit": chunk_size, "offset": offset})
+            data = await safe_request("GET", f"{API_BASE}/results/{uuid}", params={"module": module, "limit": chunk_size, "offset": offset})
             
         if "error" in data:
             return data # Surface backend errors immediately
@@ -111,12 +110,12 @@ async def search_multivol_results(uuid: str, module: str, regex_pattern: str, ma
 @mcp.tool()
 async def get_multivol_scans() -> dict:
     """Get all scans from the server. Returns UUIDs, OS, image names, and status."""
-    return {"scans": await safe_request("GET", build_url("/scans"))}
+    return {"scans": await safe_request("GET", f"{API_BASE}/scans")}
 
 @mcp.tool()
 async def get_multivol_scan_modules(uuid: str) -> dict:
     """Get all modules of a specific scan."""
-    return {"modules": await safe_request("GET", build_url(f"/scan/{uuid}/modules"))}
+    return {"modules": await safe_request("GET", f"{API_BASE}/scans/{uuid}/modules")}
 
 @mcp.tool()
 async def get_multivol_results(uuid: str, module: str, limit: int = 50, offset: int = 0) -> dict:
@@ -132,9 +131,9 @@ async def get_multivol_results(uuid: str, module: str, limit: int = 50, offset: 
 
     if module == "strings":
         page = (offset // limit) + 1 if limit > 0 else 1
-        data = await safe_request("GET", build_url(f"/results/{uuid}/strings"), params={"limit": limit, "page": page})
+        data = await safe_request("GET", f"{API_BASE}/results/{uuid}/strings", params={"limit": limit, "page": page})
     else:
-        data = await safe_request("GET", build_url(f"/results/{uuid}"), params={"module": module, "limit": limit, "offset": offset})
+        data = await safe_request("GET", f"{API_BASE}/results/{uuid}", params={"module": module, "limit": limit, "offset": offset})
 
     if isinstance(data, dict) and "error" in data:
         return data
@@ -160,7 +159,7 @@ async def list_multivol_linux_recovered_files(uuid: str, offset: int = 0, limit:
     Use `offset` and `limit` to paginate through the list.
     Use `search` to filter files matching a specific string or extension (e.g. search=".txt" or search="passwd").
     """
-    data = await safe_request("GET", build_url(f"/results/{uuid}/fs/list"))
+    data = await safe_request("GET", f"{API_BASE}/results/{uuid}/fs/list")
     if "error" in data:
         return data
         
@@ -194,7 +193,7 @@ async def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limi
     merged_files = {}
 
     # 1. Try MemProcFS.FileList results
-    memproc_data = await safe_request("GET", build_url(f"/memprocfs/{uuid}/files"), params={"limit": 0})
+    memproc_data = await safe_request("GET", f"{API_BASE}/memprocfs/{uuid}/files", params={"limit": 0})
     if not isinstance(memproc_data, dict) or "error" not in memproc_data:
         files = memproc_data.get("results", []) if isinstance(memproc_data, dict) else []
         for f in files:
@@ -208,7 +207,7 @@ async def list_multivol_windows_recovered_files(uuid: str, offset: int = 0, limi
             }
 
     # 2. Try windows.filescan.FileScan results
-    filescan_data = await safe_request("GET", build_url(f"/results/{uuid}"), params={"module": "windows.filescan.FileScan", "limit": 0})
+    filescan_data = await safe_request("GET", f"{API_BASE}/results/{uuid}", params={"module": "windows.filescan.FileScan", "limit": 0})
     filescan_results = filescan_data if isinstance(filescan_data, list) else filescan_data.get("results", []) if isinstance(filescan_data, dict) else []
     
     for f in filescan_results:
@@ -262,7 +261,7 @@ async def view_multivol_linux_recovered_file(uuid: str, file_path: str, regex_pa
         if regex_pattern:
             params["q"] = regex_pattern
             
-        data = await safe_request("GET", build_url(f"/results/{uuid}/fs/view"), params=params)
+        data = await safe_request("GET", f"{API_BASE}/results/{uuid}/fs/view", params=params)
         
         if "error" in data:
             return data

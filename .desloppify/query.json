@@ -1,0 +1,504 @@
+{
+  "command": "resolve",
+  "patterns": [
+    "architecture"
+  ],
+  "status": "fixed",
+  "resolved": [
+    "review::.::holistic::high_level_elegance::resolve_path_triplicated",
+    "review::.::holistic::abstraction_fitness::resolve_path_triplicated",
+    "review::.::holistic::abstraction_fitness::safe_print_triplicated",
+    "review::.::holistic::ai_generated_debt::restating_comments_multivol",
+    "review::.::holistic::api_surface_coherence::log_endpoint_returns_plain_text",
+    "review::.::holistic::api_surface_coherence::mutation_response_shape_fragmentation",
+    "review::.::holistic::api_surface_coherence::scan_route_prefix_incoherence",
+    "review::.::holistic::contract_coherence::execute_command_self_output_file_mutation",
+    "review::.::holistic::contract_coherence::process_recover_fs_destructive_overwrite",
+    "review::.::holistic::convention_outlier::strings_extension_style_island",
+    "review::.::holistic::cross_module_architecture::cli_workers_import_api_config",
+    "review::.::holistic::cross_module_architecture::route_module_mutable_state_dual_truth",
+    "review::.::holistic::design_coherence::argparse_namespace_as_api_data_carrier",
+    "review::.::holistic::design_coherence::execute_command_vol3_mixed_responsibilities",
+    "review::.::holistic::design_coherence::inline_script_written_to_disk",
+    "review::.::holistic::design_coherence::runner_mega_function",
+    "review::.::holistic::ai_generated_debt::bare_except_suppression",
+    "review::.::holistic::error_consistency::bare_except_utility_layer",
+    "review::.::holistic::error_consistency::files_route_db_bare_except_silent",
+    "review::.::holistic::incomplete_migration::filepath_ghost_column_in_schema",
+    "review::.::holistic::initialization_coupling::config_makedirs_import_side_effect",
+    "review::.::holistic::initialization_coupling::dump_tasks_unguarded_race",
+    "review::.::holistic::initialization_coupling::mcp_client_module_scope_singleton",
+    "review::.::holistic::initialization_coupling::runner_func_silent_noop",
+    "review::.::holistic::logic_clarity::dead_else_in_page_calc",
+    "review::.::holistic::logic_clarity::dead_except_cpu_count",
+    "review::.::holistic::logic_clarity::memprocfs_session_stale_leak",
+    "review::.::holistic::logic_clarity::redundant_success_false_assignment",
+    "review::.::holistic::low_level_elegance::duplicate_resolve_path",
+    "review::.::holistic::low_level_elegance::process_recover_fs_monolith",
+    "review::.::holistic::low_level_elegance::scan_route_monolith",
+    "review::.::holistic::mid_level_elegance::argparse_namespace_as_runner_dto",
+    "review::.::holistic::mid_level_elegance::duplicate_docker_path_translation",
+    "review::.::holistic::mid_level_elegance::runner_func_silent_noop_injection",
+    "review::.::holistic::naming_quality::manage_symbols_generic_verb",
+    "review::.::holistic::api_surface_coherence::manage_symbols_overloaded_interface",
+    "review::.::holistic::ai_generated_debt::build_url_passthrough",
+    "review::.::holistic::incomplete_migration::old_storage_path_shim",
+    "review::.::holistic::initialization_coupling::memprocfs_file_cache_toctou",
+    "review::.::holistic::low_level_elegance::inline_closure_pattern",
+    "review::.::holistic::cross_module_architecture::orphaned_strings_extension_shim",
+    "review::.::holistic::high_level_elegance::api_strings_extension_orphan",
+    "review::.::holistic::error_consistency::get_file_hash_error_sentinel_string",
+    "review::.::holistic::abstraction_fitness::execute_command_wide_param_bag",
+    "review::.::holistic::dependency_health::mcp_unused_requests_dep",
+    "review::.::holistic::dependency_health::stale_toplevel_requirements",
+    "review::.::holistic::dependency_health::no_version_pinning",
+    "review::.::holistic::mid_level_elegance::orphaned_api_blueprint_stub",
+    "review::.::holistic::mid_level_elegance::api_strings_extension_wrong_seam",
+    "review::.::holistic::authorization_consistency::default_token_baked_into_frontend",
+    "review::.::holistic::package_organization::orphaned_strings_route_in_core_package",
+    "review::.::holistic::package_organization::dead_api_blueprint_aggregator",
+    "review::.::holistic::design_coherence::orphaned_strings_extension_fragment",
+    "review::.::holistic::type_safety::safe_request_return_type_lie",
+    "review::.::holistic::type_safety::runner_func_untyped_callable_slot",
+    "review::.::holistic::type_safety::cli_subsystem_unannotated_public_api",
+    "review::.::holistic::test_strategy::no_test_infrastructure",
+    "review::.::holistic::test_strategy::auth_middleware_untested",
+    "review::.::holistic::test_strategy::schema_migration_untested",
+    "review::.::holistic::test_strategy::process_recover_fs_untested"
+  ],
+  "count": 60,
+  "next_command": "desloppify next",
+  "overall_score": 48.2,
+  "objective_score": 52.4,
+  "strict_score": 47.8,
+  "verified_strict_score": 52.4,
+  "prev_overall_score": 48.2,
+  "prev_objective_score": 52.4,
+  "prev_strict_score": 47.8,
+  "prev_verified_strict_score": 52.4,
+  "attestation": "I have actually Route prefixes standardized; manage_symbols split; execute_command refactored to dataclasses; build_url removed; mutation responses standardized and I am not gaming the score.",
+  "narrative": {
+    "phase": "early_momentum",
+    "headline": "\u26a0 1 security issue \u2014 review before other cleanup. All T1 items cleared!",
+    "dimensions": {
+      "lowest_dimensions": [
+        {
+          "name": "Test strategy",
+          "strict": 0.0,
+          "failing": 0,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        },
+        {
+          "name": "Test health",
+          "strict": 4.6,
+          "failing": 17,
+          "impact": 0.0
+        },
+        {
+          "name": "Type safety",
+          "strict": 19.0,
+          "failing": 0,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        }
+      ],
+      "biggest_gap_dimensions": [
+        {
+          "name": "Test health",
+          "lenient": 6.7,
+          "strict": 4.6,
+          "gap": 2.1,
+          "wontfix_count": 0
+        }
+      ],
+      "stagnant_dimensions": [
+        {
+          "name": "Code quality",
+          "strict": 72.3,
+          "stuck_scans": 3
+        },
+        {
+          "name": "Security",
+          "strict": 98.2,
+          "stuck_scans": 3
+        },
+        {
+          "name": "File health",
+          "strict": 68.5,
+          "stuck_scans": 3
+        },
+        {
+          "name": "Duplication",
+          "strict": 94.5,
+          "stuck_scans": 3
+        },
+        {
+          "name": "Test health",
+          "strict": 4.6,
+          "stuck_scans": 3
+        },
+        {
+          "name": "Test strategy",
+          "strict": 0.0,
+          "stuck_scans": 3
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "reorganize",
+        "detector": "orphaned",
+        "count": 13,
+        "description": "13 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
+        "command": "desloppify show orphaned --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 1,
+        "lane": "restructure"
+      },
+      {
+        "type": "reorganize",
+        "detector": "facade",
+        "count": 1,
+        "description": "1 facade issues \u2014 flatten re-export facades or consolidate barrel files",
+        "command": "desloppify show facade --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 2,
+        "lane": "restructure"
+      },
+      {
+        "type": "refactor",
+        "detector": "structural",
+        "count": 9,
+        "description": "9 structural issues \u2014 review large files \u2014 split only when responsibilities are clearly separable",
+        "command": "desloppify show structural --status open",
+        "impact": 0.0,
+        "dimension": "File health",
+        "priority": 3,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "dupes",
+        "count": 2,
+        "description": "2 dupes issues \u2014 extract shared utility or consolidate duplicates",
+        "command": "desloppify show dupes --status open",
+        "impact": 0.0,
+        "dimension": "Duplication",
+        "priority": 4,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "dict_keys",
+        "count": 7,
+        "description": "7 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
+        "command": "desloppify show dict_keys --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 5,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "test_coverage",
+        "count": 17,
+        "description": "17 test_coverage issues \u2014 add tests for untested production modules \u2014 prioritize by import count",
+        "command": "desloppify show test_coverage --status open",
+        "impact": 0.0,
+        "dimension": "Test health",
+        "priority": 6,
+        "lane": "test_coverage"
+      },
+      {
+        "type": "refactor",
+        "detector": "responsibility_cohesion",
+        "count": 1,
+        "description": "1 responsibility_cohesion issues \u2014 split modules with too many responsibilities \u2014 extract focused sub-modules",
+        "command": "desloppify show responsibility_cohesion --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 7,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "boilerplate_duplication",
+        "count": 5,
+        "description": "5 boilerplate_duplication issues \u2014 extract shared boilerplate into reusable helpers or base classes",
+        "command": "desloppify show boilerplate_duplication --status open",
+        "impact": 0.0,
+        "dimension": "Duplication",
+        "priority": 8,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "smells",
+        "count": 78,
+        "description": "78 smells issues \u2014 inspect with `desloppify next` and fix manually",
+        "command": "desloppify show smells --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 9,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "global_mutable_config",
+        "count": 5,
+        "description": "5 global_mutable_config issues \u2014 refactor module-level mutable state \u2014 use explicit init functions or dependency injection",
+        "command": "desloppify show global_mutable_config --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 10,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "stale_exclude",
+        "count": 14,
+        "description": "14 stale_exclude issues \u2014 remove stale exclusion or verify it's still needed",
+        "command": "desloppify show stale_exclude --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 11,
+        "lane": "refactor_1"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "security",
+        "count": 1,
+        "description": "1 security issues \u2014 review and fix security issues \u2014 prioritize by severity",
+        "command": "desloppify show security --status open",
+        "impact": 0.0,
+        "dimension": "Security",
+        "priority": 12,
+        "lane": "refactor_0"
+      }
+    ],
+    "strategy": {
+      "fixer_leverage": {
+        "auto_fixable_count": 0,
+        "total_count": 153,
+        "coverage": 0.0,
+        "impact_ratio": 0.0,
+        "recommendation": "none"
+      },
+      "lanes": {
+        "restructure": {
+          "actions": [
+            1,
+            2
+          ],
+          "file_count": 14,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "refactor_0": {
+          "actions": [
+            3,
+            4,
+            5,
+            7,
+            8,
+            9,
+            10,
+            12
+          ],
+          "file_count": 17,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "refactor_1": {
+          "actions": [
+            11
+          ],
+          "file_count": 14,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "test_coverage": {
+          "actions": [
+            6
+          ],
+          "file_count": 17,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        }
+      },
+      "can_parallelize": true,
+      "hint": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify."
+    },
+    "tools": {
+      "fixers": [],
+      "move": {
+        "available": true,
+        "relevant": true,
+        "reason": "13 orphaned files",
+        "usage": "desloppify move <source> <dest> [--dry-run]"
+      },
+      "plan": {
+        "command": "desloppify plan",
+        "description": "Generate prioritized markdown cleanup plan"
+      },
+      "badge": {
+        "generated": true,
+        "in_readme": false,
+        "path": "scorecard.png",
+        "recommendation": "Add to README: <img src=\"scorecard.png\" width=\"100%\">"
+      }
+    },
+    "debt": {
+      "overall_gap": 0.1,
+      "wontfix_count": 0,
+      "worst_dimension": "Test health",
+      "worst_gap": 2.1,
+      "trend": "stable"
+    },
+    "milestone": "All T1 items cleared!",
+    "primary_action": {
+      "command": "desloppify show orphaned --status open",
+      "description": "13 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
+    },
+    "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify.",
+    "verification_step": {
+      "command": "desloppify scan",
+      "reason": "revalidate after changes"
+    },
+    "risk_flags": [],
+    "strict_target": {
+      "target": 95.0,
+      "current": 47.8,
+      "gap": 47.2,
+      "state": "below",
+      "warning": null
+    },
+    "reminders": [
+      {
+        "type": "rereview_needed",
+        "message": "Subjective results may be stale after resolve. Re-run `desloppify review --prepare` to refresh, or reset with `desloppify scan --reset-subjective` before a clean rerun.",
+        "command": "desloppify review --prepare",
+        "priority": 1,
+        "severity": "high"
+      },
+      {
+        "type": "rescan_needed",
+        "message": "Rescan to verify \u2014 cascading effects may create new issues.",
+        "command": "desloppify scan",
+        "priority": 1,
+        "severity": "high"
+      },
+      {
+        "type": "stagnant_nudge",
+        "message": "Code quality has been stuck at 72.3% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "stagnant_nudge",
+        "message": "Security has been stuck at 98.2% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "stagnant_nudge",
+        "message": "File health has been stuck at 68.5% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "stagnant_nudge",
+        "message": "Duplication has been stuck at 94.5% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "stagnant_nudge",
+        "message": "Test health has been stuck at 4.6% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "stagnant_nudge",
+        "message": "Test strategy has been stuck at 0.0% for 3 scans. Try tackling it from a different angle \u2014 run `desloppify next` to find the right entry point.",
+        "command": null,
+        "priority": 2,
+        "severity": "medium"
+      },
+      {
+        "type": "zone_classification",
+        "message": "2 of 22 files classified as non-production (2 config). Override with `desloppify zone set <file> production` if any are misclassified.",
+        "command": "desloppify zone show",
+        "priority": 2,
+        "severity": "medium"
+      }
+    ],
+    "reminder_history": {
+      "zone_classification": 2,
+      "report_scores": 1,
+      "rereview_needed": 1,
+      "rescan_needed": 1,
+      "stagnant_nudge": 6
+    }
+  },
+  "config": {
+    "target_strict_score": 95,
+    "review_max_age_days": 30,
+    "review_batch_max_files": 80,
+    "holistic_max_age_days": 30,
+    "generate_scorecard": true,
+    "badge_path": "scorecard.png",
+    "exclude": [
+      "CLI/build",
+      "CLI/dist",
+      "CLI/multivol.egg-info",
+      "Web/node_modules",
+      "outputs",
+      "CLI/outputs",
+      "multivol/outputs",
+      "storage",
+      "CLI/storage",
+      "volatility3_cache",
+      "CLI/volatility3_cache",
+      "multivol/volatility3_cache",
+      "volatility2_profiles",
+      "CLI/volatility2_profiles",
+      "volatility3_symbols",
+      "CLI/volatility3_symbols",
+      "multivol/volatility3_symbols",
+      "volatility3_plugins",
+      "CLI/volatility3_plugins",
+      "multivol/volatility3_plugins"
+    ],
+    "ignore": [],
+    "ignore_metadata": {},
+    "zone_overrides": {},
+    "review_dimensions": [],
+    "large_files_threshold": 0,
+    "props_threshold": 0,
+    "issue_noise_budget": 10,
+    "issue_noise_global_budget": 0,
+    "execution_log_max_entries": 10000,
+    "needs_rescan": false,
+    "languages": {},
+    "commit_tracking_enabled": true,
+    "commit_pr": 0,
+    "commit_default_branch": "",
+    "commit_message_template": "desloppify: {status} {count} issue(s) \u2014 {summary}",
+    "trust_plugins": false
+  }
+}

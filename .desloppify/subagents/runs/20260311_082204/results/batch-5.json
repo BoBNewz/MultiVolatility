@@ -1,0 +1,123 @@
+{
+  "batch": "naming_quality",
+  "batch_index": 5,
+  "assessments": {
+    "naming_quality": 72.0
+  },
+  "dimension_notes": {
+    "naming_quality": {
+      "evidence": [
+        "manage_symbols() in files.py handles GET/POST/DELETE for the symbols directory — 'manage' reveals nothing about the multi-method dispatch inside",
+        "runner() in multivol.py is the top-level orchestration entry point; the name gives no hint it sets up directories, checks Docker images, runs parallel plugin pools, and invokes strings extraction",
+        "getCommands() in multi_volatility2.py uses camelCase while every other function in the codebase uses snake_case (get_file_hash, calculate_sha256, list_images, etc.)",
+        "dump_dir parameter in execute_command_volatility2 is described by an inline comment as 'actually the full file path from main.py' — the name actively contradicts its content",
+        "The 'hash' key in the evidence response dict from list_evidences() is assigned source_dump (a filename string like 'memorydump.raw'), not a hash value; same field is set to item (also a filename) in the second pass",
+        "process_recover_fs() in utils.py uses the generic 'process' verb; the function reads a volatility JSON output, restructures it into a tree, and overwrites the file — closer to build_recover_fs_tree()",
+        "show_commands parameter in execute_command_volatility2 controls debug print output; the equivalent flag is called debug throughout the rest of the codebase (--debug CLI arg, getattr(arguments, 'debug', False) call site)"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "sub_axes": {
+        "abstraction_leverage": 72.0,
+        "indirection_cost": 75.0,
+        "interface_honesty": 68.0,
+        "delegation_density": 74.0,
+        "definition_directness": 70.0,
+        "type_discipline": 73.0
+      }
+    }
+  },
+  "dimension_judgment": {
+    "naming_quality": {
+      "strengths": [
+        "Most route handlers follow a precise verb-noun pattern: upload_file, list_evidences, delete_evidence, download_evidence — callers can predict what each does without reading the body",
+        "calculate_sha256 / get_file_hash cleanly distinguish pure computation from cached retrieval; the naming distinction documents the caching contract",
+        "Background-thread helpers are consistently prefixed: background_dump_task, background_scan, background_single_run — the naming convention makes concurrency boundaries visible",
+        "cleanup_timeouts, ingest_results_to_db, resolve_host_path are highly specific and accurately describe what they do",
+        "Module-level constants (STORAGE_DIR, BASE_DIR, UPLOAD_FOLDER, SIDECAR_BASE_PORT) are all uppercase and unambiguous"
+      ],
+      "issue_character": "Naming issues are scattered rather than systemic — a few generic verbs (manage, runner, process), one convention outlier (camelCase getCommands), and two concrete name/behavior mismatches (dump_dir parameter, hash API field) that would trip developers reading or consuming this code.",
+      "score_rationale": "The codebase is mostly well-named: the majority of functions communicate intent at a glance and several naming patterns are applied consistently. However, a developer will encounter enough friction — a generic route handler that hides three HTTP methods, a parameter whose name contradicts its content (acknowledged by an inline comment), and an API field called 'hash' that returns a filename — to occasionally need to read implementations rather than trust names. This places the codebase in the 70-75 range: mixed, with real but non-pervasive issues rather than systemic unreliability."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "naming_quality",
+      "identifier": "manage_symbols_generic_verb",
+      "summary": "manage_symbols() hides three-way HTTP dispatch behind an opaque 'manage' verb",
+      "related_files": ["CLI/multivol/api_server/routes/files.py"],
+      "evidence": [
+        "def manage_symbols() at line 43 handles GET (list), POST (upload), and DELETE (remove) in a single function; 'manage' does not tell a reader which operations are supported or how to use the endpoint"
+      ],
+      "suggestion": "Split into three focused route handlers: list_symbols(), upload_symbol(), delete_symbol() — or at minimum rename to handle_symbols_request() and add a brief docstring enumerating the three methods and their parameters",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "generic_verb_names"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "runner_generic_orchestration_name",
+      "summary": "runner() in multivol.py is a generic name for the top-level analysis orchestration function",
+      "related_files": ["CLI/multivol/multivol.py"],
+      "evidence": [
+        "def runner(arguments) at line 20 sets up directories, validates arguments, checks/pulls Docker images, runs a multiprocessing pool of Volatility commands, and invokes strings extraction — 'runner' reveals none of this"
+      ],
+      "suggestion": "Rename to run_analysis() or orchestrate_scan() to communicate that this is the primary scan orchestration entry point, not a generic wrapper",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "generic_verb_names"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "get_commands_camel_case_outlier",
+      "summary": "getCommands() uses camelCase in a codebase where all other functions use snake_case",
+      "related_files": ["CLI/multivol/multi_volatility2.py"],
+      "evidence": [
+        "def getCommands(self, opsys) at line 124 is the only camelCase method in the file; all sibling methods (resolve_path, execute_command_volatility2, safe_print) use snake_case; multi_volatility3.py also uses getCommands(), propagating the outlier"
+      ],
+      "suggestion": "Rename to get_commands() in both multi_volatility2.py and multi_volatility3.py and update all call sites in multivol.py",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "convention_outlier"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "dump_dir_parameter_misnaming",
+      "summary": "dump_dir parameter in execute_command_volatility2 holds a full file path, not a directory",
+      "related_files": ["CLI/multivol/multi_volatility2.py"],
+      "evidence": [
+        "def execute_command_volatility2(self, command, dump, dump_dir, ...) at line 34; line 43 has an inline comment 'dump_dir here is actually the full file path from main.py'; it is passed to resolve_path(os.path.abspath(dump_dir), host_path) and bound as a Docker volume mapping to /dumps/{dump}"
+      ],
+      "suggestion": "Rename the parameter to dump_path or dump_file_path to match what it actually holds; update all call sites in multivol.py accordingly",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "naming_quality",
+      "identifier": "hash_field_holds_filename",
+      "summary": "'hash' key in evidence API response holds a filename string, not a hash value",
+      "related_files": ["CLI/multivol/api_server/routes/files.py"],
+      "evidence": [
+        "In list_evidences(), the evidence group dict includes '\"hash\": source_dump' (line 198) and '\"hash\": item' (line 232) where both source_dump and item are filename strings like 'memorydump.vmem' — a developer consuming this API field would expect a SHA-256 or similar hash value"
+      ],
+      "suggestion": "Rename the field to source_filename or dump_filename in the API response; if an actual file hash is needed for integrity verification, populate it from get_file_hash() and keep the field name 'hash'",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Generic-verb naming (manage, runner, process) likely reflects incremental function growth — functions that started small accumulated responsibility without a rename to match",
+      "The camelCase getCommands outlier suggests the class was written by a different developer or at a different time than the rest of the codebase",
+      "The hash/filename mismatch in the API response may be a legacy field repurposed as a lookup key without updating the name"
+    ],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  }
+}

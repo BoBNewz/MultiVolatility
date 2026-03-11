@@ -98,8 +98,8 @@ def init_db():
          logging.warning("'name' column missing. Attempting ADD COLUMN.")
          try:
              c.execute("ALTER TABLE scans ADD COLUMN name TEXT")
-         except:
-             pass
+         except Exception as e:
+             logging.error(f"Could not add 'name' column: {e}. Schema may be corrupt.")
 
     # 4. Add mode to scans if missing
     if 'mode' not in columns:

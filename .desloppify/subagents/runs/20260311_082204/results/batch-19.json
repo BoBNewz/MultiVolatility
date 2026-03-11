@@ -1,0 +1,108 @@
+{
+  "batch": "api_surface_coherence",
+  "batch_index": 19,
+  "assessments": {
+    "api_surface_coherence": 58.0
+  },
+  "dimension_notes": {
+    "api_surface_coherence": {
+      "evidence": [
+        "Route path inconsistency: create scan at POST /scan (singular), list at GET /scans (plural), get status at GET /status/<scan_id>, sub-resources split between /scan/<uuid>/modules and /scans/<uuid>/log, /scans/<uuid>/download — same resource addressed with both /scan/ and /scans/ prefixes",
+        "Path parameter name inconsistency: GET /status/<scan_id> uses 'scan_id' while all other scan routes use '<uuid>' as the path parameter name",
+        "Mutation response shapes are four distinct patterns: {'status': 'updated'} (rename), {'status': 'deleted'} (delete scan, delete evidence), {'success': True} (update_scan_module_status), {'message': 'Symbol uploaded successfully'} / {'message': 'Deleted successfully'} (symbols routes)",
+        "GET /scans/<uuid>/log returns raw plain text (f.read()) with plain string on 404 ('Log file not created yet or not found.') — only endpoint that is not JSON",
+        "manage_symbols() in files.py is a single function handling GET, POST, and DELETE with completely different logic branches — overloaded interface",
+        "POST /scan response includes 'output_dir' (internal server filesystem path), leaking implementation details to callers",
+        "Error responses are consistently {'error': '...'} with HTTP status codes across all endpoints"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "api_surface_coherence": {
+      "strengths": [
+        "Error responses are uniformly shaped as {'error': '...'} with appropriate HTTP status codes across all route files",
+        "All routes are synchronous Flask handlers — no mixed sync/async at the API layer",
+        "The memprocfs blueprint uses consistent RESTful sub-resource patterns (/memprocfs/<uuid>/start, /stop, /files, /status, /download)"
+      ],
+      "issue_character": "Issues are systemic naming and shape inconsistencies rooted in the scan resource: the URL namespace conflates /scan, /scans, /results, and /status for the same resource, mutation responses use four distinct key schemas, and one endpoint breaks the JSON contract entirely.",
+      "score_rationale": "A developer building against this API would be unable to predict URL patterns after seeing a few examples — the singular/plural split (/scan vs /scans) applied inconsistently, /status/<scan_id> using a different parameter name than all siblings, and four distinct mutation response shapes mean each endpoint must be individually verified. The log endpoint returning plain text silently breaks the JSON contract that every other endpoint honors. These are not isolated rough edges but recurring, codebase-wide friction. This aligns with the 60 anchor: 'APIs are hard to predict; a developer must read each endpoint's implementation to use it safely.'"
+    }
+  },
+  "issues": [
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "scan_route_prefix_incoherence",
+      "summary": "Same scan resource addressed inconsistently via /scan, /scans, /results, and /status prefixes",
+      "related_files": ["CLI/multivol/api_server/routes/scan.py"],
+      "evidence": [
+        "POST /scan (create), GET /status/<scan_id> (status), GET /scans (list), PUT /scans/<uuid> (rename), DELETE /scans/<uuid> (delete), GET /results/<uuid> (results), GET /scan/<uuid>/modules (modules) — six different path roots for one resource",
+        "Path parameter named 'scan_id' in GET /status/<scan_id> but 'uuid' in all sibling routes"
+      ],
+      "suggestion": "Consolidate all scan-resource routes under /scans: POST /scans (create), GET /scans (list), GET /scans/<uuid> (status), DELETE /scans/<uuid>, PUT /scans/<uuid>, GET /scans/<uuid>/results, GET /scans/<uuid>/modules, GET /scans/<uuid>/log. Rename the 'scan_id' path parameter to 'uuid' in get_status to match siblings.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "scan_api_incoherence"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "mutation_response_shape_fragmentation",
+      "summary": "Mutation endpoints return four distinct success shapes: {status}, {success}, {message}, and {status: success}",
+      "related_files": [
+        "CLI/multivol/api_server/routes/scan.py",
+        "CLI/multivol/api_server/routes/files.py"
+      ],
+      "evidence": [
+        "rename_scan returns {\"status\": \"updated\"}, delete_scan returns {\"status\": \"deleted\"} (scan.py lines 590, 615)",
+        "update_scan_module_status returns {\"success\": True} (scan.py line 345)",
+        "manage_symbols POST returns {\"message\": \"Symbol uploaded successfully\"}, DELETE returns {\"message\": \"Deleted successfully\"} (files.py)",
+        "upload_file returns {\"status\": \"success\", \"path\": ..., \"server_path\": ...} (files.py)",
+        "delete_evidence returns {\"status\": \"deleted\"} (files.py)"
+      ],
+      "suggestion": "Adopt a single mutation success shape, e.g. {\"ok\": true} or {\"status\": \"ok\"} optionally with a data payload. Apply it uniformly across all mutation endpoints in scan.py and files.py.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "scan_api_incoherence"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "log_endpoint_returns_plain_text",
+      "summary": "GET /scans/<uuid>/log returns raw plain text instead of JSON, breaking the API's content-type contract",
+      "related_files": ["CLI/multivol/api_server/routes/scan.py"],
+      "evidence": [
+        "Line 318: returns f.read() — a raw string, not jsonify()",
+        "Line 319: returns plain string 'Log file not created yet or not found.' with 404 status",
+        "All other endpoints in this module return jsonify(...) responses"
+      ],
+      "suggestion": "Return JSON consistently: jsonify({\"log\": f.read()}) on success and jsonify({\"error\": \"Log file not created yet or not found\"}) on 404. Callers expecting JSON will otherwise receive a content-type mismatch.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "api_surface_coherence",
+      "identifier": "manage_symbols_overloaded_interface",
+      "summary": "manage_symbols() bundles GET/POST/DELETE into one function with fully divergent code paths per method",
+      "related_files": ["CLI/multivol/api_server/routes/files.py"],
+      "evidence": [
+        "@files_bp.route('/symbols', methods=['GET', 'POST', 'DELETE']) routes three semantically distinct operations into a single function body",
+        "GET lists files (pure read), POST uploads a file with path validation, DELETE removes by path — none share logic or parameters"
+      ],
+      "suggestion": "Split into three focused route handlers: list_symbols(), upload_symbol(), delete_symbol(). Each handler is easier to understand, document, and add per-method authorization checks to.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "scan_api_incoherence: the scan resource grew organically without a REST naming convention, resulting in mixed singular/plural prefixes and fragmented response shapes"
+    ],
+    "likely_symptoms": ["mutation_response_shape_fragmentation", "scan_route_prefix_incoherence"],
+    "possible_false_positives": []
+  }
+}

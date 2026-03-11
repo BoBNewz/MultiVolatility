@@ -1,0 +1,123 @@
+{
+  "batch": "error_consistency",
+  "batch_index": 4,
+  "assessments": {
+    "error_consistency": 58.0
+  },
+  "dimension_notes": {
+    "error_consistency": {
+      "evidence": [
+        "utils.py has 4 bare `except:` clauses (lines 32, 51, 83, 91) — all silently swallow failures with no logging",
+        "database.py line 101: `except: pass` swallows failure to ADD COLUMN 'name', leaves schema in unknown state with no signal to caller or logs",
+        "routes/files.py lines 123 and 177: bare `except: pass` on DB connections — case_map silently stays empty, evidence list misses case names",
+        "routes/memprocfs.py has 6 bare `except:` clauses — lines 94, 153, 206, 262, 347, 394 — mix of intentional fallbacks and silent error swallowing",
+        "get_file_hash() returns the string literal 'Error' on failure (utils.py line 59), mixing an error sentinel string into what callers expect to be a hex hash",
+        "multi_volatility2.execute_command_volatility2 catches Docker exceptions and only prints them — caller has no way to detect failure, scan proceeds as if command succeeded",
+        "Route handlers consistently use jsonify({'error': ...}) + HTTP status codes — the public API error contract is uniform and predictable",
+        "memprocfs get_memprocfs_files distinguishes ConnectionError vs Timeout vs generic Exception with appropriate 503/504/500 responses — specific error types used where it matters",
+        "Routes consistently close DB connections before returning error responses, preventing connection leaks on error paths"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "error_consistency": {
+      "strengths": [
+        "Route handlers uniformly return jsonify({'error': ...}) with semantically correct HTTP codes across all route files — the external API error contract is predictable",
+        "memprocfs.py get_memprocfs_files differentiates ConnectionError (503), Timeout (504), and generic Exception (500) rather than collapsing all failures to one response",
+        "cleanup_timeouts() in utils.py wraps database work in try/except with explicit logging — a top-level maintenance operation that handles failure gracefully",
+        "docker.errors.ImageNotFound is caught specifically in dump.py and docker.py, giving callers actionable error messages instead of generic 500s"
+      ],
+      "issue_character": "The route layer has consistent, predictable error handling, but the utility and helper layer is riddled with bare `except:` clauses that silently swallow failures — creating a two-tier system where public API errors are reliable but internal errors are invisible.",
+      "score_rationale": "The route boundary is genuinely solid: every route terminates with a meaningful JSON error and appropriate HTTP code, and specific exception types are used in performance-critical paths. However, the utility layer (utils.py, database.py, files.py) uses bare `except:` as a blanket silencer in at least 12 places, with failures swallowed without logging. A developer debugging why evidence files lose their case names, why a schema migration silently fails, or why a hash always reads 'Error' will find no trace in logs. This structural two-tier gap — reliable at the boundary, invisible inside — fits the 60 anchor: 'error behavior is unpredictable; failures are hard to trace in specific subsystems.' The route-layer consistency lifts it slightly above 60."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "error_consistency",
+      "identifier": "bare_except_utility_layer",
+      "summary": "Bare `except:` clauses throughout utils.py silently swallow all exceptions including KeyboardInterrupt and SystemExit",
+      "related_files": ["CLI/multivol/api_server/utils.py"],
+      "evidence": [
+        "utils.py line 32: `except: pass` in resolve_host_path — any import error, attribute error, or OS error is silently ignored and the raw container path is returned",
+        "utils.py lines 51 and 83, 91: `except: pass` in get_file_hash and clean_and_parse_json — read failures and parse failures produce no logs and the function silently falls through to fallback behavior"
+      ],
+      "suggestion": "Replace bare `except:` with `except Exception:` throughout utils.py and add at minimum a `logging.debug(...)` call in each except block so failures are traceable. For get_file_hash the bare except should specifically catch OSError/IOError.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "bare_except_silencer"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "get_file_hash_error_sentinel_string",
+      "summary": "get_file_hash() returns the string 'Error' on failure, mixing an error sentinel into a value callers treat as a hex hash",
+      "related_files": ["CLI/multivol/api_server/utils.py"],
+      "evidence": [
+        "utils.py line 59: `return 'Error'` — callers in routes/files.py embed this directly into evidence JSON as the 'hash' field without checking for failure",
+        "routes/files.py child_file dict: `'hash': get_file_hash(path)` — the string 'Error' surfaces in the API response without any HTTP error signal"
+      ],
+      "suggestion": "Return None on hash failure and let callers decide how to handle missing hashes. In files.py, use `get_file_hash(path) or 'unavailable'` or omit the hash key entirely when None, rather than embedding a sentinel string in the JSON payload.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "error_value_confusion"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "database_schema_migration_silent_failure",
+      "summary": "database.py schema migration swallows ADD COLUMN failure silently, leaving schema state unknown to callers",
+      "related_files": ["CLI/multivol/api_server/database.py"],
+      "evidence": [
+        "database.py lines 99-101: `try: c.execute('ALTER TABLE scans ADD COLUMN name TEXT') except: pass` — if this fails (e.g., locked DB, permissions), init_db() returns successfully with no indication of the problem",
+        "A following `conn.commit()` commits whatever partial state resulted, potentially leaving the application running against a schema that is missing a required column"
+      ],
+      "suggestion": "Remove the bare `except: pass` and let the exception propagate from init_db(), or catch only `sqlite3.OperationalError` with an explicit re-check and log. The silent swallow hides a startup-time failure that will cause hard-to-diagnose query errors later.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "bare_except_silencer"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "execute_command_volatility2_swallows_docker_errors",
+      "summary": "execute_command_volatility2 catches Docker exceptions and only prints them — callers cannot detect that the command failed",
+      "related_files": ["CLI/multivol/multi_volatility2.py"],
+      "evidence": [
+        "multi_volatility2.py execute_command_volatility2: `except Exception as e: self.safe_print(f'[!] Error running {command}: {e}', lock)` — no re-raise, no return value change",
+        "The caller proceeds to time.sleep(0.5) and continues as if the command succeeded; no module status is set to FAILED; the scan appears to complete successfully with missing output"
+      ],
+      "suggestion": "Re-raise the exception after logging, or return a boolean success flag that callers check. At minimum the calling scan orchestration code should set the module status to FAILED when the exception is caught here.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "error_value_confusion"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "files_route_db_bare_except_silent",
+      "summary": "list_evidences silently drops DB errors with bare `except: pass`, causing evidence items to render with no case names and no log trace",
+      "related_files": ["CLI/multivol/api_server/routes/files.py"],
+      "evidence": [
+        "routes/files.py line 123: bare `except: pass` wraps the entire case_map DB load — any sqlite3 error, missing table, or connection failure leaves case_map empty",
+        "routes/files.py line 177: bare `except: source_dump = dump_base` wraps a per-item DB lookup — failures are silently replaced with a fallback without logging",
+        "Both blocks affect the display name and grouping of evidence in the UI, but a developer investigating incorrect grouping will find no log entry"
+      ],
+      "suggestion": "Replace both bare `except:` with `except Exception as e: logging.warning(f'DB error in list_evidences: {e}')` so failures leave a trace. The fallback behavior is acceptable but should be observable.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "bare_except_silencer"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "bare_except_silencer: A pervasive pattern of using bare `except:` or `except Exception: pass` as a 'make it not crash' mechanism rather than intentional error handling — most prevalent in the utility layer where defensive programming is overused",
+      "error_value_confusion: Some functions return sentinel values (the string 'Error', None) to signal failure rather than raising, creating an inconsistency with the route layer which raises/returns HTTP errors — no project-level convention reconciles these two styles"
+    ],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  }
+}

@@ -12,6 +12,11 @@ logging.basicConfig(
 from flask import Flask
 from flask_cors import CORS
 from multivol.api_server.database import init_db
+from multivol.api_server.config import ensure_dirs
+
+# Ensure runtime directories exist before anything else
+ensure_dirs()
+
 from multivol.api_server.auth import check_authorization
 from multivol.api_server.utils import cleanup_timeouts
 
@@ -48,13 +53,12 @@ try:
     init_db()
     logging.info("Database initialized.")
 except Exception as e:
-    logging.error(f"Failed to init DB: {e}")
+    logging.critical(f"Failed to initialize database: {e}")
+    raise
 
 
 def run_api(runner_cb, debug_mode=False):
-    """
-    Main entry point for starting the API server from CLI.
-    """
+    """Start the API server. Binds runner_cb as the scan executor for /scan routes."""
     init_runner(runner_cb)
     cleanup_timeouts() # Clean up stale tasks on startup
     

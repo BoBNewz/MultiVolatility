@@ -1,0 +1,87 @@
+{
+  "batch": "dependency_health",
+  "batch_index": 7,
+  "assessments": {
+    "dependency_health": 79.0
+  },
+  "dimension_notes": {
+    "dependency_health": {
+      "evidence": [
+        "MCP/requirements.txt lists both 'requests' and 'httpx', but MCP/multivol_mcp.py only imports and uses httpx (async client); 'requests' is never imported in that file",
+        "CLI uses 'requests' (in memprocfs.py) while MCP uses 'httpx' — two HTTP client libraries across the project, albeit in separate packages",
+        "Top-level requirements.txt contains only 'pyyaml' and 'requests', a partial subset of CLI/requirements.txt — functions as a confusing artifact with unclear purpose",
+        "No version pinning in any requirements file (CLI/requirements.txt: flask, flask-cors, docker, rich, waitress, pyyaml, requests; MCP/requirements.txt: fastmcp, requests, httpx) — unpinned deps risk silent breakage on upgrades",
+        "werkzeug (used via 'from werkzeug.utils import secure_filename' in files.py) is not explicitly listed; it is an implicit transitive dependency of Flask"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "dependency_health": {
+      "strengths": [
+        "Dependency set is lean and purposeful overall — flask ecosystem for API serving, docker SDK for container management, rich for CLI output, waitress for production WSGI — no obvious heavy deps pulled in for trivial use",
+        "CLI and MCP dependency sets are correctly separated into distinct requirements files, matching the modular architecture",
+        "httpx is an appropriate choice for MCP's async context (fastmcp is async-native); the selection is deliberate rather than cargo-culted",
+        "pyyaml is genuinely used for plugin list loading (multi_volatility3.py loads vol3_*.yaml files), justifying its presence"
+      ],
+      "issue_character": "Issues are localized and low-severity: one unused listed dependency in MCP, a stale/confusing top-level requirements artifact, no version pinning, and a transitive werkzeug dependency used but not declared — none of these are architectural problems.",
+      "score_rationale": "The dependency set is small and each library earns its place in the component that uses it. However, the MCP requirements file lists 'requests' despite the module exclusively using 'httpx', and the root-level requirements.txt is an unexplained artifact listing a partial subset of CLI dependencies that could mislead contributors. Universal absence of version pinning is a baseline hygiene gap that increases upgrade risk. These issues collectively sit at the '80: solid but uneven' anchor — a developer would mostly be well-served but would notice the redundant entry and the unpinned deps."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "dependency_health",
+      "identifier": "mcp_unused_requests_dep",
+      "summary": "'requests' listed in MCP/requirements.txt but only 'httpx' is used — unused dependency",
+      "related_files": ["MCP/requirements.txt", "MCP/multivol_mcp.py"],
+      "evidence": [
+        "MCP/requirements.txt lists both 'requests' and 'httpx'",
+        "MCP/multivol_mcp.py imports only httpx (line 2: 'import httpx') and uses httpx.AsyncClient throughout; 'requests' is never imported or referenced"
+      ],
+      "suggestion": "Remove 'requests' from MCP/requirements.txt — httpx fully covers the async HTTP needs of this module",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "dependency_health",
+      "identifier": "stale_toplevel_requirements",
+      "summary": "Root-level requirements.txt is a confusing artifact listing only a partial subset of CLI dependencies",
+      "related_files": ["requirements.txt", "CLI/requirements.txt"],
+      "evidence": [
+        "requirements.txt contains only 'pyyaml' and 'requests', which are a subset of CLI/requirements.txt",
+        "The file has no comment or README explanation; a new contributor would not know whether it represents the minimal install set, a legacy artifact, or the intended entry point"
+      ],
+      "suggestion": "Either remove the top-level requirements.txt entirely (each component has its own), or replace it with a clear comment explaining its scope (e.g. minimal shared dependencies) and keep it synchronized with the component files",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "dependency_health",
+      "identifier": "no_version_pinning",
+      "summary": "No version pinning in any requirements file — upgrade-time breakage risk across all components",
+      "related_files": ["CLI/requirements.txt", "MCP/requirements.txt", "requirements.txt"],
+      "evidence": [
+        "CLI/requirements.txt: flask, flask-cors, docker, rich, waitress, pyyaml, requests — all unpinned",
+        "MCP/requirements.txt: fastmcp, httpx — all unpinned",
+        "No lock file (pip-compile output, poetry.lock, or Pipfile.lock) present in the repository"
+      ],
+      "suggestion": "Pin versions using either pip-compile (pip-tools) to generate a requirements.lock, or switch to poetry/uv with an auto-generated lockfile. At minimum, add lower-bound pins (e.g. 'flask>=2.3,<3') to guard against major-version breaking changes",
+      "confidence": "high",
+      "impact_scope": "codebase",
+      "fix_scope": "multi_file_refactor"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "MCP was likely migrated from requests to httpx (for async compatibility) but the old entry was not cleaned from requirements.txt",
+      "Top-level requirements.txt appears to be a historical artifact from before the CLI/MCP split into separate packages",
+      "Version pinning was never introduced — common in early-stage or single-developer tools projects"
+    ],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  }
+}

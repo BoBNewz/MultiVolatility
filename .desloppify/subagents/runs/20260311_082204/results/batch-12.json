@@ -1,0 +1,134 @@
+{
+  "batch": "initialization_coupling",
+  "batch_index": 12,
+  "assessments": {"initialization_coupling": 62.0},
+  "dimension_notes": {
+    "initialization_coupling": {
+      "evidence": [
+        "CLI/multivol/api_server/config.py lines 11-19: six os.makedirs() calls execute at import time, creating filesystem directories as a side effect of any import. Every module that imports config (auth.py, database.py, all route files) triggers this.",
+        "CLI/multivol/api_server/config.py lines 21-22: API_TOKEN and APP_PASSWORD snapshots os.getenv() at import time. Tests cannot override via environment variable after the module is imported.",
+        "CLI/multivol/api_server/routes/scan.py line 64: runner_func = None is module-level; if any scan endpoint is hit before init_runner() is called, the route silently does nothing (guarded by 'if runner_func:') rather than raising an error.",
+        "CLI/multivol/api_server/routes/dump.py line 18: dump_tasks = {} is a module-level mutable dict accessed from the background_dump_task thread AND from GET request handlers with no threading.Lock. This is a data race.",
+        "MCP/multivol_mcp.py lines 9-13 and 30-32: API_TOKEN, BASE_URL, PORT read from env at module scope; httpx.AsyncClient constructed at module scope with the frozen token baked in — any test or reconfiguration must reload the module.",
+        "Dockerfiles/memprocfs/memprocfs_server.py lines 27-29: vmm_handle, file_cache, vmm_lock are module-level globals; file_cache is accessed without the vmm_lock in the /list endpoint (lines 187-192), creating a TOCTOU window."
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "sub_axes": {
+        "abstraction_leverage": 55.0,
+        "indirection_cost": 70.0,
+        "interface_honesty": 50.0,
+        "delegation_density": 60.0,
+        "definition_directness": 65.0,
+        "type_discipline": 60.0
+      }
+    }
+  },
+  "dimension_judgment": {
+    "initialization_coupling": {
+      "strengths": [
+        "memprocfs.py correctly uses a threading.Lock (sessions_lock) to guard the active_sessions dict across all mutations.",
+        "DB initialization is explicitly called once via init_db() in app.py rather than happening as a side effect of importing database.py.",
+        "Environment variable reads are centralized in a single config.py module rather than scattered across route files.",
+        "init_runner() provides an explicit injection point for the runner callback rather than relying on global import order alone."
+      ],
+      "issue_character": "Issues are a mix of missing thread guards on shared mutable dicts and import-time filesystem/env side effects concentrated in config.py and the MCP server, rather than deep architectural coupling.",
+      "score_rationale": "The codebase avoids the worst anti-patterns (no DB connections at import time, no circular lazy imports) and centralizes env reads. However, dump_tasks has a real data race (unlocked dict shared between a background thread and request handlers), runner_func is a deferred-init global that silently no-ops on misconfiguration, config.py performs six os.makedirs() on every import making isolated unit tests impossible without filesystem mocking, and the MCP client bakes a frozen token into a module-level singleton. These are concrete developer-experience drag points that push the score well below solid — this is a 60-range codebase on this dimension."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "dump_tasks_unguarded_race",
+      "summary": "dump_tasks dict accessed from background thread and request handlers without a threading.Lock",
+      "related_files": ["CLI/multivol/api_server/routes/dump.py"],
+      "evidence": [
+        "Line 18: dump_tasks = {} defined at module scope with no associated lock.",
+        "Line 25: background_dump_task writes dump_tasks[task_id] = {'status': 'running'} in a daemon thread.",
+        "Lines 123-128: same thread writes status/output_path/error keys.",
+        "Lines 183, 197: GET request handlers read dump_tasks[task_id] concurrently with no lock."
+      ],
+      "suggestion": "Add a threading.Lock() beside dump_tasks and wrap all reads and writes with 'with dump_tasks_lock:'. Alternatively, use a thread-safe queue or push all state to the DB (which already has SQLite serialisation).",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "unguarded_mutable_globals"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "runner_func_silent_noop",
+      "summary": "runner_func = None global silently swallows scan requests if init_runner() was never called",
+      "related_files": ["CLI/multivol/api_server/routes/scan.py", "CLI/multivol/api_server/app.py"],
+      "evidence": [
+        "scan.py line 64: runner_func = None at module scope.",
+        "scan.py lines 261-262 and 709-710: 'if runner_func: runner_func(args)' — no else branch, no error raised.",
+        "app.py: run_api() calls init_runner() only when the server starts through that entry point; importing scan_bp in any other context leaves runner_func as None."
+      ],
+      "suggestion": "Replace the silent 'if runner_func:' guard with 'if runner_func is None: raise RuntimeError(\"runner not initialized\")' or return an HTTP 503. Consider using a factory function or dependency-injection pattern instead of a module-level mutable.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "deferred_init_global"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "config_makedirs_import_side_effect",
+      "summary": "config.py creates six filesystem directories as a side effect of being imported",
+      "related_files": ["CLI/multivol/api_server/config.py"],
+      "evidence": [
+        "Lines 11-19: os.makedirs(STORAGE_DIR, ...), os.makedirs(UPLOAD_FOLDER, ...) and four more are unconditional top-level statements.",
+        "Every module that does 'from multivol.api_server.config import ...' triggers these filesystem writes.",
+        "API_TOKEN and APP_PASSWORD are also frozen at import time from os.getenv(), preventing test-time override without module reload."
+      ],
+      "suggestion": "Move makedirs calls into an explicit ensure_dirs() function called once from app startup. Consider wrapping token reads in a lazy accessor or accepting them as arguments to run_api() to allow test overrides.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "import_time_side_effects"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "mcp_client_module_scope_singleton",
+      "summary": "httpx.AsyncClient with frozen API_TOKEN constructed at MCP module scope",
+      "related_files": ["MCP/multivol_mcp.py"],
+      "evidence": [
+        "Lines 9-13: API_TOKEN, BASE_URL, PORT all read from env at module load.",
+        "Lines 30-32: 'client = httpx.AsyncClient(headers={\"Authorization\": f\"Bearer {API_TOKEN}\"}, ...)' — client built once at import with the snapshot token.",
+        "Any reconfiguration (different token, different target URL) requires reloading the module or restarting the process."
+      ],
+      "suggestion": "Construct the httpx client lazily inside safe_request or during a startup hook, reading env vars at call time. At minimum, document that the token cannot be changed after import.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "import_time_side_effects"
+    },
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "memprocfs_file_cache_toctou",
+      "summary": "file_cache global read outside vmm_lock in /list endpoint creating a TOCTOU window",
+      "related_files": ["Dockerfiles/memprocfs/memprocfs_server.py"],
+      "evidence": [
+        "Line 29: file_cache = None at module scope.",
+        "Lines 187-192 in /list handler: 'if file_cache is not None: return jsonify(file_cache)' checked without holding vmm_lock, then 'file_cache = results' written without holding vmm_lock.",
+        "Line 172: /init endpoint resets 'file_cache = None' under vmm_lock, creating a window where one thread sees non-None cache while another thread is resetting it."
+      ],
+      "suggestion": "Protect all reads and writes to file_cache with vmm_lock (or a dedicated cache_lock), or use an atomic replacement pattern (assign a new object reference rather than mutating).",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "unguarded_mutable_globals"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Pattern of treating module-level dicts as lightweight state stores without considering thread safety implications in a multi-threaded Flask/waitress deployment.",
+      "config.py used as both a constants file and an initialization script, conflating two responsibilities and making isolated imports impossible."
+    ],
+    "likely_symptoms": [
+      "dump_tasks_unguarded_race",
+      "memprocfs_file_cache_toctou"
+    ],
+    "possible_false_positives": []
+  }
+}

@@ -103,7 +103,7 @@ def list_volatility_plugins():
                 return jsonify(data)
             else:
                  return jsonify({"error": "No JSON output found", "raw": raw_output}), 500
-        except:
+        except Exception:
              return jsonify({"error": "Failed to parse script output", "raw": raw_output}), 500
 
     except Exception as e:

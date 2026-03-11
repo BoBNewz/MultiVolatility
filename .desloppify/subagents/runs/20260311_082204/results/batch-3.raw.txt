@@ -1,0 +1,103 @@
+{
+  "batch": "convention_outlier",
+  "batch_index": 3,
+  "assessments": {
+    "convention_outlier": 77.0
+  },
+  "dimension_notes": {
+    "convention_outlier": {
+      "evidence": [
+        "All 5 active route modules in CLI/multivol/api_server/routes/ use Blueprint pattern with `_bp` variable names and `get_db_connection()` from database.py",
+        "api_strings_extension.py uses bare `@app.route` decorator (not Blueprint), `sqlite3.connect(DB_PATH)` directly (bypassing get_db_connection()), and lives in CLI/multivol/ root instead of api_server/routes/",
+        "api_strings_extension.py is never imported by any source file in the project — it is a dead style island",
+        "CLI/multivol/multi_volatility2.py defines `class multi_volatility2:` and CLI/multivol/multi_volatility3.py defines `class multi_volatility3:` — snake_case class names violate Python's PascalCase class naming convention",
+        "auth_bp uses `Blueprint('auth', __name__)` (no _bp suffix in the string name) while all 5 other blueprints use `Blueprint('xxx_bp', __name__)` — minor inconsistency in blueprint registration string",
+        "Naming scan shows multivol/ has 14 snake_case and 2 camelCase function names; api_server/ and routes/ are purely snake_case — consistent with Python convention",
+        "Sibling behavior outliers for auth.py (missing os, docker, etc.) are functionally justified: it is a pure auth module with no file I/O or DB access"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "convention_outlier": {
+      "strengths": [
+        "Naming is overwhelmingly snake_case throughout all directories (multivol/, api_server/, routes/, MCP/) — consistent with Python convention",
+        "Blueprint pattern is applied uniformly across 5 of 6 route modules with consistent `_bp` variable naming and use of `get_db_connection()` from the shared utility",
+        "Import patterns across sibling route modules are functionally coherent — sibling outliers (auth.py missing docker/os/sqlite3) reflect genuine differences in module responsibility, not convention drift"
+      ],
+      "issue_character": "The issues are a localized style island (api_strings_extension.py diverging from the Blueprint/get_db_connection() pattern) plus a class-naming anti-convention in two files — not pervasive drift, but the style island is substantive.",
+      "score_rationale": "The codebase is broadly consistent on naming and structural patterns — a developer can rely on snake_case everywhere and the Blueprint pattern in routes/. What pulls the score below 80 is api_strings_extension.py: it registers routes via the raw app object instead of a Blueprint, reaches directly into sqlite3 instead of using get_db_connection(), and lives in the wrong directory — a genuine style island that breaks the established pattern. The two snake_case class names (multi_volatility2, multi_volatility3) are a secondary convention violation. Together these represent noticeable but contained convention drift, placing the score in the high-70s rather than the 80s."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "convention_outlier",
+      "identifier": "strings_extension_style_island",
+      "summary": "api_strings_extension.py registers routes via @app.route and bypasses get_db_connection(), breaking the Blueprint pattern used everywhere else",
+      "related_files": [
+        "CLI/multivol/api_strings_extension.py",
+        "CLI/multivol/api_server/routes/scan.py"
+      ],
+      "evidence": [
+        "`@app.route('/results/<uuid>/strings', ...)` — bare app decorator instead of Blueprint",
+        "`conn = sqlite3.connect(DB_PATH)` at lines 8 and 71 — direct sqlite3 usage instead of `get_db_connection()` from database.py",
+        "File lives in CLI/multivol/ root alongside CLI orchestration files, not in CLI/multivol/api_server/routes/ where all other route modules live",
+        "No import of this file found in any source file — it may be dead code"
+      ],
+      "suggestion": "Move the two handlers into CLI/multivol/api_server/routes/scan.py (or a new strings.py in routes/), convert them to use a Blueprint (`strings_bp = Blueprint('strings_bp', __name__)`), and replace `sqlite3.connect(DB_PATH)` with `get_db_connection()`. If the file is dead code, delete it.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "root_cause_cluster": "strings_route_orphan"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "snake_case_class_names",
+      "summary": "Classes multi_volatility2 and multi_volatility3 use snake_case names, violating Python's PascalCase class convention",
+      "related_files": [
+        "CLI/multivol/multi_volatility2.py",
+        "CLI/multivol/multi_volatility3.py",
+        "CLI/multivol/multivol.py"
+      ],
+      "evidence": [
+        "`class multi_volatility2:` in multi_volatility2.py line 6 — should be PascalCase",
+        "`class multi_volatility3:` in multi_volatility3.py line 12 — should be PascalCase",
+        "All other identifiers in both files correctly use snake_case (functions, variables)"
+      ],
+      "suggestion": "Rename `multi_volatility2` to `MultiVolatility2` and `multi_volatility3` to `MultiVolatility3` in their respective definition files and in all call sites (multivol.py uses `volatility2_instance = multi_volatility2()`).",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "auth_blueprint_name_inconsistency",
+      "summary": "auth_bp registers as Blueprint('auth', ...) while all other blueprints use the '_bp' suffix in the registration string",
+      "related_files": [
+        "CLI/multivol/api_server/routes/auth.py"
+      ],
+      "evidence": [
+        "`auth_bp = Blueprint('auth', __name__)` — registration string lacks '_bp' suffix",
+        "All other blueprints: `Blueprint('docker_bp', ...)`, `Blueprint('files_bp', ...)`, `Blueprint('dump_bp', ...)`, `Blueprint('memprocfs_bp', ...)`, `Blueprint('scan_bp', ...)`"
+      ],
+      "suggestion": "Change `Blueprint('auth', __name__)` to `Blueprint('auth_bp', __name__)` to match the pattern used by all sibling route blueprints.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "api_strings_extension.py appears to have been written before the Blueprint infrastructure was established, or as a quick addition that was never refactored into the route module pattern",
+      "Class naming (multi_volatility2/3) may reflect early development before settling on Python conventions, or the author treating the class name as a module-level identifier rather than a class"
+    ],
+    "likely_symptoms": [
+      "strings_extension_style_island — the missing import evidence strongly suggests this is dead or orphaned code, not an active route"
+    ],
+    "possible_false_positives": [
+      "Sibling behavior outliers for auth.py flagged by scanner — these are functionally justified differences, not convention drift"
+    ]
+  }
+}
