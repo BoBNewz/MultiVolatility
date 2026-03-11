@@ -1,5 +1,11 @@
 """Tests for files routes (multivol/api_server/routes/files.py)."""
 import pytest
+from multivol.api_server.routes.files import (
+    _get_dir_size,
+    _load_case_name_map,
+    _build_extracted_group,
+    _build_dump_group,
+)
 
 
 class TestListEvidences:
