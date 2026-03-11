@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import time
-import yaml
 import docker
 from multivol.multi_volatility_base import MultiVolatilityBase, Vol2RunConfig
 
@@ -18,17 +17,6 @@ class MultiVolatility2(MultiVolatilityBase):
         ext = "json" if fmt == "json" else "txt"
         filename = f"{command}_output.{ext}"
         return os.path.join(output_dir, filename), filename
-
-    def _trim_json_output(self, output_file: str, command: str) -> None:
-        """Keep only the last line of a JSON output file (avoids log-rotation noise)."""
-        try:
-            with open(output_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-            if lines:
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.writelines(lines[-1])
-        except OSError:
-            logging.warning("Could not trim JSON output for %s", command, exc_info=True)
 
     def execute_command_volatility2(
         self, command: str, config: Vol2RunConfig, quiet: bool = False, lock=None
@@ -66,30 +54,11 @@ class MultiVolatility2(MultiVolatilityBase):
         scan_id = os.path.basename(os.path.normpath(config.output_dir))
         container_name = f"vol2_{scan_id[:8]}_{sanitized_name}"
 
-        try:
-            existing = client.containers.get(container_name)
-            existing.remove(force=True)
-        except docker.errors.NotFound:
-            pass
-        except Exception as e:  # pylint: disable=broad-except
-            self.safe_print(
-                f"[!] Warning: Failed to cleanup existing container {container_name}: {e}",
-                lock,
-            )
-            logging.warning(
-                "Failed to cleanup existing container %s", container_name, exc_info=True
-            )
+        self._cleanup_existing_container(client, container_name, lock)
 
         try:
-            container = client.containers.run(
-                image=config.docker_image,
-                name=container_name,
-                command=cmd_with_redirect,
-                volumes=volumes,
-                tty=False,
-                remove=False,
-                detach=True,
-                log_config={"type": "none"},
+            container = self._run_detached_container(
+                client, config.docker_image, cmd_with_redirect, volumes, name=container_name
             )
             container.wait()
         except Exception as e:  # pylint: disable=broad-except
@@ -99,7 +68,7 @@ class MultiVolatility2(MultiVolatilityBase):
 
         time.sleep(0.5)
         if config.format == "json":
-            self._trim_json_output(output_file, command)
+            self._trim_output_file(output_file, command, start=-1)
 
         if not quiet:
             self.safe_print(f"[+] {command} finished.", lock)
@@ -107,15 +76,4 @@ class MultiVolatility2(MultiVolatilityBase):
 
     def get_commands(self, opsys: str) -> list[str]:
         """Return the list of plugin commands for the given operating system."""
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-
-        yaml_path = os.path.join(base_dir, "plugins_list", f"vol2_{opsys}.yaml")
-        if not os.path.exists(yaml_path):
-            raise FileNotFoundError(f"File not found : {yaml_path}")
-
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-            modules_list = data["modules"]
-
-            return modules_list
+        return self._load_commands_yaml("vol2", opsys)

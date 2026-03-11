@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import uuid
-import yaml
 import docker
 from multivol.multi_volatility_base import MultiVolatilityBase, Vol3RunConfig
 
@@ -111,36 +110,15 @@ class MultiVolatility3(MultiVolatilityBase):
                 container_name = f"vol3_{sanitized_name}_{str(uuid.uuid4())[:8]}"
 
             # Remove existing container if it exists (fix for 409 Conflict)
-            try:
-                existing_container = client.containers.get(container_name)
-                if config.show_commands:
-                    print(
-                        f"[DEBUG] Removing existing container: {container_name}",
-                        flush=True,
-                    )
-                existing_container.remove(force=True)
-            except docker.errors.NotFound:
-                pass
-            except Exception as e:  # pylint: disable=broad-except
-                self.safe_print(
-                    f"[!] Warning: Failed to cleanup existing container {container_name}: {e}",
-                    lock,
+            if config.show_commands:
+                print(
+                    f"[DEBUG] Removing existing container: {container_name}",
+                    flush=True,
                 )
-                logging.warning(
-                    "Failed to cleanup existing container %s",
-                    container_name,
-                    exc_info=True,
-                )
+            self._cleanup_existing_container(client, container_name, lock)
 
-            container = client.containers.run(
-                image=config.docker_image,
-                name=container_name,
-                command=cmd_with_redirect,
-                volumes=volumes,
-                tty=False,  # No TTY needed when redirecting to file
-                detach=True,
-                remove=False,
-                log_config={"type": "none"},  # Disable Docker logging - output goes to file
+            container = self._run_detached_container(
+                client, config.docker_image, cmd_with_redirect, volumes, name=container_name
             )
 
             # Wait for container to finish (output is written to file, not logs)
@@ -149,14 +127,7 @@ class MultiVolatility3(MultiVolatilityBase):
             # Don't remove container - API will check status and clean up
 
             if config.format == "json":
-                try:
-                    with open(output_file, "r", encoding="utf-8") as f:
-                        lines = f.readlines()
-                    if lines:
-                        with open(output_file, "w", encoding="utf-8") as f:
-                            f.writelines(lines[2:])
-                except OSError:
-                    logging.warning("Could not trim JSON output for %s", command, exc_info=True)
+                self._trim_output_file(output_file, command, start=2)
 
         except Exception as e:  # pylint: disable=broad-except
             self.safe_print(f"[!] Error running {command}: {e}", lock)
@@ -199,15 +170,4 @@ class MultiVolatility3(MultiVolatilityBase):
 
     def get_commands(self, opsys: str) -> list[str]:
         """Return the list of plugin commands for the given operating system."""
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-
-        yaml_path = os.path.join(base_dir, "plugins_list", f"vol3_{opsys}.yaml")
-        if not os.path.exists(yaml_path):
-            raise FileNotFoundError(f"File not found : {yaml_path}")
-
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-            modules_list = data["modules"]
-
-            return modules_list
+        return self._load_commands_yaml("vol3", opsys)

@@ -1,9 +1,12 @@
 """Shared base class for Volatility runner classes."""
 
 # pylint: disable=line-too-long,too-many-instance-attributes
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any, Optional
+import docker
+import yaml
 from rich import print as rprint
 
 
@@ -100,3 +103,70 @@ class MultiVolatilityBase:
                 rprint(message)
         else:
             rprint(message)
+
+    def _cleanup_existing_container(
+        self, client: Any, container_name: str, lock: Any = None
+    ) -> None:
+        """Remove an existing Docker container by name, silently skipping if not found."""
+        try:
+            existing = client.containers.get(container_name)
+            existing.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+        except Exception as e:  # pylint: disable=broad-except
+            self.safe_print(
+                f"[!] Warning: Failed to cleanup existing container {container_name}: {e}",
+                lock,
+            )
+            logging.warning(
+                "Failed to cleanup existing container %s", container_name, exc_info=True
+            )
+
+    def _run_detached_container(
+        self,
+        client: Any,
+        image: str,
+        command: str,
+        volumes: dict,
+        name: Optional[str] = None,
+    ) -> Any:
+        """Start a Docker container in detached mode and return the container object.
+
+        Output is redirected to a file inside the container; Docker logging is disabled
+        to avoid log-rotation issues.
+        """
+        run_kwargs: dict[str, Any] = {
+            "image": image,
+            "command": command,
+            "volumes": volumes,
+            "tty": False,
+            "detach": True,
+            "remove": False,
+            "log_config": {"type": "none"},
+        }
+        if name is not None:
+            run_kwargs["name"] = name
+        return client.containers.run(**run_kwargs)
+
+    def _trim_output_file(
+        self, output_file: str, command: str, start: int = 0, end: Optional[int] = None
+    ) -> None:
+        """Rewrite *output_file* keeping only ``lines[start:end]``, in-place."""
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            if lines:
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.writelines(lines[start:end])
+        except OSError:
+            logging.warning("Could not trim output for %s", command, exc_info=True)
+
+    def _load_commands_yaml(self, vol_version: str, opsys: str) -> list[str]:
+        """Load the plugin command list from the YAML file for *vol_version* and *opsys*."""
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        yaml_path = os.path.join(base_dir, "plugins_list", f"{vol_version}_{opsys}.yaml")
+        if not os.path.exists(yaml_path):
+            raise FileNotFoundError(f"File not found : {yaml_path}")
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        return data["modules"]
