@@ -10,9 +10,6 @@ import docker
 from multivol.multi_volatility_base import MultiVolatilityBase, Vol2RunConfig
 
 class MultiVolatility2(MultiVolatilityBase):
-    def __init__(self):
-        pass
-
     def _output_file_info(self, command: str, output_dir: str, fmt: str) -> tuple[str, str]:
         """Return (output_file_path, output_filename) for the given command and format."""
         ext = "json" if fmt == "json" else "txt"

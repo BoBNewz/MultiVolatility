@@ -4,7 +4,10 @@ import logging
 from multivol.api_server.config import get_api_token
 
 # Paths that do not require authentication
-_PUBLIC_PATHS = {'/auth/login', '/health'}
+_PUBLIC_PATHS = {
+    '/auth/login',  # credential exchange — no token yet
+    '/health',      # liveness probe for load balancers — no auth context needed
+}
 
 # Return type: None means "allow the request", a Response/tuple means "reject it".
 _AuthResult = Optional[Union[Response, Tuple[Response, int]]]

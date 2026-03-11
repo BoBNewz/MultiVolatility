@@ -4,6 +4,7 @@ import time
 import json
 import sqlite3
 import argparse
+import dataclasses
 import threading
 import subprocess
 import uuid
@@ -16,6 +17,7 @@ from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
 from multivol.api_server.config import STORAGE_DIR, BASE_DIR
+from multivol.multi_volatility_base import ApiScanConfig
 
 scan_bp = Blueprint('scan_bp', __name__)
 
@@ -64,10 +66,14 @@ def build_fs_tree(base_dir: str) -> list[dict[str, Any]]:
 
     return [root]
 
-runner_func: Optional[Callable[[argparse.Namespace], None]] = None
+runner_func: Optional[Callable[[Any], None]] = None
 
-def init_runner(runner_cb: Callable[[argparse.Namespace], None]) -> None:
-    """Register the analysis runner callback. Must be called before any scan is started."""
+def init_runner(runner_cb: Callable[[Any], None]) -> None:
+    """Register the analysis runner callback. Must be called before any scan is started.
+
+    The callback receives an ``argparse.Namespace`` built from an
+    ``ApiScanConfig`` so that existing runner implementations remain compatible.
+    """
     global runner_func
     runner_func = runner_cb
 
@@ -103,10 +109,9 @@ def ingest_results_to_db(scan_id: str, output_dir: str) -> None:
                 
                 # Parse or read content
                 parsed_data = clean_and_parse_json(f)
-                content_str = json.dumps(parsed_data) if parsed_data else "{}"
-                if parsed_data and "error" in parsed_data and parsed_data["error"] == "Invalid JSON output":
-                     # Store raw output if it was an error
-                     content_str = json.dumps(parsed_data)
+                if parsed_data is None:
+                    continue
+                content_str = json.dumps(parsed_data)
 
                 c.execute("INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
                           (scan_id, module_name, content_str, time.time()))
@@ -146,12 +151,12 @@ def _check_concurrency() -> Optional[Response]:
     return None
 
 
-def _build_args_from_request(data: dict[str, Any]) -> tuple[argparse.Namespace, str, str, str]:
+def _build_args_from_request(data: dict[str, Any]) -> tuple[ApiScanConfig, str, str, str]:
     """
-    Build an argparse.Namespace from the request payload, generate a scan_id,
+    Build an ApiScanConfig from the request payload, generate a scan_id,
     create the output directory, and validate the dump path.
 
-    Returns (args_obj, scan_id, target_os, vol_version).
+    Returns (config, scan_id, target_os, vol_version).
     Raises ValueError with a user-facing message on input validation failure.
     Raises other exceptions for system-level errors (e.g. makedirs failure).
     """
@@ -165,50 +170,19 @@ def _build_args_from_request(data: dict[str, Any]) -> tuple[argparse.Namespace, 
     if req_mode == "vol2":
         default_image = "sp00kyskelet0n/volatility2"
 
-    default_args = {
-        "profiles_path": os.path.join(BASE_DIR, "volatility2_profiles"),
-        "symbols_path": os.path.join(BASE_DIR, "volatility3_symbols"),
-        "cache_path": os.path.join(BASE_DIR, "volatility3_cache"),
-        "plugins_dir": os.path.join(BASE_DIR, "volatility3_plugins"),
-        "format": "json",
-        "commands": None,
-        "light": False,
-        "full": False,
-        "linux": False,
-        "windows": False,
-        "mode": None,
-        "profile": None,
-        "processes": None,
-        "host_path": os.environ.get("HOST_PATH"),
-        "debug": True,
-        "fetch_symbol": False,
-        "custom_symbol": None,
-        "image": default_image
-    }
-
-    args_dict = default_args.copy()
-    args_dict.update(data)
-
-    # Ensure mutual exclusion for OS flags
+    # Validate OS flags before building config (avoids overwriting defaults)
     is_linux = bool(data.get("linux"))
     is_windows = bool(data.get("windows"))
 
     if is_linux == is_windows:
         raise ValueError("You must specify either 'linux': true or 'windows': true, but not both or neither.")
 
-    # Default fetch_symbol to True for Linux if not explicitly provided
-    if is_linux and "fetch_symbol" not in data:
-        args_dict["fetch_symbol"] = True
-
-    args_obj = argparse.Namespace(**args_dict)
-
     scan_id = str(uuid.uuid4())
-    args_obj.scan_id = scan_id
 
     # Construct output directory with UUID
-    base_name = f"volatility2_{scan_id}" if args_obj.mode == "vol2" else f"volatility3_{scan_id}"
+    req_mode_val = data.get('mode', 'vol3')
+    base_name = f"volatility2_{scan_id}" if req_mode_val == "vol2" else f"volatility3_{scan_id}"
     final_output_dir = os.path.join(BASE_DIR, "outputs", base_name)
-    args_obj.output_dir = final_output_dir
 
     # Ensure directory exists immediately to prevent "No output dir" errors on early failure
     try:
@@ -217,21 +191,45 @@ def _build_args_from_request(data: dict[str, Any]) -> tuple[argparse.Namespace, 
         logging.error(f"Failed to create output dir {final_output_dir}: {e}")
         raise
 
-    # Determine OS and Volatility Version for DB
-    target_os = "windows" if args_obj.windows else ("linux" if args_obj.linux else "unknown")
-    vol_version = args_obj.mode
-
     # Normalize dump path: if it's a bare filename, look it up under storage
-    if not os.path.isabs(args_obj.dump) and not args_obj.dump.startswith('/'):
-        args_obj.dump = os.path.join(STORAGE_DIR, args_obj.dump)
+    dump = data.get("dump", "")
+    if not os.path.isabs(dump) and not dump.startswith('/'):
+        dump = os.path.join(STORAGE_DIR, dump)
 
-    if not os.path.exists(args_obj.dump):
-        raise ValueError(f"Dump file not found at {args_obj.dump}")
+    if not os.path.exists(dump):
+        raise ValueError(f"Dump file not found at {dump}")
 
-    return args_obj, scan_id, target_os, vol_version
+    config = ApiScanConfig(
+        dump=dump,
+        mode=data.get("mode", "vol3"),
+        linux=is_linux,
+        windows=is_windows,
+        output_dir=final_output_dir,
+        scan_id=scan_id,
+        image=data.get("image", default_image),
+        profiles_path=data.get("profiles_path", os.path.join(BASE_DIR, "volatility2_profiles")),
+        symbols_path=data.get("symbols_path", os.path.join(BASE_DIR, "volatility3_symbols")),
+        cache_path=data.get("cache_path", os.path.join(BASE_DIR, "volatility3_cache")),
+        plugins_dir=data.get("plugins_dir", os.path.join(BASE_DIR, "volatility3_plugins")),
+        format=data.get("format", "json"),
+        commands=data.get("commands"),
+        light=bool(data.get("light", False)),
+        full=bool(data.get("full", False)),
+        profile=data.get("profile"),
+        processes=data.get("processes"),
+        host_path=data.get("host_path", os.environ.get("HOST_PATH")),
+        debug=bool(data.get("debug", True)),
+        fetch_symbol=is_linux and bool(data.get("fetch_symbol", True)),
+        custom_symbol=data.get("custom_symbol"),
+    )
+
+    target_os = "windows" if config.windows else ("linux" if config.linux else "unknown")
+    vol_version = config.mode
+
+    return config, scan_id, target_os, vol_version
 
 
-def _load_command_list(args_obj: argparse.Namespace, target_os: str) -> list[str]:
+def _load_command_list(args_obj: ApiScanConfig, target_os: str) -> list[str]:
     """
     Determine which plugin commands to run from the args or a YAML plugin list.
     Mutates args_obj.commands to the resolved comma-joined list when populated.
@@ -264,7 +262,7 @@ def _load_command_list(args_obj: argparse.Namespace, target_os: str) -> list[str
 
 
 def _insert_scan_record(
-    args_obj: argparse.Namespace,
+    args_obj: ApiScanConfig,
     scan_id: str,
     command_list: list[str],
     case_name: Optional[str],
@@ -292,7 +290,7 @@ def _insert_scan_record(
     conn.close()
 
 
-def _run_scan_background(s_id: str, args: argparse.Namespace) -> None:
+def _run_scan_background(s_id: str, config: ApiScanConfig) -> None:
     """Background thread body: run the scan, ingest results, and update DB status."""
     conn = get_db_connection()
     c = conn.cursor()
@@ -302,13 +300,14 @@ def _run_scan_background(s_id: str, args: argparse.Namespace) -> None:
         conn.commit()
 
         if _require_runner():
+            args = argparse.Namespace(**dataclasses.asdict(config))
             runner_func(args)
 
         # Process RecoverFs if present (extract tarball)
-        process_recover_fs(args.output_dir)
+        process_recover_fs(config.output_dir)
 
         # Ingest results to DB
-        ingest_results_to_db(s_id, args.output_dir)
+        ingest_results_to_db(s_id, config.output_dir)
 
         # Sweep: mark any still-pending modules as FAILED (container crash / no output)
         c.execute(
@@ -336,7 +335,7 @@ def scan() -> Response:
     data = request.get_json() or {}
 
     try:
-        args_obj, scan_id, target_os, vol_version = _build_args_from_request(data)
+        config, scan_id, target_os, vol_version = _build_args_from_request(data)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
@@ -344,14 +343,13 @@ def scan() -> Response:
         return jsonify({"error": f"Failed to set up scan: {e}"}), 500
 
     case_name = data.get("name")
-    command_list = _load_command_list(args_obj, target_os)
-    _insert_scan_record(args_obj, scan_id, command_list, case_name, vol_version, target_os, data)
+    command_list = _load_command_list(config, target_os)
+    _insert_scan_record(config, scan_id, command_list, case_name, vol_version, target_os, data)
 
-    thread = threading.Thread(target=_run_scan_background, args=(scan_id, args_obj))
-    thread.daemon = True
+    thread = threading.Thread(target=_run_scan_background, args=(scan_id, config), daemon=True)
     thread.start()
 
-    return jsonify({"scan_id": scan_id, "status": "pending", "output_dir": args_obj.output_dir})
+    return jsonify({"scan_id": scan_id, "status": "pending", "output_dir": config.output_dir})
 
 @scan_bp.route('/scans/<scan_id>/status', methods=['GET'])
 def get_status(scan_id: str) -> Response:
@@ -433,7 +431,7 @@ def _ingest_module_output(c: Any, uuid: str, module_name: str, output_dir: str) 
         return
     try:
         parsed_data = clean_and_parse_json(output_file)
-        content_str = json.dumps(parsed_data) if parsed_data else "{}"
+        content_str = json.dumps(parsed_data) if parsed_data is not None else "{}"
         c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_name))
         if not c.fetchone():
             c.execute(
@@ -561,6 +559,9 @@ def _parse_int_param(value: str | None, default: int) -> int:
         return int(value) if value is not None else default
     except ValueError:
         return default
+
+
+def _get_recoverfs_result(c: Any, uuid: str) -> Response:
     """Return the RecoverFs filesystem tree for the given scan."""
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
     scan = c.fetchone()
@@ -754,7 +755,7 @@ def _store_plugin_result(scan_id: str, module: str, output_dir: str) -> None:
     if not os.path.exists(fpath):
         return
     parsed_data = clean_and_parse_json(fpath)
-    content_str = json.dumps(parsed_data) if parsed_data else "{}"
+    content_str = json.dumps(parsed_data) if parsed_data is not None else "{}"
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (scan_id, module))
@@ -784,50 +785,43 @@ def execute_plugin(uuid: str) -> Response:
     if not scan:
         return jsonify({"error": "Scan not found"}), 404
 
-    default_args = {
-        "profiles_path": os.path.join(BASE_DIR, "volatility2_profiles"),
-        "symbols_path": os.path.join(BASE_DIR, "volatility3_symbols"),
-        "cache_path": os.path.join(BASE_DIR, "volatility3_cache"),
-        "plugins_dir": os.path.join(BASE_DIR, "volatility3_plugins"),
-        "format": "json",
-        "commands": module,
-        "light": False,
-        "full": False,
-        "linux": False,
-        "windows": False,
-        "mode": scan['volatility_version'],
-        "profile": None,
-        "processes": 1, 
-        "host_path": os.environ.get("HOST_PATH"),
-        "debug": True,
-        "fetch_symbol": False,
-        "custom_symbol": None,
-        "dump": scan['dump_path'],
-        "image": scan['image'],
-        "output_dir": scan['output_dir']
-    }
+    config = ApiScanConfig(
+        profiles_path=os.path.join(BASE_DIR, "volatility2_profiles"),
+        symbols_path=os.path.join(BASE_DIR, "volatility3_symbols"),
+        cache_path=os.path.join(BASE_DIR, "volatility3_cache"),
+        plugins_dir=os.path.join(BASE_DIR, "volatility3_plugins"),
+        format="json",
+        commands=module,
+        light=False,
+        full=False,
+        linux=scan['os'] == 'linux',
+        windows=scan['os'] == 'windows',
+        mode=scan['volatility_version'],
+        profile=None,
+        processes=1,
+        host_path=os.environ.get("HOST_PATH"),
+        debug=True,  # Volatility verbosity flag, not Flask debug
+        fetch_symbol=scan['os'] == 'linux',
+        custom_symbol=None,
+        dump=scan['dump_path'],
+        image=scan['image'],
+        output_dir=scan['output_dir'],
+        scan_id=uuid,
+    )
 
-    if scan['os'] == 'linux':
-        default_args['linux'] = True
-        default_args['fetch_symbol'] = True
-    elif scan['os'] == 'windows':
-        default_args['windows'] = True
-    
-    args_obj = argparse.Namespace(**default_args)
-    args_obj.scan_id = uuid
-
-    def background_single_run(s_id: str, args: argparse.Namespace) -> None:
+    def background_single_run(s_id: str, cfg: ApiScanConfig) -> None:
         try:
             if _require_runner():
+                args = argparse.Namespace(**dataclasses.asdict(cfg))
                 runner_func(args)
-            _store_plugin_result(s_id, args.commands, args.output_dir)
+            _store_plugin_result(s_id, cfg.commands, cfg.output_dir)
         except Exception:
-            logging.exception("Manual plugin execution failed for scan %s, module %s", s_id, args.commands)
+            logging.exception("Manual plugin execution failed for scan %s, module %s", s_id, cfg.commands)
             conn_err = get_db_connection()
             try:
                 conn_err.execute(
                     "UPDATE scan_module_status SET status = 'FAILED', error_message = 'Execution error', updated_at = ? WHERE scan_id = ? AND module = ?",
-                    (time.time(), s_id, args.commands),
+                    (time.time(), s_id, cfg.commands),
                 )
                 conn_err.commit()
             finally:
@@ -847,7 +841,7 @@ def execute_plugin(uuid: str) -> Response:
     except Exception:
         logging.exception("Failed to update module status for %s", module)
 
-    thread = threading.Thread(target=background_single_run, args=(uuid, args_obj))
+    thread = threading.Thread(target=background_single_run, args=(uuid, config))
     thread.daemon = True
     thread.start()
 
@@ -946,7 +940,7 @@ def view_fs_file(uuid: str) -> Response:
     if query:
         try:
             cmd = ['grep', '-i', '-n', '-m', str(limit), query, safe_path]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace', timeout=30)
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace', timeout=30)  # nosec B603 B607
             content = result.stdout.splitlines()
             total_lines = len(content)
         except Exception as e:
@@ -954,7 +948,7 @@ def view_fs_file(uuid: str) -> Response:
     else:
         try:
             wc_cmd = ['wc', '-l', safe_path]
-            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)
+            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)  # nosec B603 B607
             if wc_res.returncode == 0 and wc_res.stdout:
                 total_lines = int(wc_res.stdout.split()[0])
 
@@ -962,7 +956,7 @@ def view_fs_file(uuid: str) -> Response:
             end_line = start_line + limit - 1
 
             sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', safe_path]
-            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)
+            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)  # nosec B603 B607
             content = sed_res.stdout.splitlines()
         except Exception as e:
             return jsonify({"error": f"Failed to read file: {str(e)}"}), 500
@@ -1037,7 +1031,7 @@ def get_strings_content(uuid: str) -> Response:
             if context > 0:
                 cmd += ['-C', str(context)]
             cmd += ['-m', str(limit), query, strings_file]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)  # nosec B603 B607
             content = result.stdout.splitlines()
             total_lines = len(content) 
         except Exception as e:
@@ -1045,7 +1039,7 @@ def get_strings_content(uuid: str) -> Response:
     else:
         try:
             wc_cmd = ['wc', '-l', strings_file]
-            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, timeout=30)
+            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, timeout=30)  # nosec B603 B607
             if wc_res.returncode == 0 and wc_res.stdout:
                 total_lines = int(wc_res.stdout.split()[0])
             
@@ -1053,7 +1047,7 @@ def get_strings_content(uuid: str) -> Response:
             end_line = start_line + limit - 1
             
             sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', strings_file]
-            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)
+            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)  # nosec B603 B607
             content = sed_res.stdout.splitlines()
         except Exception as e:
             return jsonify({"error": f"Failed to read file: {str(e)}"}), 500

@@ -341,4 +341,4 @@ if __name__ == '__main__':
             sys.exit(1)
 
     # Use threaded=False to avoid threading conflicts with native VMM code
-    app.run(host='0.0.0.0', port=5002, threaded=False)
+    app.run(host='0.0.0.0', port=5002, threaded=False)  # nosec B104

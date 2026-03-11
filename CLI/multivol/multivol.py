@@ -12,7 +12,7 @@ try:
     from .multi_volatility2 import MultiVolatility2
     from .multi_volatility3 import MultiVolatility3
     from .multi_volatility_base import Vol2RunConfig, Vol3RunConfig
-    from .strings import get_strings
+    from .volatility_commands import get_strings
 except ImportError:
     from multi_volatility2 import MultiVolatility2
     from multi_volatility3 import MultiVolatility3

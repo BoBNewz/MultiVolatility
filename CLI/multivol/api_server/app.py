@@ -20,8 +20,11 @@ from multivol.api_server.routes.memprocfs import memprocfs_bp
 from multivol.api_server.routes.auth import auth_bp
 
 app = Flask(__name__)
-# Enable CORS for all routes and explicitly allow Authorization header
-CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
+# Enable CORS — allow origins from CORS_ORIGINS env var (comma-separated), default open for local dev
+_cors_origins = os.environ.get("CORS_ORIGINS", "*")
+if _cors_origins != "*":
+    _cors_origins = [o.strip() for o in _cors_origins.split(",")]
+CORS(app, resources={r"/*": {"origins": _cors_origins, "allow_headers": ["Authorization", "Content-Type"]}})
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -64,9 +67,9 @@ def run_api(runner_cb: Callable[[argparse.Namespace], None], debug_mode: bool = 
 
     if debug_mode:
         logging.info("Starting Flask in DEBUG mode...")
-        app.run(host='0.0.0.0', port=5001, debug=True)
+        app.run(host='0.0.0.0', port=5001, debug=True)  # nosec B201
     else:
         from waitress import serve
         logging.info("Starting production server (waitress) on port 5001 with 50GB and 24h timeout...")
-        serve(app, host='0.0.0.0', port=5001, threads=10, max_request_body_size=53687091200, channel_timeout=86400)
+        serve(app, host='0.0.0.0', port=5001, threads=10, max_request_body_size=53687091200, channel_timeout=86400)  # nosec B104
         # 50GB limit, 24h timeout

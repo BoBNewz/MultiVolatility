@@ -6,6 +6,32 @@ from rich import print as rprint
 
 
 @dataclass
+class ApiScanConfig:
+    """Typed configuration for a scan request received from the API."""
+    dump: str
+    mode: str  # "vol2" or "vol3"
+    linux: bool
+    windows: bool
+    output_dir: str
+    scan_id: str
+    image: str
+    profiles_path: str
+    symbols_path: str
+    cache_path: str
+    plugins_dir: str
+    format: str = "json"
+    commands: Optional[str] = None
+    light: bool = False
+    full: bool = False
+    profile: Optional[str] = None
+    processes: Optional[int] = None
+    host_path: Optional[str] = None
+    debug: bool = True
+    fetch_symbol: bool = False
+    custom_symbol: Optional[str] = None
+
+
+@dataclass
 class Vol3RunConfig:
     dump: str
     dump_dir: str

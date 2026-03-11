@@ -46,7 +46,7 @@ def test_clean_and_parse_json_missing_file():
     from multivol.api_server.utils import clean_and_parse_json
 
     result = clean_and_parse_json("/nonexistent/file.json")
-    assert isinstance(result, dict) and "error" in result
+    assert result is None
 
 
 def test_resolve_host_path_no_host_env(monkeypatch):

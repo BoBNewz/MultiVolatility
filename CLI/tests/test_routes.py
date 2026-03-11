@@ -150,3 +150,45 @@ class TestListSymbols:
         resp = client.get("/symbols", headers=auth_headers)
         data = resp.get_json()
         assert isinstance(data, list)
+
+
+class TestErrorPaths:
+    """Error path coverage for critical routes."""
+
+    def test_scan_invalid_mode_returns_400(self, client, auth_headers, tmp_file):
+        resp = client.post('/scan', json={
+            'dump': tmp_file, 'mode': 'invalid', 'linux': True
+        }, headers=auth_headers)
+        assert resp.status_code == 400
+
+    def test_scan_both_os_flags_returns_400(self, client, auth_headers, tmp_file):
+        resp = client.post('/scan', json={
+            'dump': tmp_file, 'mode': 'vol3', 'linux': True, 'windows': True
+        }, headers=auth_headers)
+        assert resp.status_code == 400
+
+    def test_scan_neither_os_flag_returns_400(self, client, auth_headers, tmp_file):
+        resp = client.post('/scan', json={
+            'dump': tmp_file, 'mode': 'vol3'
+        }, headers=auth_headers)
+        assert resp.status_code == 400
+
+    def test_get_status_missing_scan_returns_404(self, client, auth_headers):
+        resp = client.get('/scans/nonexistent-uuid/status', headers=auth_headers)
+        assert resp.status_code == 404
+
+    def test_get_scan_log_missing_returns_404(self, client, auth_headers):
+        resp = client.get('/scans/nonexistent-uuid/log', headers=auth_headers)
+        assert resp.status_code == 404
+
+    def test_auth_wrong_password_returns_401(self, client):
+        resp = client.post('/auth/login', json={'password': 'wrong'})
+        assert resp.status_code == 401
+
+    def test_missing_auth_header_returns_401(self, client):
+        resp = client.get('/scans')
+        assert resp.status_code == 401
+
+    def test_invalid_token_returns_401(self, client):
+        resp = client.get('/scans', headers={'Authorization': 'Bearer bad-token'})
+        assert resp.status_code == 401

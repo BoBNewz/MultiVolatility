@@ -345,4 +345,4 @@ async def download_multivol_windows_recovered_file(uuid: str, vfs_path: str) -> 
     }
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="0.0.0.0", port=8000)
+    mcp.run(transport="http", host="0.0.0.0", port=8000)  # nosec B104

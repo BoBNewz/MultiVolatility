@@ -11,9 +11,6 @@ import docker
 from multivol.multi_volatility_base import MultiVolatilityBase, Vol3RunConfig
 
 class MultiVolatility3(MultiVolatilityBase):
-    def __init__(self):
-        pass
-
     def execute_command_volatility3(self, command: str, config: Vol3RunConfig, quiet: bool = False, lock=None) -> tuple[str, bool]:
         # Executes a Volatility3 command in Docker and handles output
         if not quiet:

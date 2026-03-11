@@ -68,15 +68,16 @@ def get_file_hash(filepath: str) -> Optional[str]:
         logging.warning("Could not write hash cache for %s: %s", filepath, e)
     return file_hash
 
-def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any]:
+def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any] | None:
     """Parse JSON from a Volatility output file.
 
-    Always returns a ``list`` or ``dict``. On parse failure or missing file,
-    returns ``{"error": "...", "raw_output": "..."}``.
+    Returns the parsed ``list`` or ``dict`` on success, or ``None`` when the
+    file is missing, unreadable, or does not contain valid JSON.  Callers
+    should check for ``None`` before using the result.
     """
     if not os.path.exists(filepath):
-        logging.warning(f"File not found: {filepath}")
-        return {"error": "File not found", "raw_output": ""}
+        logging.warning("clean_and_parse_json: file not found: %s", filepath)
+        return None
 
     try:
         with open(filepath, 'r') as f:
@@ -100,17 +101,17 @@ def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any]:
                  try:
                     parsed_data = json.loads('\n'.join(lines[1:]))
                  except json.JSONDecodeError:
-                    pass  # Both parse attempts failed; fall through to error return
+                    pass  # Both parse attempts failed; fall through to None return
         
         if parsed_data is not None:
             return parsed_data
             
-        # Fallback: Return raw content as error object if not valid JSON
-        # This handles Volatility error messages stored in .json files
-        return {"error": "Invalid JSON output", "raw_output": content}
+        logging.warning("clean_and_parse_json: invalid JSON in %s", filepath)
+        return None
 
-    except Exception as e:
-        return {"error": f"Error reading file: {str(e)}"}
+    except Exception:
+        logging.exception("clean_and_parse_json: error reading %s", filepath)
+        return None
 
 def _build_extracted_files_map(output_dir: str) -> dict[str, str]:
     """Map decimal inode strings to their extracted filename under output_dir."""
@@ -193,7 +194,7 @@ def process_recover_fs(output_dir: str) -> None:
 
     try:
         data = clean_and_parse_json(json_path)
-        if not data or isinstance(data, dict):
+        if data is None or not isinstance(data, list):
             return
 
         extracted_files = _build_extracted_files_map(output_dir)
