@@ -1,4 +1,5 @@
 """Shared base class for Volatility runner classes."""
+
 # pylint: disable=line-too-long,too-many-instance-attributes
 import os
 from dataclasses import dataclass
@@ -9,6 +10,7 @@ from rich import print as rprint
 @dataclass
 class ApiScanConfig:
     """Typed configuration for a scan request received from the API."""
+
     dump: str
     mode: str  # "vol2" or "vol3"
     linux: bool
@@ -35,6 +37,7 @@ class ApiScanConfig:
 @dataclass  # pylint: disable=too-many-instance-attributes
 class Vol3RunConfig:
     """Configuration for a Volatility 3 run."""
+
     dump: str
     dump_dir: str
     symbols_path: str
@@ -54,6 +57,7 @@ class Vol3RunConfig:
 @dataclass  # pylint: disable=too-many-instance-attributes
 class Vol2RunConfig:
     """Configuration for a Volatility 2 run."""
+
     dump: str
     dump_file_path: str
     profiles_path: str
@@ -77,6 +81,7 @@ class MultiVolatilityBase:
         """
         try:
             from multivol.api_server.utils import resolve_host_path  # pylint: disable=import-outside-toplevel
+
             return resolve_host_path(path, host_path_override=host_path)
         except ImportError:
             pass
@@ -87,7 +92,6 @@ class MultiVolatilityBase:
                 rel_path = os.path.relpath(path, os.getcwd())
                 return os.path.join(host_path, rel_path)
         return path
-
 
     def safe_print(self, message: str, lock: Any) -> None:
         """Thread-safe print using rich."""

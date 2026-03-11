@@ -1,4 +1,5 @@
 """Volatility 2 memory analysis orchestration using Docker containers."""
+
 # pylint: disable=line-too-long
 import logging
 import os
@@ -29,31 +30,39 @@ class MultiVolatility2(MultiVolatilityBase):
         except OSError:
             logging.warning("Could not trim JSON output for %s", command, exc_info=True)
 
-    def execute_command_volatility2(self, command: str, config: Vol2RunConfig, quiet: bool = False, lock=None) -> tuple[str, bool]:  # pylint: disable=too-many-locals
+    def execute_command_volatility2(
+        self, command: str, config: Vol2RunConfig, quiet: bool = False, lock=None
+    ) -> tuple[str, bool]:  # pylint: disable=too-many-locals
         """Execute a Volatility 2 command in Docker and handle output."""
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
 
         client = docker.from_env()
 
-        host_profiles_path = self.resolve_path(os.path.abspath(config.profiles_path), config.host_path)
-        host_dump_path_src = self.resolve_path(os.path.abspath(config.dump_file_path), config.host_path)
+        host_profiles_path = self.resolve_path(
+            os.path.abspath(config.profiles_path), config.host_path
+        )
+        host_dump_path_src = self.resolve_path(
+            os.path.abspath(config.dump_file_path), config.host_path
+        )
         host_output_dir = self.resolve_path(os.path.abspath(config.output_dir), config.host_path)
 
         volumes = {
-            host_dump_path_src: {'bind': f'/dumps/{config.dump}', 'mode': 'rw'},
-            host_profiles_path: {'bind': '/home/vol/profiles', 'mode': 'rw'},
-            host_output_dir: {'bind': '/output', 'mode': 'rw'},
+            host_dump_path_src: {"bind": f"/dumps/{config.dump}", "mode": "rw"},
+            host_profiles_path: {"bind": "/home/vol/profiles", "mode": "rw"},
+            host_output_dir: {"bind": "/output", "mode": "rw"},
         }
 
         cmd_args = f"--plugins=/home/vol/profiles -f /dumps/{config.dump} --profile={config.profile} --output={config.format} {command}"
         if config.show_commands:
             print(f"[DEBUG] Volatility 2 Command: vol.py {cmd_args}", flush=True)
 
-        output_file, output_filename = self._output_file_info(command, config.output_dir, config.format)
+        output_file, output_filename = self._output_file_info(
+            command, config.output_dir, config.format
+        )
         cmd_with_redirect = f"/bin/sh -c 'vol.py {cmd_args} > /output/{output_filename} 2>&1'"
 
-        sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', command)
+        sanitized_name = re.sub(r"[^a-zA-Z0-9_.-]", "", command)
         scan_id = os.path.basename(os.path.normpath(config.output_dir))
         container_name = f"vol2_{scan_id[:8]}_{sanitized_name}"
 
@@ -63,8 +72,13 @@ class MultiVolatility2(MultiVolatilityBase):
         except docker.errors.NotFound:
             pass
         except Exception as e:  # pylint: disable=broad-except
-            self.safe_print(f"[!] Warning: Failed to cleanup existing container {container_name}: {e}", lock)
-            logging.warning("Failed to cleanup existing container %s", container_name, exc_info=True)
+            self.safe_print(
+                f"[!] Warning: Failed to cleanup existing container {container_name}: {e}",
+                lock,
+            )
+            logging.warning(
+                "Failed to cleanup existing container %s", container_name, exc_info=True
+            )
 
         try:
             container = client.containers.run(

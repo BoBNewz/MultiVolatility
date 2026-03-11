@@ -1,4 +1,5 @@
 """Tests for multivol/api_server/database.py"""
+
 import sqlite3
 import pytest
 
@@ -7,10 +8,12 @@ import pytest
 def isolated_storage(tmp_path, monkeypatch):
     """Point STORAGE_DIR and the config module at a fresh temp dir for each test."""
     import multivol.api_server.config as cfg
+
     monkeypatch.setenv("STORAGE_DIR", str(tmp_path))
     monkeypatch.setattr(cfg, "STORAGE_DIR", str(tmp_path))
     # Force database module to pick up the new path
     import multivol.api_server.database as db_mod
+
     monkeypatch.setattr(db_mod, "STORAGE_DIR", str(tmp_path))
     yield tmp_path
 

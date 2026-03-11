@@ -1,4 +1,5 @@
 """Shared utility functions for hashing, JSON parsing, and filesystem helpers."""
+
 import os
 import hashlib
 import time
@@ -8,6 +9,7 @@ import subprocess
 from typing import Any, Optional
 import multivol.api_server.config as _config
 from multivol.api_server.database import get_db_connection
+
 
 def resolve_host_path(container_path: str, host_path_override: Optional[str] = None) -> str:
     """Translate a container-side path to the host path.
@@ -25,12 +27,13 @@ def resolve_host_path(container_path: str, host_path_override: Optional[str] = N
             rel_path = os.path.relpath(container_path, _config.BASE_DIR)
             return os.path.join(host_base, rel_path)
 
-        if 'storage' in container_path:
-            rel_path = container_path[container_path.find('storage'):]
+        if "storage" in container_path:
+            rel_path = container_path[container_path.find("storage") :]
             return os.path.join(host_base, rel_path)
     except OSError:  # pylint: disable=broad-except
         logging.warning("resolve_host_path fallback triggered", exc_info=True)
     return container_path
+
 
 def calculate_sha256(filepath: str) -> str:
     """Stream-hash a file in 4 KiB blocks to keep memory usage bounded.
@@ -43,6 +46,7 @@ def calculate_sha256(filepath: str) -> str:
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
 
+
 def get_file_hash(filepath: str) -> Optional[str]:
     """Return the SHA-256 hex digest for filepath, using a cached .sha256 sidecar file.
 
@@ -52,7 +56,7 @@ def get_file_hash(filepath: str) -> Optional[str]:
     hash_file = filepath + ".sha256"
     if os.path.exists(hash_file):
         try:
-            with open(hash_file, 'r', encoding="utf-8") as f:
+            with open(hash_file, "r", encoding="utf-8") as f:
                 return f.read().strip()
         except OSError as e:
             logging.warning("Could not read cached hash for %s: %s", filepath, e)
@@ -64,11 +68,12 @@ def get_file_hash(filepath: str) -> Optional[str]:
         return None
 
     try:
-        with open(hash_file, 'w', encoding="utf-8") as f:
+        with open(hash_file, "w", encoding="utf-8") as f:
             f.write(file_hash)
     except OSError as e:
         logging.warning("Could not write hash cache for %s: %s", filepath, e)
     return file_hash
+
 
 def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any] | None:
     """Parse JSON from a Volatility output file.
@@ -82,12 +87,12 @@ def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any] | None:
         return None
 
     try:
-        with open(filepath, 'r', encoding="utf-8") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
 
-        start_index = content.find('[')
+        start_index = content.find("[")
         if start_index == -1:
-            start_index = content.find('{')
+            start_index = content.find("{")
 
         parsed_data = None
         if start_index != -1:
@@ -101,7 +106,7 @@ def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any] | None:
             lines = content.splitlines()
             if len(lines) > 1:
                 try:
-                    parsed_data = json.loads('\n'.join(lines[1:]))
+                    parsed_data = json.loads("\n".join(lines[1:]))
                 except json.JSONDecodeError:
                     pass  # Both parse attempts failed; fall through to None return
 
@@ -115,6 +120,7 @@ def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any] | None:
         logging.exception("clean_and_parse_json: error reading %s", filepath)
         return None
 
+
 def _build_extracted_files_map(output_dir: str) -> dict[str, str]:
     """Index files extracted by Volatility's RecoverFs by their decimal inode number.
 
@@ -124,20 +130,27 @@ def _build_extracted_files_map(output_dir: str) -> dict[str, str]:
     result = {}
     for filename in os.listdir(output_dir):
         if filename.startswith("file."):
-            parts = filename.split('.')
+            parts = filename.split(".")
             if len(parts) >= 2 and parts[1].isdigit():
                 result[str(int(parts[1]))] = filename
     return result
 
 
-def _build_fs_tree(data: list[Any], output_dir: str, extracted_files: dict[str, str]) -> dict[str, Any]:  # pylint: disable=too-many-locals
+def _build_fs_tree(
+    data: list[Any], output_dir: str, extracted_files: dict[str, str]
+) -> dict[str, Any]:  # pylint: disable=too-many-locals
     """Convert a flat RecoverFs node list into a nested JSON-serialisable directory tree.
 
     Each node in *data* is a Volatility output row with ``FilePath`` and
     ``Inode`` fields. Nodes are inserted in path order; the returned root dict
     is suitable for direct serialisation in the ``/results/<uuid>/fs/list`` endpoint.
     """
-    tree: dict[str, Any] = {"name": "/", "path": "/", "type": "directory", "children": []}
+    tree: dict[str, Any] = {
+        "name": "/",
+        "path": "/",
+        "type": "directory",
+        "children": [],
+    }
 
     for item in data:
         file_path = item.get("FilePath")
@@ -157,8 +170,11 @@ def _build_fs_tree(data: list[Any], output_dir: str, extracted_files: dict[str, 
                 continue
 
             is_leaf = i == len(parts) - 1
-            new_node: dict[str, Any] = {"name": part, "path": current_path,
-                                "type": "file" if is_leaf else "directory"}
+            new_node: dict[str, Any] = {
+                "name": part,
+                "path": current_path,
+                "type": "file" if is_leaf else "directory",
+            }
 
             if is_leaf:
                 inode_id = str(item.get("Inode"))
@@ -211,13 +227,14 @@ def process_recover_fs(output_dir: str) -> None:
         extracted_files = _build_extracted_files_map(output_dir)
         tree = _build_fs_tree(data, output_dir, extracted_files)
 
-        with open(json_path, 'w', encoding="utf-8") as f:
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump([tree], f, indent=2)
 
         logging.debug("process_recover_fs completed for %s", output_dir)
 
     except Exception:  # pylint: disable=broad-except
         logging.exception("Failed to process RecoverFs for %s", output_dir)
+
 
 def cleanup_timeouts() -> None:
     """Marks scans running for > 1 hour as failed (timeout)."""
@@ -227,12 +244,19 @@ def cleanup_timeouts() -> None:
         one_hour_ago = time.time() - 3600
 
         # Find tasks that are 'running' and older than 1 hour
-        c.execute("SELECT uuid FROM scans WHERE status='running' AND created_at < ?", (one_hour_ago,))
+        c.execute(
+            "SELECT uuid FROM scans WHERE status='running' AND created_at < ?",
+            (one_hour_ago,),
+        )
         stale_scans = c.fetchall()
 
         if stale_scans:
             logging.info("Cleaning up %s stale scans...", len(stale_scans))
-            c.execute("UPDATE scans SET status='failed', error='Timeout (>1h)' WHERE status='running' AND created_at < ?", (one_hour_ago,))
+            c.execute(
+                "UPDATE scans SET status='failed', error='Timeout (>1h)'"
+                " WHERE status='running' AND created_at < ?",
+                (one_hour_ago,),
+            )
             conn.commit()
 
         conn.close()

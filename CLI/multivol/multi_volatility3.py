@@ -1,4 +1,5 @@
 """Volatility 3 memory analysis orchestration using Docker containers."""
+
 # pylint: disable=line-too-long
 import json
 import logging
@@ -13,7 +14,9 @@ from multivol.multi_volatility_base import MultiVolatilityBase, Vol3RunConfig
 class MultiVolatility3(MultiVolatilityBase):
     """Orchestrate Volatility 3 commands executed inside Docker containers."""
 
-    def execute_command_volatility3(self, command: str, config: Vol3RunConfig, quiet: bool = False, lock=None) -> tuple[str, bool]:  # pylint: disable=too-many-return-statements,too-many-branches,too-many-locals,too-many-statements
+    def execute_command_volatility3(
+        self, command: str, config: Vol3RunConfig, quiet: bool = False, lock=None
+    ) -> tuple[str, bool]:  # pylint: disable=too-many-return-statements,too-many-branches,too-many-locals,too-many-statements
         """Execute a Volatility 3 command in Docker and handle output."""
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
@@ -21,7 +24,9 @@ class MultiVolatility3(MultiVolatilityBase):
         client = docker.from_env()
 
         # Resolve paths for DooD
-        host_symbols_path = self.resolve_path(os.path.abspath(config.symbols_path), config.host_path)
+        host_symbols_path = self.resolve_path(
+            os.path.abspath(config.symbols_path), config.host_path
+        )
         host_cache_path = self.resolve_path(os.path.abspath(config.cache_dir), config.host_path)
         host_plugin_dir = self.resolve_path(os.path.abspath(config.plugin_dir), config.host_path)
         host_output_dir = self.resolve_path(os.path.abspath(config.output_dir), config.host_path)
@@ -32,14 +37,17 @@ class MultiVolatility3(MultiVolatilityBase):
         # Debug logging for path resolution
         if config.show_commands:
             print(f"[DEBUG] dump={config.dump}, dump_dir={config.dump_dir}", flush=True)
-            print(f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}", flush=True)
+            print(
+                f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}",
+                flush=True,
+            )
 
         volumes = {
-            host_dump_dir: {'bind': '/dump_dir', 'mode': 'ro'},
-            host_symbols_path: {'bind': '/symbols', 'mode': 'rw'},
-            host_cache_path: {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
-            host_plugin_dir: {'bind': '/plugins', 'mode': 'ro'},
-            host_output_dir: {'bind': '/output', 'mode': 'rw'}
+            host_dump_dir: {"bind": "/dump_dir", "mode": "ro"},
+            host_symbols_path: {"bind": "/symbols", "mode": "rw"},
+            host_cache_path: {"bind": "/root/.cache/volatility3", "mode": "rw"},
+            host_plugin_dir: {"bind": "/plugins", "mode": "ro"},
+            host_output_dir: {"bind": "/output", "mode": "rw"},
         }
 
         # Base arguments
@@ -53,12 +61,18 @@ class MultiVolatility3(MultiVolatilityBase):
         # So dump file is at /dump_dir/basename(dump)
         dump_filename = os.path.basename(config.dump)
         if config.show_commands:
-            print(f"[DEBUG] dump_filename={dump_filename}, full path in container=/dump_dir/{dump_filename}", flush=True)
+            print(
+                f"[DEBUG] dump_filename={dump_filename}, full path in container=/dump_dir/{dump_filename}",
+                flush=True,
+            )
         base_args = f"vol -q -f /dump_dir/{dump_filename} -o /output -s /symbols -p /plugins"
 
         if config.custom_symbol:
             if config.show_commands:
-                print(f"[DEBUG] Custom Symbol Selected: {config.custom_symbol}", flush=True)
+                print(
+                    f"[DEBUG] Custom Symbol Selected: {config.custom_symbol}",
+                    flush=True,
+                )
 
         if config.fetch_symbols:
             base_args = f"{base_args} --remote-isf-url https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"
@@ -76,15 +90,21 @@ class MultiVolatility3(MultiVolatilityBase):
         cmd_with_redirect = f"/bin/sh -c '{cmd_args} > /output/{output_filename} 2>&1'"
 
         if config.show_commands:
-            print(f"[DEBUG] output_dir={config.output_dir}, output_file={output_file}", flush=True)
-            print(f"[DEBUG] output_dir exists: {os.path.exists(config.output_dir)}", flush=True)
+            print(
+                f"[DEBUG] output_dir={config.output_dir}, output_file={output_file}",
+                flush=True,
+            )
+            print(
+                f"[DEBUG] output_dir exists: {os.path.exists(config.output_dir)}",
+                flush=True,
+            )
             print(f"[DEBUG] Volatility 3 Command: {cmd_args}", flush=True)
             print(f"[DEBUG] Docker Volumes: {json.dumps(volumes, indent=2)}", flush=True)
 
         try:
             # Sanitize command name for Docker container name
             # Use scan_id for predictable naming so API can track container status
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', command)
+            sanitized_name = re.sub(r"[^a-zA-Z0-9_.-]", "", command)
             if config.scan_id:
                 container_name = f"vol3_{config.scan_id[:8]}_{sanitized_name}"
             else:
@@ -94,13 +114,23 @@ class MultiVolatility3(MultiVolatilityBase):
             try:
                 existing_container = client.containers.get(container_name)
                 if config.show_commands:
-                    print(f"[DEBUG] Removing existing container: {container_name}", flush=True)
+                    print(
+                        f"[DEBUG] Removing existing container: {container_name}",
+                        flush=True,
+                    )
                 existing_container.remove(force=True)
             except docker.errors.NotFound:
                 pass
             except Exception as e:  # pylint: disable=broad-except
-                self.safe_print(f"[!] Warning: Failed to cleanup existing container {container_name}: {e}", lock)
-                logging.warning("Failed to cleanup existing container %s", container_name, exc_info=True)
+                self.safe_print(
+                    f"[!] Warning: Failed to cleanup existing container {container_name}: {e}",
+                    lock,
+                )
+                logging.warning(
+                    "Failed to cleanup existing container %s",
+                    container_name,
+                    exc_info=True,
+                )
 
             container = client.containers.run(
                 image=config.docker_image,
@@ -110,12 +140,12 @@ class MultiVolatility3(MultiVolatilityBase):
                 tty=False,  # No TTY needed when redirecting to file
                 detach=True,
                 remove=False,
-                log_config={"type": "none"}  # Disable Docker logging - output goes to file
+                log_config={"type": "none"},  # Disable Docker logging - output goes to file
             )
 
             # Wait for container to finish (output is written to file, not logs)
             wait_result = container.wait()
-            exit_code = wait_result.get('StatusCode', 0)
+            exit_code = wait_result.get("StatusCode", 0)
             # Don't remove container - API will check status and clean up
 
             if config.format == "json":
@@ -143,19 +173,23 @@ class MultiVolatility3(MultiVolatilityBase):
             with open(output_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            if "Volatility experienced" in content or "vol.py: error:" in content or "vol: error:" in content:
+            if (
+                "Volatility experienced" in content
+                or "vol.py: error:" in content
+                or "vol: error:" in content
+            ):
                 return (command, False)
             if config.format == "json":
-                start_index = content.find('[')
+                start_index = content.find("[")
                 if start_index == -1:
-                    start_index = content.find('{')
+                    start_index = content.find("{")
 
                 if start_index != -1:
                     json.loads(content[start_index:])
                     return (command, True)
                 lines = content.splitlines()
                 if len(lines) > 1:
-                    json.loads('\n'.join(lines[1:]))
+                    json.loads("\n".join(lines[1:]))
                     return (command, True)
                 return (command, False)
             return (command, True)

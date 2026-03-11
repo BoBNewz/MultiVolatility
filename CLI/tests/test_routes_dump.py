@@ -1,4 +1,5 @@
 """Tests for dump routes (multivol/api_server/routes/dump.py)."""
+
 from multivol.api_server.routes.dump import dump_tasks, DumpTask
 
 
@@ -31,7 +32,9 @@ class TestGetDumpStatus:
 
 class TestDownloadDumpResult:
     def test_missing_task_returns_404(self, client, auth_headers):
-        resp = client.get("/dump-tasks/nonexistent-task-id/download", headers=auth_headers)
+        resp = client.get(
+            "/dump-tasks/nonexistent-task-id/download", headers=auth_headers
+        )
         assert resp.status_code == 404
 
     def test_no_auth_returns_401(self, client):

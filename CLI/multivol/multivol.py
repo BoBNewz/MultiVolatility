@@ -1,4 +1,5 @@
 """Entry point for MultiVolatility: orchestrate Volatility 2/3 analysis in parallel."""
+
 # pylint: disable=line-too-long
 import multiprocessing
 import time
@@ -25,12 +26,11 @@ except ImportError:
     from strings import get_strings
 
 
-
-
 def vol3_wrapper(packed_args: Any) -> tuple[str, bool]:
     """Unpack arguments and call execute_command_volatility3."""
     instance, args = packed_args
     return instance.execute_command_volatility3(*args)
+
 
 def vol2_wrapper(packed_args: Any) -> tuple[str, bool]:
     """Unpack arguments and call execute_command_volatility2."""
@@ -46,12 +46,21 @@ def _ensure_docker_image(image_name: str, console: Console) -> None:
         try:
             client.images.get(image_name)
             if not user_provided_image:
-                console.print(f"[dim cyan][*] No --image provided, using default image: {image_name}[/dim cyan]")
+                console.print(
+                    f"[dim cyan][*] No --image provided, using default image: {image_name}[/dim cyan]"
+                )
         except docker.errors.ImageNotFound:
-            msg = (f"[*] Pulling image: {image_name}" if user_provided_image
-                   else f"[*] No --image provided, pulling default image: {image_name}")
-            with Progress(TextColumn("{task.description}"), SpinnerColumn("dots"),
-                          transient=True, console=console) as progress:
+            msg = (
+                f"[*] Pulling image: {image_name}"
+                if user_provided_image
+                else f"[*] No --image provided, pulling default image: {image_name}"
+            )
+            with Progress(
+                TextColumn("{task.description}"),
+                SpinnerColumn("dots"),
+                transient=True,
+                console=console,
+            ) as progress:
                 progress.add_task(f"[bold green]{msg}[/bold green]", total=None)
                 client.images.pull(image_name)
             console.print(f"[bold green]{msg}[/bold green]")
@@ -61,7 +70,9 @@ def _ensure_docker_image(image_name: str, console: Console) -> None:
         logging.warning("Docker image check failed for %s", image_name, exc_info=True)
 
 
-def _resolve_commands(arguments: argparse.Namespace) -> tuple[list[str], Union[MultiVolatility2, MultiVolatility3]]:
+def _resolve_commands(
+    arguments: argparse.Namespace,
+) -> tuple[list[str], Union[MultiVolatility2, MultiVolatility3]]:
     """Return (commands, vol_instance) based on arguments.mode.
 
     Raises ValueError for unknown modes.
@@ -91,11 +102,17 @@ def _resolve_commands(arguments: argparse.Namespace) -> tuple[list[str], Union[M
     raise ValueError(f"Unknown mode: {arguments.mode!r}. Expected 'vol2' or 'vol3'.")
 
 
-def _print_scan_summary(console: Console, successful_modules: list[str], failed_modules: list[str],
-                         arguments: argparse.Namespace) -> None:
+def _print_scan_summary(
+    console: Console,
+    successful_modules: list[str],
+    failed_modules: list[str],
+    arguments: argparse.Namespace,
+) -> None:
     """Print success/failure counts and per-module status."""
-    console.print(f"\n[bold green]Scan Complete![/bold green] "
-                  f"Success: {len(successful_modules)}, Failed: {len(failed_modules)}")
+    console.print(
+        f"\n[bold green]Scan Complete![/bold green] "
+        f"Success: {len(successful_modules)}, Failed: {len(failed_modules)}"
+    )
     if successful_modules:
         console.print("\n[bold green]Successful Modules:[/bold green]")
         for mod in successful_modules:
@@ -108,8 +125,14 @@ def _print_scan_summary(console: Console, successful_modules: list[str], failed_
                 console.print(f"[red][!] Failed to validate JSON for {mod}[/red]")
 
 
-def _run_vol2_pool(pool: Any, vol_instance: MultiVolatility2, commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
-                   arguments: argparse.Namespace, output_dir: str, lock: Any) -> tuple[list[str], list[str]]:
+def _run_vol2_pool(
+    pool: Any,
+    vol_instance: MultiVolatility2,
+    commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    arguments: argparse.Namespace,
+    output_dir: str,
+    lock: Any,
+) -> tuple[list[str], list[str]]:
     """Run vol2 commands via pool and return (successful, failed) module lists."""
     vol2_cfg = Vol2RunConfig(
         dump=os.path.basename(arguments.dump),
@@ -129,10 +152,17 @@ def _run_vol2_pool(pool: Any, vol_instance: MultiVolatility2, commands: list[str
     return successful, failed
 
 
-def _run_vol3_pool(pool: Any, vol_instance: MultiVolatility3, commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
-                   arguments: argparse.Namespace, output_dir: str, lock: Any,
-                   console: Console) -> tuple[list[str], list[str]]:
+def _run_vol3_pool(
+    pool: Any,
+    vol_instance: MultiVolatility3,
+    commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    arguments: argparse.Namespace,
+    output_dir: str,
+    lock: Any,
+    console: Console,
+) -> tuple[list[str], list[str]]:
     """Run vol3 commands via pool, including info bootstrap and strings, return (successful, failed)."""
+
     def _make_vol3_cfg() -> Vol3RunConfig:
         return Vol3RunConfig(
             dump=os.path.basename(arguments.dump),
@@ -162,28 +192,41 @@ def _run_vol3_pool(pool: Any, vol_instance: MultiVolatility3, commands: list[str
         (successful if is_success else failed).append(command_name)
 
     console.print("\n[+] Starting strings...")
-    get_strings(os.path.basename(arguments.dump), os.path.abspath(arguments.dump),
-                output_dir, arguments.image, lock, arguments.host_path)
+    get_strings(
+        os.path.basename(arguments.dump),
+        os.path.abspath(arguments.dump),
+        output_dir,
+        arguments.image,
+        lock,
+        arguments.host_path,
+    )
     console.print("\n[+] Strings complete !")
     return successful, failed
 
 
 def run_analysis(arguments: argparse.Namespace) -> None:
     """Run the full analysis pipeline based on parsed CLI arguments."""
-    for d in ("volatility3_symbols", "volatility2_profiles", "volatility3_cache", "volatility3_plugins"):
+    for d in (
+        "volatility3_symbols",
+        "volatility2_profiles",
+        "volatility3_cache",
+        "volatility3_plugins",
+    ):
         os.makedirs(os.path.join(os.getcwd(), d), exist_ok=True)
 
     if not arguments.light and not arguments.full:
         arguments.light = True
 
-    output_dir = (getattr(arguments, "output_dir", None)
-                  or getattr(arguments, "output", None)
-                  or f"output_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}")
+    output_dir = (
+        getattr(arguments, "output_dir", None)
+        or getattr(arguments, "output", None)
+        or f"output_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
+    )
     os.makedirs(output_dir, exist_ok=True)
 
     commands, vol_instance = _resolve_commands(arguments)
 
-    max_procs = getattr(arguments, 'processes', None)
+    max_procs = getattr(arguments, "processes", None)
     max_processes = min(max_procs, len(commands)) if max_procs else (os.cpu_count() or 4)
     start_time = time.time()
 
@@ -197,13 +240,17 @@ def run_analysis(arguments: argparse.Namespace) -> None:
     with multiprocessing.Pool(processes=max_processes) as pool:
         if arguments.mode == "vol2":
             successful_modules, failed_modules = _run_vol2_pool(
-                pool, vol_instance, commands, arguments, output_dir, lock)
+                pool, vol_instance, commands, arguments, output_dir, lock
+            )
         else:
             successful_modules, failed_modules = _run_vol3_pool(
-                pool, vol_instance, commands, arguments, output_dir, lock, console)
+                pool, vol_instance, commands, arguments, output_dir, lock, console
+            )
 
     _print_scan_summary(console, successful_modules, failed_modules, arguments)
-    console.print(f"\n[bold yellow]⏱️  Time : {time.time() - start_time:.2f} seconds for {len(commands)} modules.[/bold yellow]")
+    console.print(
+        f"\n[bold yellow]⏱️  Time : {time.time() - start_time:.2f} seconds for {len(commands)} modules.[/bold yellow]"
+    )
 
 
 def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
@@ -235,42 +282,120 @@ def main():
     parser = argparse.ArgumentParser("multivol")
     parser.add_argument("--api", action="store_true", help="Start API server")
     parser.add_argument("--dev", action="store_true", help="Enable developer mode (hot reload)")
-    parser.add_argument("--host-path", type=str, required=False, default=None, help="Root path of the project on the Host machine (required for Docker-in-Docker)")
+    parser.add_argument(
+        "--host-path",
+        type=str,
+        required=False,
+        default=None,
+        help="Root path of the project on the Host machine (required for Docker-in-Docker)",
+    )
     subparser = parser.add_subparsers(dest="mode", required=False)
 
     # Volatility2 argument group
     vol2_parser = subparser.add_parser("vol2", help="Use volatility2.")
-    vol2_parser.add_argument("--profiles-path", help="Path to the directory with the profiles.", default=os.path.join(os.getcwd(), "volatility2_profiles"))
+    vol2_parser.add_argument(
+        "--profiles-path",
+        help="Path to the directory with the profiles.",
+        default=os.path.join(os.getcwd(), "volatility2_profiles"),
+    )
     vol2_parser.add_argument("--profile", help="Profile to use.", required=True)
     vol2_parser.add_argument("--dump", help="Dump to parse.", required=True)
-    vol2_parser.add_argument("--image", help="Docker image to use.", required=False, default="sp00kyskelet0n/volatility2")
-    vol2_parser.add_argument("--commands", help="Commands to run : command1,command2,command3", required=False)
+    vol2_parser.add_argument(
+        "--image",
+        help="Docker image to use.",
+        required=False,
+        default="sp00kyskelet0n/volatility2",
+    )
+    vol2_parser.add_argument(
+        "--commands",
+        help="Commands to run : command1,command2,command3",
+        required=False,
+    )
     vol2_os_group = vol2_parser.add_mutually_exclusive_group(required=True)
     vol2_os_group.add_argument("--linux", action="store_true", help="For a Linux memory dump")
     vol2_os_group.add_argument("--windows", action="store_true", help="For a Windows memory dump")
     vol2_parser.add_argument("--light", action="store_true", help="Use the main modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
-    vol2_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
-    vol2_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes.")
-    vol2_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
+    vol2_parser.add_argument(
+        "--format",
+        help="Format of the outputs: json, text",
+        required=False,
+        default="text",
+    )
+    vol2_parser.add_argument(
+        "--processes",
+        type=int,
+        required=False,
+        default=None,
+        help="Max number of concurrent processes.",
+    )
+    vol2_parser.add_argument(
+        "--output",
+        required=False,
+        help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).",
+    )
 
     # Volatility3 argument group
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
     vol3_parser.add_argument("--dump", help="Dump to parse.", required=True)
-    vol3_parser.add_argument("--image", help="Docker image to use.", required=False, default="sp00kyskelet0n/volatility3")
-    vol3_parser.add_argument("--symbols-path", help="Path to the directory with the symbols.", required=False, default=os.path.join(os.getcwd(), "volatility3_symbols"))
-    vol3_parser.add_argument("--cache-path", help="Path to directory with the cache for volatility3.", required=False, default=os.path.join(os.getcwd(), "volatility3_cache"))
-    vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default=os.path.join(os.getcwd(), "volatility3_plugins"))
-    vol3_parser.add_argument("--commands", help="Commands to run : command1,command2,command3", required=False)
+    vol3_parser.add_argument(
+        "--image",
+        help="Docker image to use.",
+        required=False,
+        default="sp00kyskelet0n/volatility3",
+    )
+    vol3_parser.add_argument(
+        "--symbols-path",
+        help="Path to the directory with the symbols.",
+        required=False,
+        default=os.path.join(os.getcwd(), "volatility3_symbols"),
+    )
+    vol3_parser.add_argument(
+        "--cache-path",
+        help="Path to directory with the cache for volatility3.",
+        required=False,
+        default=os.path.join(os.getcwd(), "volatility3_cache"),
+    )
+    vol3_parser.add_argument(
+        "--plugins-dir",
+        help="Path to directory with the plugins",
+        required=False,
+        default=os.path.join(os.getcwd(), "volatility3_plugins"),
+    )
+    vol3_parser.add_argument(
+        "--commands",
+        help="Commands to run : command1,command2,command3",
+        required=False,
+    )
     vol3_os_group = vol3_parser.add_mutually_exclusive_group(required=True)
     vol3_os_group.add_argument("--linux", action="store_true", help="It's a Linux memory dump.")
     vol3_os_group.add_argument("--windows", action="store_true", help="It's a Windows memory dump.")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
-    vol3_parser.add_argument("--fetch-symbol", action="store_true", help="Fetch automatically symbol from github.com/Abyss-W4tcher/volatility3-symbols", required=False)
+    vol3_parser.add_argument(
+        "--fetch-symbol",
+        action="store_true",
+        help="Fetch automatically symbol from github.com/Abyss-W4tcher/volatility3-symbols",
+        required=False,
+    )
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
-    vol3_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
-    vol3_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes")
-    vol3_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
+    vol3_parser.add_argument(
+        "--format",
+        help="Format of the outputs: json, text",
+        required=False,
+        default="text",
+    )
+    vol3_parser.add_argument(
+        "--processes",
+        type=int,
+        required=False,
+        default=None,
+        help="Max number of concurrent processes",
+    )
+    vol3_parser.add_argument(
+        "--output",
+        required=False,
+        help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).",
+    )
 
     # Global arguments
     parser.add_argument("--debug", action="store_true", help="Show executed Docker commands")
@@ -289,6 +414,7 @@ def main():
     _validate_args(parser, args)
 
     run_analysis(args)
+
 
 if __name__ == "__main__":
     main()

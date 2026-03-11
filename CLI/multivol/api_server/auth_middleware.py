@@ -1,4 +1,5 @@
 """Request authentication middleware for the Flask API."""
+
 import logging
 from typing import Optional, Tuple, Union
 from flask import request, jsonify, Response
@@ -6,8 +7,8 @@ from multivol.api_server.config import get_api_token
 
 # Paths that do not require authentication
 _PUBLIC_PATHS = {
-    '/auth/login',  # credential exchange — no token yet
-    '/health',      # liveness probe for load balancers — no auth context needed
+    "/auth/login",  # credential exchange — no token yet
+    "/health",  # liveness probe for load balancers — no auth context needed
 }
 
 # Return type: None means "allow the request", a Response/tuple means "reject it".
@@ -22,8 +23,8 @@ def check_authorization() -> _AuthResult:
     correctly — this is the standard Flask before_request contract.
     """
     # Allow CORS preflight requests
-    if request.method == 'OPTIONS':
-        return '', 200
+    if request.method == "OPTIONS":
+        return "", 200
 
     if request.path in _PUBLIC_PATHS:
         return None

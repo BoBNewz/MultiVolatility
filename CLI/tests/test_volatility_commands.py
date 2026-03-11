@@ -1,4 +1,5 @@
 """Tests for MultiVolatility2 and MultiVolatility3 get_commands() — pure YAML logic."""
+
 import pytest
 
 # YAML files are named vol2_windows.full.yaml / vol2_linux.full.yaml etc.
@@ -9,6 +10,7 @@ LINUX_KEY = "linux.full"
 class TestMultiVolatility2Commands:
     def setup_method(self):
         from multivol.multi_volatility2 import MultiVolatility2
+
         self.vol2 = MultiVolatility2()
 
     def test_get_commands_windows_returns_list(self):
@@ -37,6 +39,7 @@ class TestMultiVolatility2Commands:
 class TestMultiVolatility3Commands:
     def setup_method(self):
         from multivol.multi_volatility3 import MultiVolatility3
+
         self.vol3 = MultiVolatility3()
 
     def test_get_commands_windows_returns_list(self):

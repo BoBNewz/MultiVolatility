@@ -1,4 +1,5 @@
 """Docker image and Volatility plugin listing routes."""
+
 import os
 import textwrap
 import json
@@ -8,9 +9,10 @@ import docker
 from multivol.api_server.utils import resolve_host_path
 from multivol.api_server.config import BASE_DIR
 
-docker_bp = Blueprint('docker_bp', __name__)
+docker_bp = Blueprint("docker_bp", __name__)
 
-@docker_bp.route('/images', methods=['GET'])
+
+@docker_bp.route("/images", methods=["GET"])
 def list_images() -> Response:
     """List all locally available Docker images with 'volatility' in their tag."""
     try:
@@ -26,10 +28,11 @@ def list_images() -> Response:
     except docker.errors.DockerException as e:
         return jsonify({"error": str(e)}), 500
 
-@docker_bp.route('/volatility3/plugins', methods=['GET'])
+
+@docker_bp.route("/volatility3/plugins", methods=["GET"])
 def list_volatility_plugins() -> Response:
     """Run a container to enumerate all Volatility 3 plugins in the given image."""
-    image = request.args.get('image')
+    image = request.args.get("image")
     if not image:
         return jsonify({"error": "Missing 'image' query parameter"}), 400
 
@@ -80,24 +83,22 @@ def list_volatility_plugins() -> Response:
             image=image,
             entrypoint="python3",
             command="/list_plugins.py",
-            volumes={
-                host_script_path: {'bind': '/list_plugins.py', 'mode': 'ro'}
-            },
-            working_dir="/volatility3", # Set working dir to repo root avoids some path issues
-            environment={"PYTHONPATH": "/volatility3"}, # Explicitly set pythonpath
+            volumes={host_script_path: {"bind": "/list_plugins.py", "mode": "ro"}},
+            working_dir="/volatility3",  # Set working dir to repo root avoids some path issues
+            environment={"PYTHONPATH": "/volatility3"},  # Explicitly set pythonpath
             stderr=True,
-            remove=True
+            remove=True,
         )
 
         # Parse output
-        raw_output = container.decode('utf-8')
+        raw_output = container.decode("utf-8")
         try:
             # Output should be mainly JSON
             lines = raw_output.splitlines()
             # It might have stderr logs, so look for JSON
             json_line = None
             for line in reversed(lines):
-                if line.strip().startswith('{'):
+                if line.strip().startswith("{"):
                     json_line = line
                     break
 

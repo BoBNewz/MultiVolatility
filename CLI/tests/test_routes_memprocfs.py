@@ -1,4 +1,5 @@
 """Tests for memprocfs routes (multivol/api_server/routes/memprocfs.py)."""
+
 from multivol.api_server.routes.memprocfs import (
     get_sidecar_url,
     get_next_port,
@@ -75,7 +76,9 @@ class TestMemprocfsConstants:
 
 class TestMemprocfsRoutes:
     def test_start_missing_scan_returns_404(self, client, auth_headers):
-        resp = client.post("/scans/nonexistent-uuid/memprocfs/start", headers=auth_headers)
+        resp = client.post(
+            "/scans/nonexistent-uuid/memprocfs/start", headers=auth_headers
+        )
         assert resp.status_code == 404
 
     def test_start_no_auth_returns_401(self, client):
@@ -83,13 +86,19 @@ class TestMemprocfsRoutes:
         assert resp.status_code == 401
 
     def test_files_missing_scan_returns_4xx(self, client, auth_headers):
-        resp = client.get("/scans/nonexistent-uuid/memprocfs/files", headers=auth_headers)
+        resp = client.get(
+            "/scans/nonexistent-uuid/memprocfs/files", headers=auth_headers
+        )
         assert resp.status_code in (404, 503)
 
     def test_status_missing_scan_returns_404(self, client, auth_headers):
-        resp = client.get("/scans/nonexistent-uuid/memprocfs/status", headers=auth_headers)
+        resp = client.get(
+            "/scans/nonexistent-uuid/memprocfs/status", headers=auth_headers
+        )
         assert resp.status_code in (200, 404)
 
     def test_stop_missing_scan_returns_4xx(self, client, auth_headers):
-        resp = client.post("/scans/nonexistent-uuid/memprocfs/stop", headers=auth_headers)
+        resp = client.post(
+            "/scans/nonexistent-uuid/memprocfs/stop", headers=auth_headers
+        )
         assert resp.status_code in (404, 400, 200)
