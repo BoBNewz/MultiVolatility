@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 import docker
 import os
 import textwrap
@@ -10,7 +10,7 @@ from multivol.api_server.config import BASE_DIR
 docker_bp = Blueprint('docker_bp', __name__)
 
 @docker_bp.route('/list_images', methods=['GET'])
-def list_images():
+def list_images() -> Response:
     try:
         client = docker.from_env()
         images = client.images.list()
@@ -25,7 +25,7 @@ def list_images():
         return jsonify({"error": str(e)}), 500
 
 @docker_bp.route('/volatility3/plugins', methods=['GET'])
-def list_volatility_plugins():
+def list_volatility_plugins() -> Response:
     image = request.args.get('image')
     if not image:
          return jsonify({"error": "Missing 'image' query parameter"}), 400

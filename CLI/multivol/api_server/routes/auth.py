@@ -1,11 +1,11 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 import logging
 from multivol.api_server.config import get_app_password, get_api_token
 
 auth_bp = Blueprint('auth_bp', __name__)
 
 @auth_bp.route('/auth/login', methods=['POST'])
-def login():
+def login() -> Response:
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid request"}), 400

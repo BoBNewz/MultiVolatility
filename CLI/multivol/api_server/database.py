@@ -3,12 +3,12 @@ import os
 import logging
 from multivol.api_server.config import STORAGE_DIR
 
-def get_db_connection():
+def get_db_connection() -> sqlite3.Connection:
     db_path = os.path.join(STORAGE_DIR, 'scans.db')
     conn = sqlite3.connect(db_path, timeout=10.0) # wait up to 10s if db is locked
     return conn
 
-def init_db():
+def init_db() -> None:
     conn = get_db_connection()
     c = conn.cursor()
     # Create tables
@@ -92,14 +92,16 @@ def init_db():
         logging.info("Translating 'case_name' -> 'name'.")
         try:
              c.execute("ALTER TABLE scans RENAME COLUMN case_name TO name")
-        except Exception as e:
-             logging.error(f"Could not rename column: {e}. If 'name' is missing, schema might be corrupt or older SQLite.")
+        except sqlite3.OperationalError as e:
+             logging.exception("Could not rename column; schema may be corrupt or SQLite version too old.")
+             raise
     elif 'name' not in columns:
          logging.warning("'name' column missing. Attempting ADD COLUMN.")
          try:
              c.execute("ALTER TABLE scans ADD COLUMN name TEXT")
-         except Exception as e:
-             logging.error(f"Could not add 'name' column: {e}. Schema may be corrupt.")
+         except sqlite3.OperationalError as e:
+             logging.exception("Could not add 'name' column; schema may be corrupt.")
+             raise
 
     # 4. Add mode to scans if missing
     if 'mode' not in columns:

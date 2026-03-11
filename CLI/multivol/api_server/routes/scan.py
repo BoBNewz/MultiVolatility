@@ -11,7 +11,7 @@ import glob
 import yaml
 import docker
 import logging
-from typing import Optional, Callable, Tuple, Union
+from typing import Any, Callable, Optional
 from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import clean_and_parse_json, process_recover_fs
@@ -19,7 +19,7 @@ from multivol.api_server.config import STORAGE_DIR, BASE_DIR
 
 scan_bp = Blueprint('scan_bp', __name__)
 
-def build_fs_tree(base_dir):
+def build_fs_tree(base_dir: str) -> list[dict[str, Any]]:
     """
     Walk the recovered_fs/ directory and build a nested tree structure:
     [{"name": "/", "path": "/", "type": "directory", "children": [...]}]
@@ -79,7 +79,7 @@ def _require_runner() -> bool:
         return False
     return True
 
-def ingest_results_to_db(scan_id, output_dir):
+def ingest_results_to_db(scan_id: str, output_dir: str) -> None:
     """Reads JSON output files and stores them in the database."""
     logging.debug(f"Ingesting results for {scan_id} from {output_dir}")
     if not os.path.exists(output_dir):
@@ -121,7 +121,7 @@ def ingest_results_to_db(scan_id, output_dir):
                     (time.time(), scan_id, module_name)
                 )
         except Exception as e:
-            logging.error(f"Failed to ingest {f}: {e}")
+            logging.exception("Failed to ingest %s", f)
             
     conn.commit()
     conn.close()
@@ -146,7 +146,7 @@ def _check_concurrency() -> Optional[Response]:
     return None
 
 
-def _build_args_from_request(data: dict) -> tuple:
+def _build_args_from_request(data: dict[str, Any]) -> tuple[argparse.Namespace, str, str, str]:
     """
     Build an argparse.Namespace from the request payload, generate a scan_id,
     create the output directory, and validate the dump path.
@@ -231,7 +231,7 @@ def _build_args_from_request(data: dict) -> tuple:
     return args_obj, scan_id, target_os, vol_version
 
 
-def _load_command_list(args_obj: argparse.Namespace, target_os: str) -> list:
+def _load_command_list(args_obj: argparse.Namespace, target_os: str) -> list[str]:
     """
     Determine which plugin commands to run from the args or a YAML plugin list.
     Mutates args_obj.commands to the resolved comma-joined list when populated.
@@ -266,11 +266,11 @@ def _load_command_list(args_obj: argparse.Namespace, target_os: str) -> list:
 def _insert_scan_record(
     args_obj: argparse.Namespace,
     scan_id: str,
-    command_list: list,
+    command_list: list[str],
     case_name: Optional[str],
     vol_version: str,
     target_os: str,
-    data: dict,
+    data: dict[str, Any],
 ) -> None:
     """Insert the scan row and pre-populate per-module status rows."""
     conn = get_db_connection()
@@ -320,7 +320,7 @@ def _run_scan_background(s_id: str, args: argparse.Namespace) -> None:
         c.execute("UPDATE scans SET status = 'completed' WHERE uuid = ?", (s_id,))
         conn.commit()
     except Exception as e:
-        logging.error(f"Scan failed: {e}")
+        logging.exception("Scan failed for %s", s_id)
         c.execute("UPDATE scans SET status = 'failed', error = ? WHERE uuid = ?", (str(e), s_id))
         conn.commit()
     finally:
@@ -415,110 +415,131 @@ def update_scan_module_status(uuid: str) -> Response:
     finally:
         conn.close()
 
+def _find_container(docker_client: Any, uuid: str, module_name: str) -> Optional[Any]:
+    """Return the first running/exited container matching this module, or None."""
+    sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', module_name)
+    for prefix in ("vol3", "vol2"):
+        try:
+            return docker_client.containers.get(f"{prefix}_{uuid[:8]}_{sanitized_name}")
+        except docker.errors.NotFound:
+            pass
+    return None
+
+
+def _ingest_module_output(c: Any, uuid: str, module_name: str, output_dir: str) -> None:
+    """Parse module JSON output and store it in scan_results if not already present."""
+    output_file = os.path.join(output_dir, f"{module_name}_output.json")
+    if not os.path.exists(output_file):
+        return
+    try:
+        parsed_data = clean_and_parse_json(output_file)
+        content_str = json.dumps(parsed_data) if parsed_data else "{}"
+        c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_name))
+        if not c.fetchone():
+            c.execute(
+                "INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
+                (uuid, module_name, content_str, time.time()),
+            )
+    except Exception:
+        logging.exception("Failed to ingest %s for scan %s", module_name, uuid)
+
+
+def _handle_exited_container(c: Any, uuid: str, module_name: str, output_dir: Optional[str], container: Any) -> None:
+    """Handle a container that has exited: ingest output, mark COMPLETED, remove container."""
+    if module_name == "linux.pagecache.RecoverFs" and output_dir:
+        process_recover_fs(output_dir)
+    if output_dir:
+        _ingest_module_output(c, uuid, module_name, output_dir)
+    c.execute(
+        "UPDATE scan_module_status SET status = 'COMPLETED', updated_at = ? WHERE scan_id = ? AND module = ?",
+        (time.time(), uuid, module_name),
+    )
+    try:
+        container.remove()
+    except docker.errors.APIError as rm_err:
+        logging.debug("Container removal skipped (already gone or API error): %s", rm_err)
+
+
+def _refresh_module_from_docker(c: Any, docker_client: Any, uuid: str, mod_dict: dict, output_dir: Optional[str]) -> None:
+    """Update mod_dict status by inspecting the corresponding Docker container."""
+    module_name = mod_dict['module']
+    try:
+        container = _find_container(docker_client, uuid, module_name)
+        if container is None:
+            return
+        if container.status == 'running':
+            mod_dict['status'] = 'RUNNING'
+            c.execute(
+                "UPDATE scan_module_status SET status = 'RUNNING', updated_at = ? WHERE scan_id = ? AND module = ?",
+                (time.time(), uuid, module_name),
+            )
+        elif container.status == 'exited':
+            _handle_exited_container(c, uuid, module_name, output_dir, container)
+            mod_dict['status'] = 'COMPLETED'
+    except Exception:
+        logging.exception("Exception checking container for module %s", module_name)
+
+
+def _status_list_from_results(c: Any, uuid: str) -> list[dict]:
+    """Build a status list from scan_results when no scan_module_status rows exist."""
+    c.execute("SELECT module FROM scan_results WHERE scan_id = ?", (uuid,))
+    return [{"module": r['module'], "status": "COMPLETED", "error_message": None} for r in c.fetchall()]
+
+
+def _status_list_from_output_dir(output_dir: str) -> list[dict]:
+    """Infer completed modules by scanning output JSON files on disk."""
+    status_list = []
+    for jf in glob.glob(os.path.join(output_dir, "*_output.json")):
+        basename = os.path.basename(jf)
+        if basename.endswith("_output.json"):
+            status_list.append({
+                "module": basename[:-len("_output.json")],
+                "status": "COMPLETED",
+                "error_message": None,
+            })
+    return status_list
+
+
+def _append_strings_module(status_list: list[dict], output_dir: str) -> None:
+    """Add a 'strings' entry if the strings output file exists and isn't already listed."""
+    strings_path = os.path.join(output_dir, "strings_output.txt")
+    if os.path.exists(strings_path) and not any(m['module'] == 'strings' for m in status_list):
+        status_list.append({"module": "strings", "status": "COMPLETED"})
+
+
 @scan_bp.route('/scans/<uuid>/modules', methods=['GET'])
 def get_scan_modules_status(uuid: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    
+
     try:
         c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
         scan_row = c.fetchone()
         output_dir = scan_row['output_dir'] if scan_row else None
-        
+
         c.execute("SELECT module, status, error_message FROM scan_module_status WHERE scan_id = ?", (uuid,))
         rows = c.fetchall()
-        
-        status_list = []
-        docker_client = None
-        
+
         if rows:
+            docker_client = None
+            status_list = []
             for row in rows:
                 mod_dict = dict(row)
-                module_name = mod_dict['module']
-                
-                if mod_dict['status'] in ['PENDING', 'RUNNING']:
-                    sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', module_name)
-                    container_names = [f"vol3_{uuid[:8]}_{sanitized_name}", f"vol2_{uuid[:8]}_{sanitized_name}"]
-                    
-                    try:
-                        if docker_client is None:
-                            docker_client = docker.from_env()
-                        
-                        container = None
-                        for c_name in container_names:
-                            try:
-                                container = docker_client.containers.get(c_name)
-                                break
-                            except docker.errors.NotFound:
-                                pass
-                                
-                        if container:
-                            container_status = container.status
-                            
-                            if container_status == 'running':
-                                mod_dict['status'] = 'RUNNING'
-                                c.execute("UPDATE scan_module_status SET status = 'RUNNING', updated_at = ? WHERE scan_id = ? AND module = ?",
-                                          (time.time(), uuid, module_name))
-                            elif container_status == 'exited':
-                                if module_name == "linux.pagecache.RecoverFs" and output_dir:
-                                     process_recover_fs(output_dir)
-
-                                if output_dir:
-                                    output_file = os.path.join(output_dir, f"{module_name}_output.json")
-                                    if os.path.exists(output_file):
-                                        try:
-                                            parsed_data = clean_and_parse_json(output_file)
-                                            content_str = json.dumps(parsed_data) if parsed_data else "{}"
-                                            c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_name))
-                                            if not c.fetchone():
-                                                c.execute("INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
-                                                          (uuid, module_name, content_str, time.time()))
-                                        except Exception as e:
-                                            logging.error(f"Failed to ingest {module_name}: {e}", exc_info=True)
-                                
-                                mod_dict['status'] = 'COMPLETED'
-                                c.execute("UPDATE scan_module_status SET status = 'COMPLETED', updated_at = ? WHERE scan_id = ? AND module = ?",
-                                          (time.time(), uuid, module_name))
-                                
-                                try:
-                                    container.remove()
-                                except Exception as rm_err:
-                                    logging.debug(f"Container already removed or removal failed: {rm_err}")
-                                    
-                    except Exception as e:
-                        logging.error(f"Exception checking container {container_names}: {e}", exc_info=True)
-                
+                if mod_dict['status'] in ('PENDING', 'RUNNING'):
+                    if docker_client is None:
+                        docker_client = docker.from_env()
+                    _refresh_module_from_docker(c, docker_client, uuid, mod_dict, output_dir)
                 status_list.append(mod_dict)
-            
             conn.commit()
         else:
-            c.execute("SELECT module FROM scan_results WHERE scan_id = ?", (uuid,))
-            result_rows = c.fetchall()
-            for r in result_rows:
-                status_list.append({
-                    "module": r['module'], 
-                    "status": "COMPLETED", 
-                    "error_message": None
-                })
-        
-        if len(status_list) == 0 and output_dir and os.path.isdir(output_dir):
-            json_files = glob.glob(os.path.join(output_dir, "*_output.json"))
-            for jf in json_files:
-                basename = os.path.basename(jf)
-                if basename.endswith("_output.json"):
-                    module_name = basename[:-len("_output.json")]
-                    status_list.append({
-                        "module": module_name,
-                        "status": "COMPLETED",
-                        "error_message": None
-                    })
+            status_list = _status_list_from_results(c, uuid)
+
+        if not status_list and output_dir and os.path.isdir(output_dir):
+            status_list = _status_list_from_output_dir(output_dir)
 
         if output_dir:
-            strings_path = os.path.join(output_dir, "strings_output.txt")
-            if os.path.exists(strings_path):
-                if not any(m['module'] == 'strings' for m in status_list):
-                    status_list.append({"module": "strings", "status": "COMPLETED"})
+            _append_strings_module(status_list, output_dir)
 
         return jsonify(status_list)
 
@@ -528,42 +549,71 @@ def get_scan_modules_status(uuid: str) -> Response:
     finally:
         conn.close()
 
+def _paginate_data(data: list[Any] | dict[str, Any], limit: int, offset: int) -> list[Any] | dict[str, Any]:
+    """Slice a list result by offset/limit; dicts are returned unchanged."""
+    if isinstance(data, list) and limit > 0:
+        return data[offset : offset + limit]
+    return data
+
+
+def _parse_int_param(value: str | None, default: int) -> int:
+    try:
+        return int(value) if value is not None else default
+    except ValueError:
+        return default
+    """Return the RecoverFs filesystem tree for the given scan."""
+    c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
+    scan = c.fetchone()
+    if not scan:
+        return jsonify({"error": "Scan not found"}), 404
+    extract_dir = os.path.join(scan['output_dir'], "recovered_fs")
+    if os.path.exists(extract_dir):
+        return jsonify(build_fs_tree(extract_dir))
+    return jsonify({"error": "RecoverFs output directory not found"}), 404
+
+
+def _get_all_module_results(output_dir: str, paginate_data: Callable) -> Response:
+    """Collect and return results for every module output file in output_dir."""
+    results = {}
+    for f in glob.glob(os.path.join(output_dir, "*_output.json")):
+        filename = os.path.basename(f)
+        if filename.endswith("_output.json"):
+            module_name = filename[:-12]
+            parsed_data = clean_and_parse_json(f)
+            if parsed_data is not None:
+                results[module_name] = paginate_data(parsed_data)
+    return jsonify(results)
+
+
+def _get_single_module_result(output_dir: str, module_param: str, paginate_data: Callable) -> Response:
+    """Return results for a specific module from its output file on disk."""
+    target_file = os.path.join(output_dir, f"{module_param}_output.json")
+    if not os.path.exists(target_file):
+        return jsonify({"error": f"Module {module_param} output not found"}), 404
+    parsed_data = clean_and_parse_json(target_file)
+    if parsed_data is None:
+        return jsonify({"error": f"Failed to parse JSON for {module_param}"}), 500
+    return jsonify(paginate_data(parsed_data))
+
+
 @scan_bp.route('/results/<uuid>', methods=['GET'])
 def get_scan_results(uuid: str) -> Response:
     module_param = request.args.get('module')
     if not module_param:
         return jsonify({"error": "Missing 'module' query parameter"}), 400
-        
-    try:
-        limit = int(request.args.get('limit', 0))
-    except ValueError:
-        limit = 0
-        
-    try:
-        offset = int(request.args.get('offset', 0))
-    except ValueError:
-        offset = 0
 
-    def paginate_data(data):
-        if isinstance(data, list) and limit > 0:
-            return data[offset : offset + limit]
-        return data
+    limit = _parse_int_param(request.args.get('limit'), 0)
+    offset = _parse_int_param(request.args.get('offset'), 0)
+    paginate = lambda data: _paginate_data(data, limit, offset)
 
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    
-    # RecoverFs: dynamically build tree from the recovered_fs/ directory on disk
+
     if module_param == 'linux.pagecache.RecoverFs':
-        c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
-        scan = c.fetchone()
+        result = _get_recoverfs_result(c, uuid)
         conn.close()
-        if not scan:
-            return jsonify({"error": "Scan not found"}), 404
-        extract_dir = os.path.join(scan['output_dir'], "recovered_fs")
-        if os.path.exists(extract_dir):
-            return jsonify(build_fs_tree(extract_dir))
-        return jsonify({"error": "RecoverFs output directory not found"}), 404
+        return result
 
     c.execute("SELECT content FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, module_param))
     row = c.fetchone()
@@ -571,42 +621,24 @@ def get_scan_results(uuid: str) -> Response:
         conn.close()
         try:
             data = json.loads(row['content'])
-            return jsonify(paginate_data(data))
+            return jsonify(paginate(data))
         except (json.JSONDecodeError, KeyError):
             return jsonify({"error": "Failed to parse stored content", "raw": row['content']}), 500
 
     c.execute("SELECT output_dir FROM scans WHERE uuid = ?", (uuid,))
     scan = c.fetchone()
     conn.close()
-    
+
     if not scan:
-         return jsonify({"error": "Scan not found"}), 404
-    
+        return jsonify({"error": "Scan not found"}), 404
+
     output_dir = scan['output_dir']
     if not output_dir or not os.path.exists(output_dir):
-         return jsonify({"error": "Output directory not found"}), 404
+        return jsonify({"error": "Output directory not found"}), 404
 
     if module_param == 'all':
-        results = {}
-        json_files = glob.glob(os.path.join(output_dir, "*_output.json"))
-        for f in json_files:
-            filename = os.path.basename(f)
-            if filename.endswith("_output.json"):
-                module_name = filename[:-12]
-                parsed_data = clean_and_parse_json(f)
-                if parsed_data is not None:
-                    results[module_name] = paginate_data(parsed_data)
-        return jsonify(results)
-    else:
-        target_file = os.path.join(output_dir, f"{module_param}_output.json")
-        if not os.path.exists(target_file):
-            return jsonify({"error": f"Module {module_param} output not found"}), 404
-            
-        parsed_data = clean_and_parse_json(target_file)
-        if parsed_data is None:
-             return jsonify({"error": f"Failed to parse JSON for {module_param}"}), 500
-             
-        return jsonify(paginate_data(parsed_data))
+        return _get_all_module_results(output_dir, paginate)
+    return _get_single_module_result(output_dir, module_param, paginate)
 
 @scan_bp.route('/scans', methods=['GET'])
 def list_scans() -> Response:
@@ -651,7 +683,7 @@ def rename_scan(uuid: str) -> Response:
     return jsonify({"status": "updated"})
 
 @scan_bp.route('/scans/<uuid>', methods=['DELETE'])
-def delete_scan(uuid):
+def delete_scan(uuid: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -664,8 +696,8 @@ def delete_scan(uuid):
         import shutil
         try:
             shutil.rmtree(row['output_dir'])
-        except Exception as e:
-            logging.error(f"Error deleting output dir: {e}")
+        except Exception:
+            logging.exception("Error deleting output dir %s", row['output_dir'])
             
     # Delete related records first (foreign key constraints)
     c.execute("DELETE FROM scan_module_status WHERE scan_id = ?", (uuid,))
@@ -676,7 +708,7 @@ def delete_scan(uuid):
     return jsonify({"status": "deleted"})
 
 @scan_bp.route('/scans/<uuid>/download', methods=['GET'])
-def download_scan_zip(uuid):
+def download_scan_zip(uuid: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -784,13 +816,22 @@ def execute_plugin(uuid: str) -> Response:
     args_obj = argparse.Namespace(**default_args)
     args_obj.scan_id = uuid
 
-    def background_single_run(s_id, args):
+    def background_single_run(s_id: str, args: argparse.Namespace) -> None:
         try:
             if _require_runner():
                 runner_func(args)
             _store_plugin_result(s_id, args.commands, args.output_dir)
-        except Exception as e:
-            logging.error(f"Manual plugin execution failed: {e}")
+        except Exception:
+            logging.exception("Manual plugin execution failed for scan %s, module %s", s_id, args.commands)
+            conn_err = get_db_connection()
+            try:
+                conn_err.execute(
+                    "UPDATE scan_module_status SET status = 'FAILED', error_message = 'Execution error', updated_at = ? WHERE scan_id = ? AND module = ?",
+                    (time.time(), s_id, args.commands),
+                )
+                conn_err.commit()
+            finally:
+                conn_err.close()
 
     try:
         conn = get_db_connection()
@@ -803,8 +844,8 @@ def execute_plugin(uuid: str) -> Response:
                       (uuid, module, 'RUNNING', time.time()))
         conn.commit()
         conn.close()
-    except Exception as e:
-        logging.error(f"Failed to update module status for {module}: {e}")
+    except Exception:
+        logging.exception("Failed to update module status for %s", module)
 
     thread = threading.Thread(target=background_single_run, args=(uuid, args_obj))
     thread.daemon = True
@@ -813,7 +854,7 @@ def execute_plugin(uuid: str) -> Response:
     return jsonify({"status": "started", "module": module})
 
 @scan_bp.route('/stats', methods=['GET'])
-def get_stats():
+def get_stats() -> Response:
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM scans")
@@ -841,7 +882,7 @@ def get_stats():
     })
 
 @scan_bp.route('/results/<uuid>/fs/list', methods=['GET'])
-def list_fs_files(uuid):
+def list_fs_files(uuid: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -869,7 +910,7 @@ def list_fs_files(uuid):
     return jsonify({"files": file_list})
 
 @scan_bp.route('/results/<uuid>/fs/view', methods=['GET'])
-def view_fs_file(uuid):
+def view_fs_file(uuid: str) -> Response:
     key_path = request.args.get('path')
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 1000, type=int)
@@ -905,7 +946,7 @@ def view_fs_file(uuid):
     if query:
         try:
             cmd = ['grep', '-i', '-n', '-m', str(limit), query, safe_path]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace')
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace', timeout=30)
             content = result.stdout.splitlines()
             total_lines = len(content)
         except Exception as e:
@@ -913,7 +954,7 @@ def view_fs_file(uuid):
     else:
         try:
             wc_cmd = ['wc', '-l', safe_path]
-            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, errors='replace')
+            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)
             if wc_res.returncode == 0 and wc_res.stdout:
                 total_lines = int(wc_res.stdout.split()[0])
 
@@ -921,7 +962,7 @@ def view_fs_file(uuid):
             end_line = start_line + limit - 1
 
             sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', safe_path]
-            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace')
+            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)
             content = sed_res.stdout.splitlines()
         except Exception as e:
             return jsonify({"error": f"Failed to read file: {str(e)}"}), 500
@@ -934,7 +975,7 @@ def view_fs_file(uuid):
     })
 
 @scan_bp.route('/results/<uuid>/fs/download', methods=['GET'])
-def download_fs_file(uuid):
+def download_fs_file(uuid: str) -> Response:
     key_path = request.args.get('path')
     if not key_path:
         return jsonify({"error": "Missing path"}), 400
@@ -963,7 +1004,7 @@ def download_fs_file(uuid):
     return send_file(safe_path, as_attachment=True)
 
 @scan_bp.route('/results/<uuid>/strings', methods=['GET'])
-def get_strings_content(uuid):
+def get_strings_content(uuid: str) -> Response:
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 1000, type=int)
     query = request.args.get('q', '')
@@ -996,7 +1037,7 @@ def get_strings_content(uuid):
             if context > 0:
                 cmd += ['-C', str(context)]
             cmd += ['-m', str(limit), query, strings_file]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
             content = result.stdout.splitlines()
             total_lines = len(content) 
         except Exception as e:
@@ -1004,7 +1045,7 @@ def get_strings_content(uuid):
     else:
         try:
             wc_cmd = ['wc', '-l', strings_file]
-            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True)
+            wc_res = subprocess.run(wc_cmd, stdout=subprocess.PIPE, text=True, timeout=30)
             if wc_res.returncode == 0 and wc_res.stdout:
                 total_lines = int(wc_res.stdout.split()[0])
             
@@ -1012,7 +1053,7 @@ def get_strings_content(uuid):
             end_line = start_line + limit - 1
             
             sed_cmd = ['sed', '-n', f'{start_line},{end_line}p', strings_file]
-            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace')
+            sed_res = subprocess.run(sed_cmd, stdout=subprocess.PIPE, text=True, errors='replace', timeout=30)
             content = sed_res.stdout.splitlines()
         except Exception as e:
             return jsonify({"error": f"Failed to read file: {str(e)}"}), 500
@@ -1026,7 +1067,7 @@ def get_strings_content(uuid):
     })
 
 @scan_bp.route('/results/<uuid>/strings/download', methods=['GET'])
-def download_strings(uuid):
+def download_strings(uuid: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()

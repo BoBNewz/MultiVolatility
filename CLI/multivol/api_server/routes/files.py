@@ -3,7 +3,8 @@ import sqlite3
 import time
 import shutil
 import logging
-from flask import Blueprint, request, jsonify, send_from_directory
+from typing import Any
+from flask import Blueprint, request, jsonify, send_from_directory, Response
 from werkzeug.utils import secure_filename
 from multivol.api_server.config import UPLOAD_FOLDER, STORAGE_DIR, BASE_DIR
 from multivol.api_server.utils import get_file_hash
@@ -12,7 +13,7 @@ from multivol.api_server.database import get_db_connection
 files_bp = Blueprint('files_bp', __name__)
 
 @files_bp.route('/upload', methods=['POST'])
-def upload_file():
+def upload_file() -> Response:
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
     file = request.files['file']
@@ -40,7 +41,7 @@ def upload_file():
             return jsonify({"error": str(e)}), 500
 
 @files_bp.route('/symbols', methods=['GET'])
-def list_symbols():
+def list_symbols() -> Response:
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
     symbols = []
@@ -51,7 +52,7 @@ def list_symbols():
     return jsonify(symbols)
 
 @files_bp.route('/symbols', methods=['POST'])
-def upload_symbol():
+def upload_symbol() -> Response:
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
     if 'file' not in request.files:
@@ -71,7 +72,7 @@ def upload_symbol():
     return jsonify({"status": "success"})
 
 @files_bp.route('/symbols', methods=['DELETE'])
-def delete_symbol():
+def delete_symbol() -> Response:
     symbols_dir = os.path.join(BASE_DIR, 'volatility3_symbols')
     os.makedirs(symbols_dir, exist_ok=True)
     path = request.args.get('path')
@@ -100,9 +101,9 @@ def _get_dir_size(start_path: str) -> int:
     return total
 
 
-def _load_case_name_map() -> dict:
+def _load_case_name_map() -> dict[str, str]:
     """Return a dict mapping dump filename → case name from the scans table."""
-    case_map: dict = {}
+    case_map: dict[str, str] = {}
     try:
         conn = get_db_connection()
         conn.row_factory = sqlite3.Row
@@ -133,7 +134,7 @@ def _resolve_source_dump_name(dump_base: str) -> str:
     return dump_base
 
 
-def _build_extracted_group(item: str, path: str, processed_dumps: set) -> dict:
+def _build_extracted_group(item: str, path: str, processed_dumps: set[str]) -> dict[str, Any]:
     """Build an evidence-group dict for a *_extracted directory."""
     dump_base = item[:-10]  # strip _extracted
     files = []
@@ -146,7 +147,7 @@ def _build_extracted_group(item: str, path: str, processed_dumps: set) -> dict:
                 files.append({"id": os.path.join(item, sub), "name": sub,
                                "size": os.path.getsize(subpath), "type": "Extracted File"})
     except Exception as e:
-        logging.error("Error reading subdir %s: %s", path, e)
+        logging.exception("Error reading subdir %s", path)
 
     source_dump = _resolve_source_dump_name(dump_base)
     if source_dump and source_dump != "Unknown Source":
@@ -165,7 +166,7 @@ def _build_extracted_group(item: str, path: str, processed_dumps: set) -> dict:
     }
 
 
-def _build_dump_group(item: str, path: str, case_map: dict) -> dict:
+def _build_dump_group(item: str, path: str, case_map: dict[str, str]) -> dict[str, Any]:
     """Build an evidence-group dict for a standalone dump file."""
     display_name = case_map.get(item, "Unassigned Evidence")
     child_file = {
@@ -185,7 +186,7 @@ def _build_dump_group(item: str, path: str, case_map: dict) -> dict:
 
 
 @files_bp.route('/evidences', methods=['GET'])
-def list_evidences():
+def list_evidences() -> Response:
     try:
         all_items = [i for i in os.listdir(STORAGE_DIR)
                      if not (i.startswith("scans.db") or i.endswith(".sha256"))]
@@ -194,8 +195,8 @@ def list_evidences():
         all_items = []
 
     case_map = _load_case_name_map()
-    evidences: list = []
-    processed_dumps: set = set()
+    evidences: list[dict[str, Any]] = []
+    processed_dumps: set[str] = set()
 
     for item in all_items:
         path = os.path.join(STORAGE_DIR, item)
@@ -210,7 +211,7 @@ def list_evidences():
     return jsonify(evidences)
 
 @files_bp.route('/evidence/<filename>', methods=['DELETE'])
-def delete_evidence(filename):
+def delete_evidence(filename: str) -> Response:
     # Strip virtual group prefix if present
     if filename.startswith("group_"):
         filename = filename[6:]
@@ -240,7 +241,7 @@ def delete_evidence(filename):
     return jsonify({"error": "File not found"}), 404
 
 @files_bp.route('/evidence/<path:filename>/download', methods=['GET'])
-def download_evidence(filename):
+def download_evidence(filename: str) -> Response:
     # Allow nested paths for extracted files
     # send_from_directory handles traversal attacks (mostly), but we shouldn't use secure_filename on the whole path
     return send_from_directory(STORAGE_DIR, filename, as_attachment=True)

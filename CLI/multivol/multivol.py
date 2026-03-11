@@ -1,6 +1,7 @@
 # multivol.py
 # Entry point for MultiVolatility: orchestrates running Volatility2 and Volatility3 memory analysis in parallel using multiprocessing.
-import multiprocessing, time, os, argparse, sys
+import multiprocessing, time, os, argparse, sys, logging
+from typing import Any, Union
 import docker
 from datetime import datetime
 from rich.console import Console
@@ -21,11 +22,11 @@ except ImportError:
 
 
 
-def vol3_wrapper(packed_args):
+def vol3_wrapper(packed_args: Any) -> tuple[str, bool]:
     instance, args = packed_args
     return instance.execute_command_volatility3(*args)
 
-def vol2_wrapper(packed_args):
+def vol2_wrapper(packed_args: Any) -> tuple[str, bool]:
     instance, args = packed_args
     return instance.execute_command_volatility2(*args)
 
@@ -50,9 +51,10 @@ def _ensure_docker_image(image_name: str, console: Console) -> None:
             console.print(f"[bold green][*] Image {image_name} ready.[/bold green]")
     except Exception as e:
         console.print(f"[bold red]Warning: Docker check failed: {e}[/bold red]")
+        logging.warning("Docker image check failed for %s", image_name, exc_info=True)
 
 
-def _resolve_commands(arguments: argparse.Namespace) -> tuple:
+def _resolve_commands(arguments: argparse.Namespace) -> tuple[list[str], Union[MultiVolatility2, MultiVolatility3]]:
     """Return (commands, vol_instance) based on arguments.mode.
 
     Raises ValueError for unknown modes.
@@ -83,7 +85,7 @@ def _resolve_commands(arguments: argparse.Namespace) -> tuple:
         raise ValueError(f"Unknown mode: {arguments.mode!r}. Expected 'vol2' or 'vol3'.")
 
 
-def _print_scan_summary(console: Console, successful_modules: list, failed_modules: list,
+def _print_scan_summary(console: Console, successful_modules: list[str], failed_modules: list[str],
                          arguments: argparse.Namespace) -> None:
     """Print success/failure counts and per-module status."""
     console.print(f"\n[bold green]Scan Complete![/bold green] "
@@ -98,6 +100,66 @@ def _print_scan_summary(console: Console, successful_modules: list, failed_modul
             console.print(f"  - [red]{mod}[/red]")
             if arguments.format == "json":
                 console.print(f"[red][!] Failed to validate JSON for {mod}[/red]")
+
+
+def _run_vol2_pool(pool: Any, vol_instance: MultiVolatility2, commands: list[str],
+                   arguments: argparse.Namespace, output_dir: str, lock: Any) -> tuple[list[str], list[str]]:
+    """Run vol2 commands via pool and return (successful, failed) module lists."""
+    vol2_cfg = Vol2RunConfig(
+        dump=os.path.basename(arguments.dump),
+        dump_file_path=os.path.abspath(arguments.dump),
+        profiles_path=arguments.profiles_path,
+        docker_image=arguments.image,
+        profile=arguments.profile,
+        output_dir=output_dir,
+        format=arguments.format,
+        host_path=arguments.host_path,
+        show_commands=getattr(arguments, "debug", False),
+    )
+    tasks = [(vol_instance, (cmd, vol2_cfg, False, lock)) for cmd in commands]
+    successful, failed = [], []
+    for command_name, is_success in pool.imap_unordered(vol2_wrapper, tasks):
+        (successful if is_success else failed).append(command_name)
+    return successful, failed
+
+
+def _run_vol3_pool(pool: Any, vol_instance: MultiVolatility3, commands: list[str],
+                   arguments: argparse.Namespace, output_dir: str, lock: Any,
+                   console: Console) -> tuple[list[str], list[str]]:
+    """Run vol3 commands via pool, including info bootstrap and strings, return (successful, failed)."""
+    def _make_vol3_cfg() -> Vol3RunConfig:
+        return Vol3RunConfig(
+            dump=os.path.basename(arguments.dump),
+            dump_dir=os.path.abspath(arguments.dump),
+            symbols_path=arguments.symbols_path,
+            docker_image=arguments.image,
+            cache_dir=os.path.abspath(arguments.cache_path),
+            plugin_dir=os.path.abspath(arguments.plugins_dir),
+            output_dir=output_dir,
+            format=arguments.format,
+            host_path=arguments.host_path,
+            fetch_symbols=getattr(arguments, "fetch_symbol", False),
+            show_commands=getattr(arguments, "debug", False),
+            custom_symbol=getattr(arguments, "custom_symbol", None),
+            scan_id=getattr(arguments, "scan_id", None),
+        )
+
+    if arguments.windows or arguments.linux:
+        info_module = "windows.info.Info" if arguments.windows else "linux.bash.Bash"
+        if info_module in commands:
+            commands.remove(info_module)
+            vol_instance.execute_command_volatility3(info_module, _make_vol3_cfg(), False, lock)
+
+    tasks = [(vol_instance, (cmd, _make_vol3_cfg(), False, lock)) for cmd in commands]
+    successful, failed = [], []
+    for command_name, is_success in pool.imap_unordered(vol3_wrapper, tasks):
+        (successful if is_success else failed).append(command_name)
+
+    console.print("\n[+] Starting strings...")
+    get_strings(os.path.basename(arguments.dump), os.path.abspath(arguments.dump),
+                output_dir, arguments.image, lock, arguments.host_path)
+    console.print("\n[+] Strings complete !")
+    return successful, failed
 
 
 def run_analysis(arguments: argparse.Namespace) -> None:
@@ -125,62 +187,39 @@ def run_analysis(arguments: argparse.Namespace) -> None:
     manager = multiprocessing.Manager()
     lock = manager.Lock()
 
-    successful_modules: list = []
-    failed_modules: list = []
-
     with multiprocessing.Pool(processes=max_processes) as pool:
         if arguments.mode == "vol2":
-            vol2_cfg = Vol2RunConfig(
-                dump=os.path.basename(arguments.dump),
-                dump_file_path=os.path.abspath(arguments.dump),
-                profiles_path=arguments.profiles_path,
-                docker_image=arguments.image,
-                profile=arguments.profile,
-                output_dir=output_dir,
-                format=arguments.format,
-                host_path=arguments.host_path,
-                show_commands=getattr(arguments, "debug", False),
-            )
-            tasks = [(vol_instance, (cmd, vol2_cfg, False, lock)) for cmd in commands]
-            for command_name, is_success in pool.imap_unordered(vol2_wrapper, tasks):
-                (successful_modules if is_success else failed_modules).append(command_name)
-
+            successful_modules, failed_modules = _run_vol2_pool(
+                pool, vol_instance, commands, arguments, output_dir, lock)
         else:
-            def _make_vol3_cfg() -> Vol3RunConfig:
-                return Vol3RunConfig(
-                    dump=os.path.basename(arguments.dump),
-                    dump_dir=os.path.abspath(arguments.dump),
-                    symbols_path=arguments.symbols_path,
-                    docker_image=arguments.image,
-                    cache_dir=os.path.abspath(arguments.cache_path),
-                    plugin_dir=os.path.abspath(arguments.plugins_dir),
-                    output_dir=output_dir,
-                    format=arguments.format,
-                    host_path=arguments.host_path,
-                    fetch_symbols=getattr(arguments, "fetch_symbol", False),
-                    show_commands=getattr(arguments, "debug", False),
-                    custom_symbol=getattr(arguments, "custom_symbol", None),
-                    scan_id=getattr(arguments, "scan_id", None),
-                )
-
-            # Run info/bootstrap module first to ensure symbols are cached
-            if arguments.windows or arguments.linux:
-                info_module = "windows.info.Info" if arguments.windows else "linux.bash.Bash"
-                if info_module in commands:
-                    commands.remove(info_module)
-                    vol_instance.execute_command_volatility3(info_module, _make_vol3_cfg(), False, lock)
-
-            tasks = [(vol_instance, (cmd, _make_vol3_cfg(), False, lock)) for cmd in commands]
-            for command_name, is_success in pool.imap_unordered(vol3_wrapper, tasks):
-                (successful_modules if is_success else failed_modules).append(command_name)
-
-            console.print("\n[+] Starting strings...")
-            get_strings(os.path.basename(arguments.dump), os.path.abspath(arguments.dump),
-                        output_dir, arguments.image, lock, arguments.host_path)
-            console.print("\n[+] Strings complete !")
+            successful_modules, failed_modules = _run_vol3_pool(
+                pool, vol_instance, commands, arguments, output_dir, lock, console)
 
     _print_scan_summary(console, successful_modules, failed_modules, arguments)
     console.print(f"\n[bold yellow]⏱️  Time : {time.time() - start_time:.2f} seconds for {len(commands)} modules.[/bold yellow]")
+
+
+def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Validate parsed CLI arguments, printing help and raising SystemExit on invalid input."""
+    if args.mode is None:
+        parser.print_help()
+        raise SystemExit(1)
+
+    if not args.linux and not args.windows:
+        print("[-] --linux or --windows required.")
+        raise SystemExit(1)
+
+    if getattr(args, "fetch_symbol", False) and not args.linux:
+        print("[-] --fetch-symbol only available with --linux")
+        raise SystemExit(1)
+
+    if args.mode == "vol2" and getattr(args, "fetch_symbol", False):
+        print("[-] --fetch-symbol only available with vol3")
+        raise SystemExit(1)
+
+    if args.format not in ("json", "text"):
+        print("Format not supported !")
+        raise SystemExit(1)
 
 
 def main():
@@ -237,29 +276,12 @@ def main():
         except ImportError:
             from api_server import run_api
         run_api(run_analysis, debug_mode=args.dev)
-        sys.exit(0)
+        return
 
-    if args.mode is None:
-        parser.print_help()
-        sys.exit(1)
+    _validate_args(parser, args)
 
-    # Validate required OS type
-    if not args.linux and not args.windows:
-        print("[-] --linux or --windows required.")
-        sys.exit(1)
-
-    if getattr(args, "fetch_symbol", False) and not args.linux:
-        print("[-] --fetch-symbol only available with --linux")
-        sys.exit(1)
-
-    if args.mode == "vol2" and getattr(args, "fetch_symbol", False):
-        print("[-] --fetch-symbol only available with vol3")
-        sys.exit(1)
-
-    # Validate output format
-    if (args.format != "json") and (args.format != "text"):
-        print("Format not supported !")
-        sys.exit(1)
+    # Start the runner with parsed arguments
+    run_analysis(args)
     
     # Start the runner with parsed arguments
     run_analysis(args)

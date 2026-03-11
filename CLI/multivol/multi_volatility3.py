@@ -101,8 +101,7 @@ class MultiVolatility3(MultiVolatilityBase):
                 pass
             except Exception as e:
                 self.safe_print(f"[!] Warning: Failed to cleanup existing container {container_name}: {e}", lock)
-
-            container = client.containers.run(
+                logging.warning("Failed to cleanup existing container %s", container_name, exc_info=True)
                 image=config.docker_image,
                 name=container_name,
                 command=cmd_with_redirect,
@@ -121,10 +120,8 @@ class MultiVolatility3(MultiVolatilityBase):
 
         except Exception as e:
              self.safe_print(f"[!] Error running {command}: {e}", lock)
+             logging.exception("Volatility3 container failed for %s", command)
              return (command, False)
-        
-        time.sleep(0.5)
-        if config.format == "json":
             try:
                 with open(output_file, "r") as f:
                     lines = f.readlines()
@@ -132,7 +129,7 @@ class MultiVolatility3(MultiVolatilityBase):
                      with open(output_file, "w") as f:
                         f.writelines(lines[2:])
             except OSError as e:
-                logging.warning(f"Could not trim JSON output for {command}: {e}")
+                logging.warning("Could not trim JSON output for %s", command, exc_info=True)
 
         if not quiet:
             self.safe_print(f"[+] {command} finished.", lock)
@@ -166,7 +163,7 @@ class MultiVolatility3(MultiVolatilityBase):
             logging.warning(f"Could not validate output for {command}: {e}")
             return (command, False)
 
-    def get_commands(self, opsys):
+    def get_commands(self, opsys: str) -> list[str]:
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
 

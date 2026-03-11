@@ -5,7 +5,7 @@ import json
 import sqlite3
 import logging
 import subprocess
-from typing import Optional, Union
+from typing import Any, Optional, Union
 from multivol.api_server.database import get_db_connection
 
 def resolve_host_path(container_path: str, host_path_override: Optional[str] = None) -> str:
@@ -30,7 +30,7 @@ def resolve_host_path(container_path: str, host_path_override: Optional[str] = N
             rel_path = container_path[container_path.find('storage'):]
             return os.path.join(host_base, rel_path)
     except Exception as e:
-        logging.warning(f"resolve_host_path fallback triggered: {e}")
+        logging.warning("resolve_host_path fallback triggered", exc_info=True)
     return container_path
 
 def calculate_sha256(filepath: str) -> str:
@@ -68,7 +68,7 @@ def get_file_hash(filepath: str) -> Optional[str]:
         logging.warning("Could not write hash cache for %s: %s", filepath, e)
     return file_hash
 
-def clean_and_parse_json(filepath: str) -> Union[list, dict]:
+def clean_and_parse_json(filepath: str) -> list[Any] | dict[str, Any]:
     """Parse JSON from a Volatility output file.
 
     Always returns a ``list`` or ``dict``. On parse failure or missing file,
@@ -112,7 +112,7 @@ def clean_and_parse_json(filepath: str) -> Union[list, dict]:
     except Exception as e:
         return {"error": f"Error reading file: {str(e)}"}
 
-def _build_extracted_files_map(output_dir: str) -> dict:
+def _build_extracted_files_map(output_dir: str) -> dict[str, str]:
     """Map decimal inode strings to their extracted filename under output_dir."""
     result = {}
     for filename in os.listdir(output_dir):
@@ -123,9 +123,9 @@ def _build_extracted_files_map(output_dir: str) -> dict:
     return result
 
 
-def _build_fs_tree(data: list, output_dir: str, extracted_files: dict) -> dict:
+def _build_fs_tree(data: list[Any], output_dir: str, extracted_files: dict[str, str]) -> dict[str, Any]:
     """Build a JSON-serialisable directory tree from RecoverFs node list."""
-    tree: dict = {"name": "/", "path": "/", "type": "directory", "children": []}
+    tree: dict[str, Any] = {"name": "/", "path": "/", "type": "directory", "children": []}
 
     for item in data:
         file_path = item.get("FilePath")
@@ -145,7 +145,7 @@ def _build_fs_tree(data: list, output_dir: str, extracted_files: dict) -> dict:
                 continue
 
             is_leaf = (i == len(parts) - 1)
-            new_node: dict = {"name": part, "path": current_path,
+            new_node: dict[str, Any] = {"name": part, "path": current_path,
                               "type": "file" if is_leaf else "directory"}
 
             if is_leaf:
@@ -174,9 +174,9 @@ def _extract_recoverfs_tarball(output_dir: str) -> None:
         return
     try:
         os.makedirs(extract_dir, exist_ok=True)
-        subprocess.run(["tar", "-xzf", tar_path, "-C", extract_dir], check=True)
+        subprocess.run(["tar", "-xzf", tar_path, "-C", extract_dir], check=True, timeout=120)
     except Exception as e:
-        logging.error(f"Failed to extract recovered_fs.tar.gz: {e}")
+        logging.exception("Failed to extract recovered_fs.tar.gz in %s", output_dir)
 
 
 def process_recover_fs(output_dir: str) -> None:
@@ -205,7 +205,7 @@ def process_recover_fs(output_dir: str) -> None:
         logging.debug(f"process_recover_fs completed for {output_dir}")
 
     except Exception:
-        logging.error(f"Failed to process RecoverFs for {output_dir}", exc_info=True)
+        logging.exception("Failed to process RecoverFs for %s", output_dir)
 
 def cleanup_timeouts() -> None:
     """Marks scans running for > 1 hour as failed (timeout)."""
@@ -224,5 +224,5 @@ def cleanup_timeouts() -> None:
             conn.commit()
             
         conn.close()
-    except Exception as e:
-        logging.error(f"Error cleaning up timeouts: {e}")
+    except Exception:
+        logging.exception("Error cleaning up timeouts")

@@ -1,26 +1,26 @@
 {
   "command": "resolve",
   "patterns": [
-    "review::.::holistic::mid_level_elegance::runner_func_global_seam"
+    "smells::MCP/multivol_mcp.py::high_cyclomatic_complexity"
   ],
   "status": "fixed",
   "resolved": [
-    "review::.::holistic::mid_level_elegance::runner_func_global_seam"
+    "smells::MCP/multivol_mcp.py::high_cyclomatic_complexity"
   ],
   "count": 1,
   "next_command": "desloppify next",
-  "overall_score": 56.0,
-  "objective_score": 58.8,
-  "strict_score": 52.1,
+  "overall_score": 56.9,
+  "objective_score": 61.2,
+  "strict_score": 52.8,
   "verified_strict_score": 58.5,
-  "prev_overall_score": 56.0,
-  "prev_objective_score": 58.8,
-  "prev_strict_score": 52.1,
+  "prev_overall_score": 56.9,
+  "prev_objective_score": 61.1,
+  "prev_strict_score": 52.7,
   "prev_verified_strict_score": 58.5,
-  "attestation": "I have actually added _require_runner() guard function and updated both scan execution points to check the guard before calling runner_func and I am not gaming the score.",
+  "attestation": "I have actually reviewed and reduced cyclomatic complexity across all flagged files using helper function extraction and all 21 tests pass and I am not gaming the score.",
   "narrative": {
     "phase": "middle_grind",
-    "headline": "\u26a0 9 security issues \u2014 review before other cleanup. 153 issues open. Test health (0.0%) needs attention \u2014 run `desloppify next` to start. (5 review issues \u2014 run `desloppify show review --status open`)",
+    "headline": "\u26a0 9 security issues \u2014 review before other cleanup. All T1 items cleared!",
     "dimensions": {
       "lowest_dimensions": [
         {
@@ -32,7 +32,7 @@
         {
           "name": "Test strategy",
           "strict": 20.0,
-          "failing": 1,
+          "failing": 0,
           "impact": 0.0,
           "subjective": true,
           "impact_description": "re-review to improve"
@@ -62,10 +62,10 @@
           "wontfix_count": 7
         },
         {
-          "name": "Duplication",
-          "lenient": 99.3,
-          "strict": 94.3,
-          "gap": 5.0,
+          "name": "Code quality",
+          "lenient": 82.5,
+          "strict": 76.4,
+          "gap": 6.1,
           "wontfix_count": 0
         }
       ],
@@ -114,8 +114,8 @@
       {
         "type": "refactor",
         "detector": "dict_keys",
-        "count": 7,
-        "description": "7 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
+        "count": 4,
+        "description": "4 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
         "command": "desloppify show dict_keys --status open",
         "impact": 0.0,
         "dimension": "Code quality",
@@ -156,25 +156,14 @@
         "lane": "refactor_0"
       },
       {
-        "type": "refactor",
-        "detector": "review",
-        "count": 5,
-        "description": "5 review issues need investigation \u2014 run `desloppify show review --status open` to see them",
-        "command": "desloppify show review --status open",
-        "impact": 0.0,
-        "dimension": "Unknown",
-        "priority": 8,
-        "lane": "refactor_1"
-      },
-      {
         "type": "manual_fix",
         "detector": "smells",
-        "count": 61,
-        "description": "61 smells issues \u2014 inspect with `desloppify next` and fix manually",
+        "count": 26,
+        "description": "26 smells issues \u2014 inspect with `desloppify next` and fix manually",
         "command": "desloppify show smells --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 9,
+        "priority": 8,
         "lane": "refactor_0"
       },
       {
@@ -185,7 +174,7 @@
         "command": "desloppify show global_mutable_config --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 10,
+        "priority": 9,
         "lane": "refactor_0"
       },
       {
@@ -196,8 +185,8 @@
         "command": "desloppify show stale_exclude --status open",
         "impact": 0.0,
         "dimension": "Code quality",
-        "priority": 11,
-        "lane": "refactor_2"
+        "priority": 10,
+        "lane": "refactor_1"
       },
       {
         "type": "manual_fix",
@@ -207,7 +196,7 @@
         "command": "desloppify show security --status open",
         "impact": 0.0,
         "dimension": "Security",
-        "priority": 12,
+        "priority": 11,
         "lane": "refactor_0"
       },
       {
@@ -218,14 +207,14 @@
         "command": "desloppify review --prepare",
         "impact": 0.0,
         "dimension": "Test health",
-        "priority": 13,
+        "priority": 12,
         "lane": "refactor_0"
       }
     ],
     "strategy": {
       "fixer_leverage": {
         "auto_fixable_count": 0,
-        "total_count": 163,
+        "total_count": 110,
         "coverage": 0.0,
         "impact_ratio": 0.0,
         "recommendation": "none"
@@ -247,28 +236,19 @@
             4,
             6,
             7,
+            8,
             9,
-            10,
-            12,
-            13
+            11,
+            12
           ],
-          "file_count": 18,
+          "file_count": 17,
           "total_impact": 0.0,
           "automation": "manual",
           "run_first": false
         },
         "refactor_1": {
           "actions": [
-            8
-          ],
-          "file_count": 1,
-          "total_impact": 0.0,
-          "automation": "manual",
-          "run_first": false
-        },
-        "refactor_2": {
-          "actions": [
-            11
+            10
           ],
           "file_count": 14,
           "total_impact": 0.0,
@@ -286,7 +266,7 @@
         }
       },
       "can_parallelize": true,
-      "hint": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 5 issue(s) \u2014 `desloppify show review --status open`."
+      "hint": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify."
     },
     "tools": {
       "fixers": [],
@@ -308,18 +288,18 @@
       }
     },
     "debt": {
-      "overall_gap": 1.5,
+      "overall_gap": 1.6,
       "wontfix_count": 7,
       "worst_dimension": "Test health",
       "worst_gap": 18.0,
       "trend": "growing"
     },
-    "milestone": null,
+    "milestone": "All T1 items cleared!",
     "primary_action": {
       "command": "desloppify show orphaned --status open",
       "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
     },
-    "why_now": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 5 issue(s) \u2014 `desloppify show review --status open`.",
+    "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify.",
     "verification_step": {
       "command": "desloppify scan",
       "reason": "revalidate after changes"
@@ -328,13 +308,13 @@
       {
         "type": "wontfix_gap",
         "severity": "medium",
-        "message": "Strict/lenient gap is 1.5 pts with 7 wontfix issues"
+        "message": "Strict/lenient gap is 1.6 pts with 7 wontfix issues"
       }
     ],
     "strict_target": {
       "target": 95.0,
-      "current": 52.1,
-      "gap": 42.9,
+      "current": 52.8,
+      "gap": 42.2,
       "state": "below",
       "warning": null
     },
@@ -354,13 +334,6 @@
         "severity": "high"
       },
       {
-        "type": "review_issues_pending",
-        "message": "5 review issue(s) need investigation. Run `desloppify show review --status open` to see the work queue.",
-        "command": "desloppify show review --status open",
-        "priority": 1,
-        "severity": "high"
-      },
-      {
         "type": "wontfix_growing",
         "message": "Wontfix debt is growing. Review stale decisions: `desloppify show --status wontfix`.",
         "command": "desloppify show --status wontfix",
@@ -374,7 +347,7 @@
       "stagnant_nudge": 3,
       "wontfix_growing": 3,
       "feedback_nudge": 2,
-      "review_issues_pending": 2,
+      "review_issues_pending": 1,
       "rereview_needed": 1,
       "rescan_needed": 1
     }

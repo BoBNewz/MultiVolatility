@@ -14,7 +14,7 @@ import sqlite3
 import threading
 import docker
 import logging
-from typing import Optional
+from typing import Any, Optional
 from flask import Blueprint, request, jsonify, Response
 import requests as http_requests
 from multivol.api_server.database import get_db_connection
@@ -45,7 +45,7 @@ def get_sidecar_url(scan_id: str) -> Optional[str]:
         return f"http://{session['container_name']}:5002"
 
 
-def get_next_port():
+def get_next_port() -> int:
     """Get the next available port for a sidecar."""
     with sessions_lock:
         used_ports = {s['port'] for s in active_sessions.values()}
@@ -55,7 +55,7 @@ def get_next_port():
         return port
 
 
-def cleanup_container(container_name):
+def cleanup_container(container_name: str) -> None:
     """Stop and remove a container by name."""
     try:
         client = docker.from_env()
@@ -65,8 +65,8 @@ def cleanup_container(container_name):
             container.remove(force=True)
         except docker.errors.NotFound:
             pass
-    except Exception as e:
-        logging.warning(f"Failed to cleanup container {container_name}: {e}")
+    except Exception:
+        logging.warning("Failed to cleanup container %s", container_name, exc_info=True)
 
 
 # ──────────────────────────────────────────────
@@ -94,7 +94,7 @@ def _get_or_check_active_session(uuid: str) -> Optional[Response]:
     return None
 
 
-def _lookup_scan_for_memprocfs(uuid: str) -> tuple:
+def _lookup_scan_for_memprocfs(uuid: str) -> tuple[sqlite3.Row, str, str]:
     """
     Fetch the scan row, validate OS and dump file presence.
     Returns (scan, dump_path, dump_filename) on success.
@@ -139,13 +139,13 @@ def _register_module_status(uuid: str) -> None:
                 (time.time(), uuid, MODULE_NAME)
             )
         conn.commit()
-    except Exception as e:
-        logging.error(f"Failed to update module status: {e}")
+    except Exception:
+        logging.exception("Failed to update module status for scan %s", uuid)
     finally:
         conn.close()
 
 
-def _detect_network(client) -> str:
+def _detect_network(client: docker.DockerClient) -> str:
     """Return the Docker network name shared with the multivol-api container, or 'bridge'."""
     try:
         api_container = client.containers.get('multivol-api')
@@ -175,8 +175,9 @@ def _wait_for_sidecar(container_name: str, uuid: str) -> None:
                 conn.close()
                 logging.info(f"MemProcFS sidecar ready for {uuid}")
                 return
-        except Exception as poll_err:
-            logging.debug(f"Sidecar health check not ready yet: {poll_err}")
+        except http_requests.exceptions.RequestException as poll_err:
+            # Expected during sidecar initialization — suppress until ready
+            logging.debug("Sidecar health check not ready yet: %s", poll_err)
         time.sleep(3)
 
     conn = get_db_connection()
@@ -194,7 +195,7 @@ def _wait_for_sidecar(container_name: str, uuid: str) -> None:
 # ──────────────────────────────────────────────
 
 @memprocfs_bp.route('/memprocfs/<uuid>/start', methods=['POST'])
-def start_memprocfs(uuid):
+def start_memprocfs(uuid: str) -> Response:
     """
     Start a MemProcFS sidecar container for a Windows scan.
     The sidecar auto-initializes with the dump file and keeps the VMM handle alive.
@@ -248,8 +249,59 @@ def start_memprocfs(uuid):
         return jsonify({"error": f"Failed to start sidecar: {str(e)}"}), 500
 
 
+def _load_cached_files(uuid: str) -> Optional[list]:
+    """Return the cached file listing from the DB, or None if not cached / invalid."""
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT content FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, MODULE_NAME))
+    cached = c.fetchone()
+    conn.close()
+    if not cached:
+        return None
+    try:
+        return json.loads(cached['content'])
+    except json.JSONDecodeError:
+        return None
+
+
+def _fetch_and_cache_files(uuid: str) -> tuple[Optional[list], Optional[Response]]:
+    """Fetch file listing from the MemProcFS sidecar and cache it. Returns (files, error_response)."""
+    sidecar_url = get_sidecar_url(uuid)
+    if not sidecar_url:
+        return None, (jsonify({"error": "MemProcFS session not active. Start it first."}), 400)
+
+    try:
+        resp = http_requests.get(f"{sidecar_url}/list", timeout=300)
+        if resp.status_code != 200:
+            return None, (jsonify(resp.json()), resp.status_code)
+        all_files = resp.json()
+    except http_requests.exceptions.ConnectionError:
+        return None, (jsonify({"error": "MemProcFS sidecar is not reachable. It may still be initializing."}), 503)
+    except http_requests.exceptions.Timeout:
+        return None, (jsonify({"error": "MemProcFS file listing timed out (>5 min)"}), 504)
+    except Exception as e:
+        return None, (jsonify({"error": f"Failed to fetch files: {str(e)}"}), 500)
+
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, MODULE_NAME))
+        if not c.fetchone():
+            c.execute(
+                "INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
+                (uuid, MODULE_NAME, json.dumps(all_files), time.time()),
+            )
+        conn.commit()
+        conn.close()
+    except Exception:
+        logging.warning("Failed to cache MemProcFS results for scan %s", uuid, exc_info=True)
+
+    return all_files, None
+
+
 @memprocfs_bp.route('/memprocfs/<uuid>/files', methods=['GET'])
-def get_memprocfs_files(uuid):
+def get_memprocfs_files(uuid: str) -> Response:
     """
     Get file listing from the MemProcFS sidecar.
     Supports pagination: ?limit=500&offset=0&search=
@@ -259,80 +311,29 @@ def get_memprocfs_files(uuid):
     offset = request.args.get('offset', 0, type=int)
     search = request.args.get('search', '', type=str).strip().lower()
 
-    # Try to get cached full listing
-    all_files = None
-    conn = get_db_connection()
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    c.execute("SELECT content FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, MODULE_NAME))
-    cached = c.fetchone()
-
-    if cached:
-        conn.close()
-        try:
-            all_files = json.loads(cached['content'])
-        except json.JSONDecodeError:
-            all_files = None
-
+    all_files = _load_cached_files(uuid)
     if all_files is None:
-        conn.close()
-        # Fetch from sidecar
-        sidecar_url = get_sidecar_url(uuid)
-        if not sidecar_url:
-            return jsonify({"error": "MemProcFS session not active. Start it first."}), 400
+        all_files, error_response = _fetch_and_cache_files(uuid)
+        if error_response is not None:
+            return error_response
 
-        try:
-            resp = http_requests.get(f"{sidecar_url}/list", timeout=300)
-            if resp.status_code != 200:
-                return jsonify(resp.json()), resp.status_code
-
-            all_files = resp.json()
-
-            # Cache full results in DB
-            try:
-                conn = get_db_connection()
-                c = conn.cursor()
-                c.execute("SELECT id FROM scan_results WHERE scan_id = ? AND module = ?", (uuid, MODULE_NAME))
-                if not c.fetchone():
-                    c.execute(
-                        "INSERT INTO scan_results (scan_id, module, content, created_at) VALUES (?, ?, ?, ?)",
-                        (uuid, MODULE_NAME, json.dumps(all_files), time.time())
-                    )
-                conn.commit()
-                conn.close()
-            except Exception as e:
-                logging.warning(f"Failed to cache MemProcFS results: {e}")
-
-        except http_requests.exceptions.ConnectionError:
-            return jsonify({"error": "MemProcFS sidecar is not reachable. It may still be initializing."}), 503
-        except http_requests.exceptions.Timeout:
-            return jsonify({"error": "MemProcFS file listing timed out (>5 min)"}), 504
-        except Exception as e:
-            return jsonify({"error": f"Failed to fetch files: {str(e)}"}), 500
-
-    # Apply search filter
     if search:
         all_files = [f for f in all_files if search in f.get('Name', '').lower()]
 
     total = len(all_files)
-
-    # Paginate
-    if limit > 0:
-        page_files = all_files[offset:offset + limit]
-    else:
-        page_files = all_files
+    page_files = all_files[offset:offset + limit] if limit > 0 else all_files
 
     return jsonify({
         "results": page_files,
         "total": total,
         "offset": offset,
         "limit": limit,
-        "has_more": (offset + limit) < total if limit > 0 else False
+        "has_more": (offset + limit) < total if limit > 0 else False,
     })
 
 
 @memprocfs_bp.route('/memprocfs/<uuid>/download', methods=['GET'])
-def download_memprocfs_file(uuid):
+def download_memprocfs_file(uuid: str) -> Response:
     """
     Download a file via the MemProcFS sidecar's persistent VMM handle.
     Instant because the handle is already open.
@@ -375,7 +376,7 @@ def download_memprocfs_file(uuid):
 
 
 @memprocfs_bp.route('/memprocfs/<uuid>/stop', methods=['DELETE'])
-def stop_memprocfs(uuid):
+def stop_memprocfs(uuid: str) -> Response:
     """Stop and remove the MemProcFS sidecar container."""
     with sessions_lock:
         session = active_sessions.pop(uuid, None)
@@ -388,7 +389,7 @@ def stop_memprocfs(uuid):
 
 
 @memprocfs_bp.route('/memprocfs/<uuid>/status', methods=['GET'])
-def memprocfs_status(uuid):
+def memprocfs_status(uuid: str) -> Response:
     """Check if a MemProcFS session is active and healthy."""
     sidecar_url = get_sidecar_url(uuid)
     if not sidecar_url:
@@ -403,5 +404,6 @@ def memprocfs_status(uuid):
                 "vmm_ready": health.get('vmm_active', False),
                 "files_cached": health.get('files_cached', False)
             })
-    except Exception as health_err:
-        logging.debug(f"MemProcFS health check failed: {health_err}")
+    except http_requests.exceptions.RequestException as health_err:
+        # Sidecar unreachable — treat as inactive
+        logging.debug("MemProcFS health check failed: %s", health_err)

@@ -1,7 +1,7 @@
 """Shared base class for Volatility runner classes."""
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 from rich import print as rprint
 
 
@@ -60,7 +60,7 @@ class MultiVolatilityBase:
         return path
 
 
-    def safe_print(self, message: str, lock) -> None:
+    def safe_print(self, message: str, lock: Any) -> None:
         """Thread-safe print using rich."""
         if lock:
             with lock:

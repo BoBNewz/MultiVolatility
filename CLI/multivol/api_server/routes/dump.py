@@ -8,17 +8,18 @@ import threading
 import docker
 import re
 import logging
-from flask import Blueprint, request, jsonify, send_file
+from typing import Any
+from flask import Blueprint, request, jsonify, send_file, Response
 from multivol.api_server.database import get_db_connection
 from multivol.api_server.utils import resolve_host_path
 from multivol.api_server.config import STORAGE_DIR
 
 dump_bp = Blueprint('dump_bp', __name__)
 
-dump_tasks: dict = {}
+dump_tasks: dict[str, dict[str, Any]] = {}
 dump_tasks_lock = threading.Lock()
 
-def _build_vol_dump_command(scan: dict, virt_addr, file_path, config: dict) -> list:
+def _build_vol_dump_command(scan: dict[str, Any], virt_addr: Any, file_path: str | None, config: dict[str, Any]) -> list[str]:
     """Build the Volatility command list for a memory dump task."""
     uploaded_path = scan['dump_path']
     if not os.path.isabs(uploaded_path) and not uploaded_path.startswith('/'):
@@ -43,7 +44,7 @@ def _build_vol_dump_command(scan: dict, virt_addr, file_path, config: dict) -> l
     return cmd
 
 
-def _run_docker_vol(client, image_tag: str, container_name: str, cmd: list, volumes: dict) -> str:
+def _run_docker_vol(client: docker.DockerClient, image_tag: str, container_name: str, cmd: list[str], volumes: dict[str, Any]) -> str:
     """Run a Volatility Docker container, auto-pulling the image if missing. Returns decoded stdout."""
     run_kwargs = dict(image=image_tag, name=container_name, command=cmd,
                       volumes=volumes, remove=True, detach=False, stderr=True, stdout=True)
@@ -55,7 +56,7 @@ def _run_docker_vol(client, image_tag: str, container_name: str, cmd: list, volu
     return output.decode('utf-8', errors='replace') if output else ""
 
 
-def _move_task_output(task_out_dir: str, case_extract_dir: str) -> list:
+def _move_task_output(task_out_dir: str, case_extract_dir: str) -> list[str]:
     """Move all files from task_out_dir to case_extract_dir. Returns list of moved filenames."""
     files = os.listdir(task_out_dir)
     if not files:
@@ -68,16 +69,16 @@ def _move_task_output(task_out_dir: str, case_extract_dir: str) -> list:
     return created
 
 
-def background_dump_task(task_id: str, scan: dict, virt_addr, image_tag: str, file_path=None) -> None:
+def background_dump_task(task_id: str, scan: dict[str, Any], virt_addr: Any, image_tag: str, file_path: str | None = None) -> None:
     """Run a Volatility3 memory dump in a background thread, writing output to task_id's entry."""
     logging.debug("[%s] Starting background dump task for scan: %s", task_id, scan['uuid'])
     with dump_tasks_lock:
         dump_tasks[task_id] = {'status': 'running'}
 
-    created_files: list = []
+    created_files: list[str] = []
     case_extract_dir: str = ""
     try:
-        config: dict = {}
+        config: dict[str, Any] = {}
         if scan.get('config_json'):
             try:
                 config = json.loads(scan['config_json'])
@@ -136,7 +137,7 @@ def background_dump_task(task_id: str, scan: dict, virt_addr, image_tag: str, fi
         conn.close()
 
 @dump_bp.route('/scans/<scan_id>/dump-file', methods=['POST'])
-def dump_file_from_memory(scan_id):
+def dump_file_from_memory(scan_id: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -173,7 +174,7 @@ def dump_file_from_memory(scan_id):
     return jsonify({"task_id": task_id, "status": "pending"})
 
 @dump_bp.route('/dump-task/<task_id>', methods=['GET'])
-def get_dump_status(task_id):
+def get_dump_status(task_id: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -187,7 +188,7 @@ def get_dump_status(task_id):
     return jsonify(dict(task))
 
 @dump_bp.route('/dump-task/<task_id>/download', methods=['GET'])
-def download_dump_result(task_id):
+def download_dump_result(task_id: str) -> Response:
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()

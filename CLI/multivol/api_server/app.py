@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+import argparse
 import os
 import logging
 import sys
+from typing import Callable
 
 # Configure logging at the very start so it applies to all imported modules
 logging.basicConfig(
@@ -57,7 +61,7 @@ except Exception as e:
     raise
 
 
-def run_api(runner_cb, debug_mode=False):
+def run_api(runner_cb: Callable[[argparse.Namespace], None], debug_mode: bool = False) -> None:
     """Start the API server. Binds runner_cb as the scan executor for /scan routes."""
     init_runner(runner_cb)
     cleanup_timeouts() # Clean up stale tasks on startup
