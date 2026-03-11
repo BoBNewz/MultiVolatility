@@ -38,7 +38,7 @@ def get_strings(
     client = docker.from_env()
 
     try:
-        container = base._run_detached_container(client, docker_image, cmd_with_redirect, volumes)
+        container = base.run_detached_container(client, docker_image, cmd_with_redirect, volumes)
         container.wait()
         container.remove()
 

@@ -57,7 +57,7 @@ class MultiVolatility2(MultiVolatilityBase):
         self._cleanup_existing_container(client, container_name, lock)
 
         try:
-            container = self._run_detached_container(
+            container = self.run_detached_container(
                 client, config.docker_image, cmd_with_redirect, volumes, name=container_name
             )
             container.wait()

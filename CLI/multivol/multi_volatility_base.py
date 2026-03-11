@@ -122,7 +122,7 @@ class MultiVolatilityBase:
                 "Failed to cleanup existing container %s", container_name, exc_info=True
             )
 
-    def _run_detached_container(
+    def run_detached_container(
         self,
         client: Any,
         image: str,
