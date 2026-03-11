@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, Union
 from flask import request, jsonify, Response
 import logging
-from multivol.api_server.config import API_TOKEN
+from multivol.api_server.config import get_api_token
 
 # Paths that do not require authentication
 _PUBLIC_PATHS = {'/auth/login', '/health'}
@@ -33,7 +33,7 @@ def check_authorization() -> _AuthResult:
     elif token_query:
         provided_token = token_query
 
-    if not provided_token or provided_token != API_TOKEN:
+    if not provided_token or provided_token != get_api_token():
         logging.warning(f"Unauthorized access attempt to {request.path}")
         return jsonify({"error": "Unauthorized"}), 401
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 import logging
-from multivol.api_server.config import APP_PASSWORD, API_TOKEN
+from multivol.api_server.config import get_app_password, get_api_token
 
 auth_bp = Blueprint('auth_bp', __name__)
 
@@ -11,12 +11,11 @@ def login():
         return jsonify({"error": "Invalid request"}), 400
         
     password = data.get('password')
-    if password == APP_PASSWORD:
+    if password == get_app_password():
         logging.info("Successful login attempt.")
-        # We return the API_TOKEN to the frontend so it can use it for subsequent requests
         return jsonify({
-            "success": True, 
-            "token": API_TOKEN
+            "success": True,
+            "token": get_api_token()
         })
     
     logging.warning("Failed login attempt with invalid password.")

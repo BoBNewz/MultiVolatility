@@ -17,7 +17,7 @@ from multivol.api_server.config import ensure_dirs
 # Ensure runtime directories exist before anything else
 ensure_dirs()
 
-from multivol.api_server.auth import check_authorization
+from multivol.api_server.auth_middleware import check_authorization
 from multivol.api_server.utils import cleanup_timeouts
 
 # Import Blueprints

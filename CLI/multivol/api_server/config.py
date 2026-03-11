@@ -8,6 +8,8 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'storage', 'uploads')
 STORAGE_DIR = os.environ.get("STORAGE_DIR", os.path.join(BASE_DIR, "storage"))
 
+# Module-level snapshot used by code that imports these directly.
+# For test overrides, prefer get_api_token() / get_app_password().
 API_TOKEN = os.getenv("API_TOKEN") or ""
 APP_PASSWORD = os.getenv("APP_PASSWORD") or ""
 
@@ -23,6 +25,16 @@ if not APP_PASSWORD:
         "APP_PASSWORD env var is not set. Login will be disabled. "
         "Set APP_PASSWORD in your environment to enable password authentication."
     )
+
+
+def get_api_token() -> str:
+    """Read API_TOKEN from env at call time, falling back to the module-level snapshot."""
+    return os.getenv("API_TOKEN") or API_TOKEN
+
+
+def get_app_password() -> str:
+    """Read APP_PASSWORD from env at call time."""
+    return os.getenv("APP_PASSWORD") or APP_PASSWORD
 
 
 def ensure_dirs() -> None:

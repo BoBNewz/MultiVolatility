@@ -1,45 +1,26 @@
 {
-  "command": "next",
-  "items": [
-    {
-      "id": "review::.::holistic::error_consistency::mixed_error_strategies_in_utils",
-      "kind": "issue",
-      "confidence": "high",
-      "detector": "review",
-      "file": ".",
-      "summary": "utils.py uses two different error strategies for I/O failures: get_file_hash raises OSError while clean_and_parse_json returns an error dict",
-      "detail": {
-        "holistic": true,
-        "dimension": "error_consistency",
-        "related_files": [
-          "CLI/multivol/api_server/utils.py"
-        ],
-        "evidence": [
-          "get_file_hash(): docstring says 'Raises OSError if the file cannot be read'; calculate_sha256() propagates FileNotFoundError from open()",
-          "clean_and_parse_json(): returns {\"error\": \"File not found\", \"raw_output\": \"\"} when file is missing instead of raising",
-          "Callers of both functions must use completely different error-handling patterns even though both are reading files"
-        ],
-        "suggestion": "Decide on one strategy for the module. Since callers are Flask routes, returning error dicts is more idiomatic for utils used at the HTTP layer. Either (a) have get_file_hash return None on failure and document it, or (b) have clean_and_parse_json raise FileNotFoundError on missing file. Apply the chosen strategy consistently.",
-        "reasoning": "",
-        "content_hash": "b2ec8365"
-      },
-      "status": "open",
-      "primary_command": "desloppify plan resolve \"review::.::holistic::error_consistency::mixed_error_strategies_in_utils\" --note \"<what you did>\" --confirm",
-      "queue_position": 1,
-      "plan_cluster": {
-        "name": "auto/review-error_consistency",
-        "description": "Address 2 error_consistency review issues",
-        "total_items": 1,
-        "action_steps": []
-      }
-    }
+  "command": "resolve",
+  "patterns": [
+    "review::.::holistic::mid_level_elegance::runner_func_global_seam"
   ],
-  "queue": {
-    "total": 1
-  },
+  "status": "fixed",
+  "resolved": [
+    "review::.::holistic::mid_level_elegance::runner_func_global_seam"
+  ],
+  "count": 1,
+  "next_command": "desloppify next",
+  "overall_score": 56.0,
+  "objective_score": 58.8,
+  "strict_score": 52.1,
+  "verified_strict_score": 58.5,
+  "prev_overall_score": 56.0,
+  "prev_objective_score": 58.8,
+  "prev_strict_score": 52.1,
+  "prev_verified_strict_score": 58.5,
+  "attestation": "I have actually added _require_runner() guard function and updated both scan execution points to check the guard before calling runner_func and I am not gaming the score.",
   "narrative": {
     "phase": "middle_grind",
-    "headline": "\u26a0 9 security issues \u2014 review before other cleanup. 164 issues open. Test health (0.0%) needs attention \u2014 run `desloppify next` to start. (16 review issues \u2014 run `desloppify show review --status open`)",
+    "headline": "\u26a0 9 security issues \u2014 review before other cleanup. 153 issues open. Test health (0.0%) needs attention \u2014 run `desloppify next` to start. (5 review issues \u2014 run `desloppify show review --status open`)",
     "dimensions": {
       "lowest_dimensions": [
         {
@@ -101,15 +82,11 @@
         "type": "reorganize",
         "detector": "orphaned",
         "count": 12,
-        "description": "12 orphaned issues in 1 cluster(s) \u2014 run `desloppify next`",
-        "command": "desloppify next",
+        "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
+        "command": "desloppify show orphaned --status open",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 1,
-        "clusters": [
-          "auto/orphaned"
-        ],
-        "cluster_count": 1,
         "lane": "restructure"
       },
       {
@@ -138,31 +115,22 @@
         "type": "refactor",
         "detector": "dict_keys",
         "count": 7,
-        "description": "7 dict_keys issues in 2 cluster(s) \u2014 run `desloppify next`",
-        "command": "desloppify next",
+        "description": "7 dict_keys issues \u2014 fix dict key mismatches \u2014 dead writes are likely dead code, schema drift suggests a typo or missed rename",
+        "command": "desloppify show dict_keys --status open",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 4,
-        "clusters": [
-          "auto/dict_keys-phantom_read",
-          "auto/dict_keys-overwritten_key"
-        ],
-        "cluster_count": 2,
         "lane": "refactor_0"
       },
       {
         "type": "refactor",
         "detector": "test_coverage",
         "count": 14,
-        "description": "14 test_coverage issues in 1 cluster(s) \u2014 run `desloppify next`",
-        "command": "desloppify next",
+        "description": "14 test_coverage issues \u2014 add tests for untested production modules \u2014 prioritize by import count",
+        "command": "desloppify show test_coverage --status open",
         "impact": 0.0,
         "dimension": "Test health",
         "priority": 5,
-        "clusters": [
-          "auto/test_coverage"
-        ],
-        "cluster_count": 1,
         "lane": "test_coverage"
       },
       {
@@ -190,8 +158,8 @@
       {
         "type": "refactor",
         "detector": "review",
-        "count": 16,
-        "description": "16 review issues need investigation \u2014 run `desloppify show review --status open` to see them",
+        "count": 5,
+        "description": "5 review issues need investigation \u2014 run `desloppify show review --status open` to see them",
         "command": "desloppify show review --status open",
         "impact": 0.0,
         "dimension": "Unknown",
@@ -202,26 +170,11 @@
         "type": "manual_fix",
         "detector": "smells",
         "count": 61,
-        "description": "61 smells issues in 12 cluster(s) \u2014 run `desloppify next`",
-        "command": "desloppify next",
+        "description": "61 smells issues \u2014 inspect with `desloppify next` and fix manually",
+        "command": "desloppify show smells --status open",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 9,
-        "clusters": [
-          "auto/smells-silent_except",
-          "auto/smells-swallowed_error",
-          "auto/smells-subprocess_no_timeout",
-          "auto/smells-sys_exit_in_library",
-          "auto/smells-monster_function",
-          "auto/smells-annotation_quality",
-          "auto/smells-high_cyclomatic_complexity",
-          "auto/smells-hardcoded_url",
-          "auto/smells-dead_function",
-          "auto/smells-deferred_import",
-          "auto/smells-debug_tag",
-          "auto/smells-import_runtime_init"
-        ],
-        "cluster_count": 12,
         "lane": "refactor_0"
       },
       {
@@ -239,52 +192,40 @@
         "type": "manual_fix",
         "detector": "stale_exclude",
         "count": 14,
-        "description": "14 stale_exclude issues in 1 cluster(s) \u2014 run `desloppify next`",
-        "command": "desloppify next",
+        "description": "14 stale_exclude issues \u2014 remove stale exclusion or verify it's still needed",
+        "command": "desloppify show stale_exclude --status open",
         "impact": 0.0,
         "dimension": "Code quality",
         "priority": 11,
-        "clusters": [
-          "auto/stale_exclude"
-        ],
-        "cluster_count": 1,
         "lane": "refactor_2"
       },
       {
         "type": "manual_fix",
         "detector": "security",
         "count": 9,
-        "description": "9 security issues in 1 cluster(s) \u2014 run `desloppify next`",
-        "command": "desloppify next",
+        "description": "9 security issues \u2014 review and fix security issues \u2014 prioritize by severity",
+        "command": "desloppify show security --status open",
         "impact": 0.0,
         "dimension": "Security",
         "priority": 12,
-        "clusters": [
-          "auto/security"
-        ],
-        "cluster_count": 1,
         "lane": "refactor_0"
       },
       {
         "type": "manual_fix",
         "detector": "subjective_review",
         "count": 15,
-        "description": "15 subjective_review issues in 1 cluster(s) \u2014 run `desloppify next`",
-        "command": "desloppify next",
+        "description": "15 files need design review \u2014 run holistic review to refresh subjective scores",
+        "command": "desloppify review --prepare",
         "impact": 0.0,
         "dimension": "Test health",
         "priority": 13,
-        "clusters": [
-          "auto/subjective_review"
-        ],
-        "cluster_count": 1,
         "lane": "refactor_0"
       }
     ],
     "strategy": {
       "fixer_leverage": {
         "auto_fixable_count": 0,
-        "total_count": 196,
+        "total_count": 163,
         "coverage": 0.0,
         "impact_ratio": 0.0,
         "recommendation": "none"
@@ -345,7 +286,7 @@
         }
       },
       "can_parallelize": true,
-      "hint": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 16 issue(s) \u2014 `desloppify show review --status open`."
+      "hint": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 5 issue(s) \u2014 `desloppify show review --status open`."
     },
     "tools": {
       "fixers": [],
@@ -375,10 +316,10 @@
     },
     "milestone": null,
     "primary_action": {
-      "command": "desloppify next",
-      "description": "12 orphaned issues in 1 cluster(s) \u2014 run `desloppify next`"
+      "command": "desloppify show orphaned --status open",
+      "description": "12 orphaned issues \u2014 delete dead files or relocate with `desloppify move`"
     },
-    "why_now": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 16 issue(s) \u2014 `desloppify show review --status open`.",
+    "why_now": "5 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 5 issue(s) \u2014 `desloppify show review --status open`.",
     "verification_step": {
       "command": "desloppify scan",
       "reason": "revalidate after changes"
@@ -399,8 +340,22 @@
     },
     "reminders": [
       {
+        "type": "rereview_needed",
+        "message": "Subjective results may be stale after resolve. Re-run `desloppify review --prepare` to refresh, or reset with `desloppify scan --reset-subjective` before a clean rerun.",
+        "command": "desloppify review --prepare",
+        "priority": 1,
+        "severity": "high"
+      },
+      {
+        "type": "rescan_needed",
+        "message": "Rescan to verify \u2014 cascading effects may create new issues.",
+        "command": "desloppify scan",
+        "priority": 1,
+        "severity": "high"
+      },
+      {
         "type": "review_issues_pending",
-        "message": "16 review issue(s) need investigation. Run `desloppify show review --status open` to see the work queue.",
+        "message": "5 review issue(s) need investigation. Run `desloppify show review --status open` to see the work queue.",
         "command": "desloppify show review --status open",
         "priority": 1,
         "severity": "high"
@@ -419,664 +374,11 @@
       "stagnant_nudge": 3,
       "wontfix_growing": 3,
       "feedback_nudge": 2,
-      "review_issues_pending": 2
+      "review_issues_pending": 2,
+      "rereview_needed": 1,
+      "rescan_needed": 1
     }
   },
-  "agent_notes": [
-    "Do NOT use `desloppify plan skip` unless the user explicitly asks you to skip an item.",
-    "If you cannot fix an item, report it and move to the next one.",
-    "For cluster items: if the autofix_hint finds 0 results, drill into individual issues with the primary_command."
-  ],
-  "plan": {
-    "active": true,
-    "focus": null,
-    "clusters": [
-      {
-        "name": "auto/orphaned",
-        "description": "Fix 12 orphaned issues",
-        "item_count": 12
-      },
-      {
-        "name": "auto/test_coverage",
-        "description": "Fix 14 test coverage issues",
-        "item_count": 14
-      },
-      {
-        "name": "auto/smells-silent_except",
-        "description": "Fix 5 silent except issues",
-        "item_count": 5
-      },
-      {
-        "name": "auto/smells-swallowed_error",
-        "description": "Fix 9 swallowed error issues",
-        "item_count": 9
-      },
-      {
-        "name": "auto/smells-subprocess_no_timeout",
-        "description": "Fix 2 subprocess no timeout issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/smells-sys_exit_in_library",
-        "description": "Fix 2 sys exit in library issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/smells-monster_function",
-        "description": "Fix 2 monster function issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/smells-annotation_quality",
-        "description": "Fix 14 annotation quality issues",
-        "item_count": 14
-      },
-      {
-        "name": "auto/smells-high_cyclomatic_complexity",
-        "description": "Fix 8 high cyclomatic complexity issues",
-        "item_count": 8
-      },
-      {
-        "name": "auto/smells-hardcoded_url",
-        "description": "Fix 4 hardcoded url issues",
-        "item_count": 4
-      },
-      {
-        "name": "auto/smells-dead_function",
-        "description": "Fix 2 dead function issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/smells-deferred_import",
-        "description": "Fix 7 deferred import issues",
-        "item_count": 7
-      },
-      {
-        "name": "auto/smells-debug_tag",
-        "description": "Fix 2 debug tag issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/dict_keys-phantom_read",
-        "description": "Fix 3 phantom read issues",
-        "item_count": 3
-      },
-      {
-        "name": "auto/dict_keys-overwritten_key",
-        "description": "Fix 4 overwritten key issues",
-        "item_count": 4
-      },
-      {
-        "name": "auto/subjective_review",
-        "description": "Address 15 subjective_review review issues",
-        "item_count": 15
-      },
-      {
-        "name": "auto/stale_exclude",
-        "description": "Fix 14 stale exclude issues",
-        "item_count": 14
-      },
-      {
-        "name": "dead-code",
-        "description": "Remove api_strings_extension.py dead code and routes/__init__.py dead blueprint",
-        "item_count": 0
-      },
-      {
-        "name": "error-handling",
-        "description": "Fix get_file_hash sentinel return, remaining bare excepts, swallowed errors",
-        "item_count": 0
-      },
-      {
-        "name": "naming-quality",
-        "description": "Fix naming: camelCase, misnamed params, misleading field names",
-        "item_count": 0
-      },
-      {
-        "name": "architecture",
-        "description": "Route prefix inconsistency, god functions, redundant code, mutable module state, argument coupling",
-        "item_count": 0
-      },
-      {
-        "name": "type-safety",
-        "description": "Missing type annotations on public APIs, untyped callables, misleading return types",
-        "item_count": 0
-      },
-      {
-        "name": "testing",
-        "description": "No test suite exists; critical paths are completely untested",
-        "item_count": 0
-      },
-      {
-        "name": "auto/smells-import_runtime_init",
-        "description": "Fix 2 import runtime init issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/security",
-        "description": "Fix 16 security issues",
-        "item_count": 16
-      },
-      {
-        "name": "auto/review-cross_module_architecture",
-        "description": "Address 2 cross_module_architecture review issues",
-        "item_count": 0
-      },
-      {
-        "name": "auto/review-high_level_elegance",
-        "description": "Address 2 high_level_elegance review issues",
-        "item_count": 3
-      },
-      {
-        "name": "auto/review-mid_level_elegance",
-        "description": "Address 2 mid_level_elegance review issues",
-        "item_count": 4
-      },
-      {
-        "name": "auto/review-low_level_elegance",
-        "description": "Address 2 low_level_elegance review issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/review-type_safety",
-        "description": "Address 3 type_safety review issues",
-        "item_count": 3
-      },
-      {
-        "name": "auto/review-error_consistency",
-        "description": "Address 2 error_consistency review issues",
-        "item_count": 1
-      },
-      {
-        "name": "auto/review-contract_coherence",
-        "description": "Address 2 contract_coherence review issues",
-        "item_count": 0
-      },
-      {
-        "name": "auto/review-design_coherence",
-        "description": "Address 2 design_coherence review issues",
-        "item_count": 1
-      },
-      {
-        "name": "auto/review-initialization_coupling",
-        "description": "Address 2 initialization_coupling review issues",
-        "item_count": 2
-      },
-      {
-        "name": "auto/review-incomplete_migration",
-        "description": "Address 2 incomplete_migration review issues",
-        "item_count": 3
-      },
-      {
-        "name": "auto/review-authorization_consistency",
-        "description": "Address 3 authorization_consistency review issues",
-        "item_count": 0
-      },
-      {
-        "name": "auto/review-test_strategy",
-        "description": "Address 2 test_strategy review issues",
-        "item_count": 1
-      },
-      {
-        "name": "auto/stale-review",
-        "description": "Re-review 3 stale subjective dimensions",
-        "item_count": 3
-      },
-      {
-        "name": "already-fixed",
-        "description": "Issues already fixed this session",
-        "item_count": 1
-      }
-    ],
-    "total_ordered": 39,
-    "total_skipped": 7,
-    "plan_overrides_narrative": true
-  },
-  "overall_score": 56.0,
-  "objective_score": 58.8,
-  "strict_score": 52.1,
-  "scorecard_dimensions": [
-    {
-      "name": "File health",
-      "score": 72.0,
-      "strict": 68.5,
-      "checks": 20,
-      "failing": 8,
-      "tier": 3,
-      "subjective": false
-    },
-    {
-      "name": "AI generated debt",
-      "score": 70.0,
-      "strict": 70.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "ai_generated_debt"
-      ]
-    },
-    {
-      "name": "Abstraction fit",
-      "score": 60.0,
-      "strict": 60.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "abstraction_fitness"
-      ]
-    },
-    {
-      "name": "Auth consistency",
-      "score": 43.0,
-      "strict": 43.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "authorization_consistency"
-      ]
-    },
-    {
-      "name": "Code quality",
-      "score": 74.2,
-      "strict": 70.7,
-      "checks": 148,
-      "failing": 85,
-      "tier": 3,
-      "subjective": false
-    },
-    {
-      "name": "Contracts",
-      "score": 47.0,
-      "strict": 47.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "contract_coherence"
-      ]
-    },
-    {
-      "name": "Convention drift",
-      "score": 57.0,
-      "strict": 57.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "convention_outlier"
-      ]
-    },
-    {
-      "name": "Cross-module arch",
-      "score": 60.0,
-      "strict": 60.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "cross_module_architecture"
-      ]
-    },
-    {
-      "name": "Dep health",
-      "score": 33.0,
-      "strict": 33.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "dependency_health"
-      ]
-    },
-    {
-      "name": "Design coherence",
-      "score": 53.0,
-      "strict": 53.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "design_coherence"
-      ]
-    },
-    {
-      "name": "Duplication",
-      "score": 99.3,
-      "strict": 94.3,
-      "checks": 96,
-      "failing": 1,
-      "tier": 3,
-      "subjective": false
-    },
-    {
-      "name": "Elegance",
-      "score": 56.3,
-      "strict": 56.3,
-      "checks": 30,
-      "failing": 6,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "high_level_elegance",
-        "low_level_elegance",
-        "mid_level_elegance"
-      ]
-    },
-    {
-      "name": "Error consistency",
-      "score": 50.0,
-      "strict": 50.0,
-      "checks": 10,
-      "failing": 1,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "error_consistency"
-      ]
-    },
-    {
-      "name": "Init coupling",
-      "score": 50.0,
-      "strict": 50.0,
-      "checks": 10,
-      "failing": 2,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "initialization_coupling"
-      ]
-    },
-    {
-      "name": "Security",
-      "score": 90.4,
-      "strict": 81.3,
-      "checks": 47,
-      "failing": 9,
-      "tier": 4,
-      "subjective": false
-    },
-    {
-      "name": "Stale migration",
-      "score": 42.0,
-      "strict": 42.0,
-      "checks": 10,
-      "failing": 2,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "incomplete_migration"
-      ]
-    },
-    {
-      "name": "Structure nav",
-      "score": 60.0,
-      "strict": 60.0,
-      "checks": 10,
-      "failing": 1,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "package_organization"
-      ]
-    },
-    {
-      "name": "Test health",
-      "score": 18.0,
-      "strict": 0.0,
-      "checks": 249,
-      "failing": 29,
-      "tier": 4,
-      "subjective": false
-    },
-    {
-      "name": "Test strategy",
-      "score": 20.0,
-      "strict": 20.0,
-      "checks": 10,
-      "failing": 1,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "test_strategy"
-      ]
-    },
-    {
-      "name": "Type safety",
-      "score": 43.0,
-      "strict": 43.0,
-      "checks": 10,
-      "failing": 3,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "type_safety"
-      ]
-    }
-  ],
-  "subjective_measures": [
-    {
-      "name": "AI generated debt",
-      "score": 70.0,
-      "strict": 70.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "ai_generated_debt"
-      ]
-    },
-    {
-      "name": "Abstraction fit",
-      "score": 60.0,
-      "strict": 60.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "abstraction_fitness"
-      ]
-    },
-    {
-      "name": "Auth consistency",
-      "score": 43.0,
-      "strict": 43.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "authorization_consistency"
-      ]
-    },
-    {
-      "name": "Contracts",
-      "score": 47.0,
-      "strict": 47.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "contract_coherence"
-      ]
-    },
-    {
-      "name": "Convention drift",
-      "score": 57.0,
-      "strict": 57.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "convention_outlier"
-      ]
-    },
-    {
-      "name": "Cross-module arch",
-      "score": 60.0,
-      "strict": 60.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "cross_module_architecture"
-      ]
-    },
-    {
-      "name": "Dep health",
-      "score": 33.0,
-      "strict": 33.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "dependency_health"
-      ]
-    },
-    {
-      "name": "Design coherence",
-      "score": 53.0,
-      "strict": 53.0,
-      "checks": 10,
-      "failing": 0,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "design_coherence"
-      ]
-    },
-    {
-      "name": "Elegance",
-      "score": 56.3,
-      "strict": 56.3,
-      "checks": 30,
-      "failing": 6,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "high_level_elegance",
-        "low_level_elegance",
-        "mid_level_elegance"
-      ]
-    },
-    {
-      "name": "Error consistency",
-      "score": 50.0,
-      "strict": 50.0,
-      "checks": 10,
-      "failing": 1,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "error_consistency"
-      ]
-    },
-    {
-      "name": "Init coupling",
-      "score": 50.0,
-      "strict": 50.0,
-      "checks": 10,
-      "failing": 2,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "initialization_coupling"
-      ]
-    },
-    {
-      "name": "Stale migration",
-      "score": 42.0,
-      "strict": 42.0,
-      "checks": 10,
-      "failing": 2,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "incomplete_migration"
-      ]
-    },
-    {
-      "name": "Structure nav",
-      "score": 60.0,
-      "strict": 60.0,
-      "checks": 10,
-      "failing": 1,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "package_organization"
-      ]
-    },
-    {
-      "name": "Test strategy",
-      "score": 20.0,
-      "strict": 20.0,
-      "checks": 10,
-      "failing": 1,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "test_strategy"
-      ]
-    },
-    {
-      "name": "Type safety",
-      "score": 43.0,
-      "strict": 43.0,
-      "checks": 10,
-      "failing": 3,
-      "tier": 4,
-      "subjective": true,
-      "placeholder": false,
-      "cli_keys": [
-        "type_safety"
-      ]
-    }
-  ],
   "config": {
     "target_strict_score": 95,
     "review_max_age_days": 30,

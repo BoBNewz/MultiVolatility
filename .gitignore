@@ -13,3 +13,6 @@ memory.dump
 config.yml
 Win7SP1x86.dmp
 .env
+CLI/build
+CLI/dist
+CLI/multivol.egg-info

@@ -25,16 +25,23 @@ class StaticTokenAuth(TokenVerifier):
         return None
 
 
-# Use an async client for better concurrency and to avoid double-response issues in FastMCP
-client = httpx.AsyncClient(
-    headers={"Authorization": f"Bearer {API_TOKEN}"},
-    timeout=httpx.Timeout(60.0, connect=10.0)
-)
+_client: httpx.AsyncClient | None = None
+
+def _get_client() -> httpx.AsyncClient:
+    """Return a lazily-initialized shared httpx client using the current API_TOKEN env var."""
+    global _client
+    if _client is None:
+        token = os.getenv("API_TOKEN")
+        _client = httpx.AsyncClient(
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=httpx.Timeout(60.0, connect=10.0),
+        )
+    return _client
 
 async def safe_request(method: str, url: str, **kwargs) -> dict:
     """Helper to handle requests gracefully so the AI gets clean errors instead of stack traces."""
     try:
-        response = await client.request(method, url, **kwargs)
+        response = await _get_client().request(method, url, **kwargs)
         response.raise_for_status()
         return response.json()
     except httpx.HTTPError as e:
