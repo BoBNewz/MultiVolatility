@@ -40,6 +40,16 @@ def auth_headers():
 
 
 @pytest.fixture()
+def db_conn(app):
+    """Direct SQLite connection to the test database for test setup/teardown."""
+    from multivol.api_server.database import get_db_connection
+    with app.app_context():
+        conn = get_db_connection()
+        yield conn
+        conn.close()
+
+
+@pytest.fixture()
 def tmp_file(tmp_path):
     """A real temporary file path (not yet created)."""
     return str(tmp_path / "testfile.bin")

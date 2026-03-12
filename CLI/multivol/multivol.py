@@ -242,6 +242,7 @@ def run_analysis(arguments: argparse.Namespace) -> None:
 
     console = Console(theme=Theme({"info": "dim cyan", "warning": "magenta", "danger": "bold red"}))
     _ensure_docker_image(arguments.image, console)
+    console.print(f"[bold cyan][*] Output directory: {os.path.abspath(output_dir)}[/bold cyan]")
     console.print("\n[bold green][+] Launching all commands...[/bold green]\n")
 
     manager = multiprocessing.Manager()
@@ -409,7 +410,6 @@ def main():
 
     # Global arguments
     parser.add_argument("--debug", action="store_true", help="Show executed Docker commands")
-    parser.add_argument("--scan-id", help="Scan UUID for API status updates", required=False)
 
     args = parser.parse_args()
 

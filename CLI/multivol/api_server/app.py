@@ -14,7 +14,7 @@ from flask_cors import CORS
 from multivol.api_server.auth_middleware import check_authorization
 from multivol.api_server.utils import cleanup_timeouts
 from multivol.api_server.database import init_db
-from multivol.api_server.config import ensure_dirs
+from multivol.api_server.config import ensure_dirs, check_env_warnings
 
 # Import Blueprints
 from multivol.api_server.routes.files import files_bp
@@ -72,6 +72,7 @@ def run_api(runner_cb: Callable[[argparse.Namespace], None], debug_mode: bool = 
     )
 
     ensure_dirs()
+    check_env_warnings()
     try:
         init_db()
         logging.info("Database initialized.")

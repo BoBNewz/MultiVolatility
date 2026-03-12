@@ -17,16 +17,19 @@ APP_PASSWORD = os.getenv("APP_PASSWORD") or ""
 
 if not API_TOKEN:
     API_TOKEN = secrets.token_hex(32)
-    logging.warning(
-        "API_TOKEN env var is not set. Generated a random token for this session. "
-        "Set API_TOKEN in your environment to use a stable token."
-    )
 
-if not APP_PASSWORD:
-    logging.warning(
-        "APP_PASSWORD env var is not set. Login will be disabled. "
-        "Set APP_PASSWORD in your environment to enable password authentication."
-    )
+def check_env_warnings() -> None:
+    """Print API authentication setup warnings on API backend startup."""
+    if not os.getenv("API_TOKEN"):
+        logging.warning(
+            "API_TOKEN env var is not set. Generated a random token for this session. "
+            "Set API_TOKEN in your environment to use a stable token."
+        )
+    if not os.getenv("APP_PASSWORD"):
+        logging.warning(
+            "APP_PASSWORD env var is not set. Login will be disabled. "
+            "Set APP_PASSWORD in your environment to enable password authentication."
+        )
 
 
 def get_api_token() -> str:
