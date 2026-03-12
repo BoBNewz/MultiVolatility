@@ -15,10 +15,12 @@ Endpoints:
 """
 
 import os
+import queue
 import time
 import logging
 import threading
 import concurrent.futures
+import memprocfs
 from flask import Flask, request, jsonify, Response
 
 # Configurable forensic-ready timeout (seconds). Large dumps (>8 GB) can need 10–20 min.
@@ -57,10 +59,7 @@ def check_sidecar_auth():
 # Creating a VMM on one thread and calling it from another leads to an instant SIGSEGV.
 # Solution: A single background worker thread owns the Vmm object and executes all calls.
 
-import queue
-import memprocfs
-
-_task_queue = queue.Queue()
+_task_queue: queue.Queue = queue.Queue()
 
 _session = {
     "dump_path": None,
@@ -76,23 +75,27 @@ _list_event: threading.Event | None = None
 
 def _vmm_worker():
     """Single thread that owns the vmm object and executes all requests."""
-    global _list_event
+    global _list_event  # pylint: disable=global-statement
     vmm = None
-    
+
     while True:
         task = _task_queue.get()
         if task is None:
             if vmm:
-                try: vmm.close()
-                except: pass
+                try:
+                    vmm.close()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    pass
             break
-            
+
         action = task.get("action")
-        
+
         if action == "load":
             if vmm:
-                try: vmm.close()
-                except: pass
+                try:
+                    vmm.close()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    pass
                 vmm = None
 
             dump_path = task["dump_path"]
@@ -111,7 +114,7 @@ def _vmm_worker():
                 vmm = memprocfs.Vmm(["-device", dump_path, "-forensic", "1"])
                 _session["status"] = "ready"
                 logging.info("VMM ready for: %s", dump_path)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 logging.error("VMM init failed: %s", e)
                 vmm = None
                 _session["status"] = "error"
@@ -119,8 +122,10 @@ def _vmm_worker():
 
         elif action == "unload":
             if vmm:
-                try: vmm.close()
-                except: pass
+                try:
+                    vmm.close()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    pass
                 vmm = None
             _session["dump_path"] = None
             _session["status"] = "idle"
@@ -131,7 +136,7 @@ def _vmm_worker():
                     _list_event.set()
                 _list_event = None
             logging.info("VMM unloaded, session idle")
-            
+
         elif action == "list":
             result_box = task["result_box"]
             if not vmm:
@@ -146,7 +151,7 @@ def _vmm_worker():
                         res = _do_list_files(vmm)
                         _session["files_cache"] = res
                         result_box.put(res)
-                    except Exception as e:
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         logging.exception("Worker list_files failed")
                         result_box.put(e)
                     finally:
@@ -181,7 +186,7 @@ def _vmm_worker():
                                 else:
                                     raise ValueError("File content is unrecoverable (null bytes)")
                             result_box.put(data)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     logging.exception("Worker read failed")
                     result_box.put(e)
 
@@ -194,7 +199,7 @@ _worker_lock = threading.Lock()
 
 @app.before_request
 def ensure_worker_started():
-    global _worker_thread
+    global _worker_thread  # pylint: disable=global-statement
     with _worker_lock:
         if _worker_thread is None or not _worker_thread.is_alive():
             _worker_thread = threading.Thread(target=_vmm_worker, daemon=True)
@@ -250,7 +255,7 @@ def list_files_endpoint():
     if _session["files_cache"] is not None:
         return jsonify(_session["files_cache"])
 
-    global _list_event
+    global _list_event  # pylint: disable=global-statement
 
     with _list_lock:
         # Re-check inside the lock — another thread may have finished while we waited
@@ -341,7 +346,7 @@ def _wait_for_forensic(vmm, path: str, timeout: int | None = None) -> bool:
         try:
             if len(vmm.vfs.list(path)) > 0:
                 return True
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
         time.sleep(5)
     return False
@@ -359,7 +364,7 @@ def _list_recursive(
         return
     try:
         entries = vmm.vfs.list(vfs_root)
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-exception-caught
         return
     for name, info in entries.items():
         if name in (".", ".."):
@@ -403,7 +408,7 @@ def _do_list_files(vmm) -> list:
             src = futures[fut]
             try:
                 results_by_source[src] = fut.result()
-            except Exception:  # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-exception-caught
                 logging.exception("Error listing source %s", src)
                 results_by_source[src] = []
 
@@ -450,5 +455,5 @@ def _try_alternate_source(vmm, vfs_path: str):
             return None
         data = vmm.vfs.read(alt, size, 0)
         return data if data and not _is_null_bytes(data) else None
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-exception-caught
         return None
