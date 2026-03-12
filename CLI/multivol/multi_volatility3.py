@@ -1,228 +1,173 @@
-# multi_volatility3.py
-# Implements Volatility3 memory analysis orchestration, Docker command generation, and backend communication.
-import time
-import os
+"""Volatility 3 memory analysis orchestration using Docker containers."""
+
+# pylint: disable=line-too-long
 import json
+import logging
+import os
 import re
 import uuid
-from rich import print as rprint
-import yaml
 import docker
+from multivol.multi_volatility_base import MultiVolatilityBase, Vol3RunConfig
 
-class multi_volatility3:
-    def __init__(self):
-        # Constructor for multi_volatility3 class
-        pass
 
-    def resolve_path(self, path, host_path):
-        # If host_path is set, replacing the current working directory prefix with host_path
-        if host_path: 
-            if path.startswith("/storage"):
-                 # Handle special storage mapping for Docker
-                 # Map /storage -> {host_path}/storage/data
-                 rel_path = os.path.relpath(path, "/storage")
-                 return os.path.join(host_path, "storage", "data", rel_path)
+class MultiVolatility3(MultiVolatilityBase):
+    """Orchestrate Volatility 3 commands executed inside Docker containers."""
 
-            if path.startswith(os.getcwd()):
-                rel_path = os.path.relpath(path, os.getcwd())
-                return os.path.join(host_path, rel_path)
-        return path
-
-    def execute_command_volatility3(self, command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None, extra_args=""):
-        # Executes a Volatility3 command in Docker and handles output
+    def execute_command_volatility3(
+        self, command: str, config: Vol3RunConfig, quiet: bool = False, lock=None
+    ) -> tuple[str, bool]:  # pylint: disable=too-many-return-statements,too-many-branches,too-many-locals,too-many-statements
+        """Execute a Volatility 3 command in Docker and handle output."""
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
-        
+
         client = docker.from_env()
 
         # Resolve paths for DooD
-        host_symbols_path = self.resolve_path(os.path.abspath(symbols_path), host_path)
-        host_cache_path = self.resolve_path(os.path.abspath(cache_dir), host_path)
-        host_plugin_dir = self.resolve_path(os.path.abspath(plugin_dir), host_path)
-        host_output_dir = self.resolve_path(os.path.abspath(output_dir), host_path)
-        
-        host_dump_path = self.resolve_path(os.path.abspath(dump_dir), host_path)
+        host_symbols_path = self.resolve_path(
+            os.path.abspath(config.symbols_path), config.host_path
+        )
+        host_cache_path = self.resolve_path(os.path.abspath(config.cache_dir), config.host_path)
+        host_plugin_dir = self.resolve_path(os.path.abspath(config.plugin_dir), config.host_path)
+        host_output_dir = self.resolve_path(os.path.abspath(config.output_dir), config.host_path)
+
+        host_dump_path = self.resolve_path(os.path.abspath(config.dump_dir), config.host_path)
         host_dump_dir = os.path.dirname(host_dump_path)
-        
+
         # Debug logging for path resolution
-        if show_commands:
-            print(f"[DEBUG] dump={dump}, dump_dir={dump_dir}", flush=True)
-            print(f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}", flush=True)
-        
+        if config.show_commands:
+            print(f"[DEBUG] dump={config.dump}, dump_dir={config.dump_dir}", flush=True)
+            print(
+                f"[DEBUG] host_dump_path={host_dump_path}, host_dump_dir={host_dump_dir}",
+                flush=True,
+            )
+
         volumes = {
-             host_dump_dir: {'bind': '/dump_dir', 'mode': 'ro'},
-             host_symbols_path: {'bind': '/symbols', 'mode': 'rw'},
-             host_cache_path: {'bind': '/root/.cache/volatility3', 'mode': 'rw'},
-             host_plugin_dir: {'bind': '/plugins', 'mode': 'ro'},
-             host_output_dir: {'bind': '/output', 'mode': 'rw'}
+            host_dump_dir: {"bind": "/dump_dir", "mode": "ro"},
+            host_symbols_path: {"bind": "/symbols", "mode": "rw"},
+            host_cache_path: {"bind": "/root/.cache/volatility3", "mode": "rw"},
+            host_plugin_dir: {"bind": "/plugins", "mode": "ro"},
+            host_output_dir: {"bind": "/output", "mode": "rw"},
         }
-        
+
         # Base arguments
         # Base arguments with new volume paths:
         # dump_dir -> /dump_dir
         # symbols -> /symbols
         # cache -> /root/.cache/volatility3
         # plugins -> /plugins
-        
-        # NOTE: -f expects the file path. Volume maps dump_dir to /dump_dir. 
+
+        # NOTE: -f expects the file path. Volume maps dump_dir to /dump_dir.
         # So dump file is at /dump_dir/basename(dump)
-        dump_filename = os.path.basename(dump)
-        if show_commands:
-            print(f"[DEBUG] dump_filename={dump_filename}, full path in container=/dump_dir/{dump_filename}", flush=True)
+        dump_filename = os.path.basename(config.dump)
+        if config.show_commands:
+            print(
+                f"[DEBUG] dump_filename={dump_filename}, full path in container=/dump_dir/{dump_filename}",
+                flush=True,
+            )
         base_args = f"vol -q -f /dump_dir/{dump_filename} -o /output -s /symbols -p /plugins"
 
-        if custom_symbol:
-            if show_commands:
-                print(f"[DEBUG] Custom Symbol Selected: {custom_symbol}", flush=True)
+        if config.custom_symbol:
+            if config.show_commands:
+                print(
+                    f"[DEBUG] Custom Symbol Selected: {config.custom_symbol}",
+                    flush=True,
+                )
 
-        if fetch_symbols:
+        if config.fetch_symbols:
             base_args = f"{base_args} --remote-isf-url https://github.com/Abyss-W4tcher/volatility3-symbols/raw/master/banners/banners.json"
 
-        if format == "json":
-            self.output_file = os.path.join(output_dir, f"{command}_output.json")
+        if config.format == "json":
+            output_file = os.path.join(config.output_dir, f"{command}_output.json")
             output_filename = f"{command}_output.json"
-            cmd_args = f"{base_args} -r json {command} {extra_args}"
+            cmd_args = f"{base_args} -r json {command} {config.extra_args}"
         else:
-            self.output_file = os.path.join(output_dir, f"{command}_output.txt")
+            output_file = os.path.join(config.output_dir, f"{command}_output.txt")
             output_filename = f"{command}_output.txt"
-            cmd_args = f"{base_args} {command} {extra_args}"
-        
+            cmd_args = f"{base_args} {command} {config.extra_args}"
+
         # Redirect output to file inside container (avoids Docker log rotation issues)
         cmd_with_redirect = f"/bin/sh -c '{cmd_args} > /output/{output_filename} 2>&1'"
-        
-        # Debug: verify output path
-        if show_commands:
-            print(f"[DEBUG] output_dir={output_dir}, output_file={self.output_file}", flush=True)
-            print(f"[DEBUG] output_dir exists: {os.path.exists(output_dir)}", flush=True)
-        if show_commands:
+
+        if config.show_commands:
+            print(
+                f"[DEBUG] output_dir={config.output_dir}, output_file={output_file}",
+                flush=True,
+            )
+            print(
+                f"[DEBUG] output_dir exists: {os.path.exists(config.output_dir)}",
+                flush=True,
+            )
             print(f"[DEBUG] Volatility 3 Command: {cmd_args}", flush=True)
             print(f"[DEBUG] Docker Volumes: {json.dumps(volumes, indent=2)}", flush=True)
 
         try:
             # Sanitize command name for Docker container name
             # Use scan_id for predictable naming so API can track container status
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_.-]', '', command)
-            if scan_id:
-                container_name = f"vol3_{scan_id[:8]}_{sanitized_name}"
+            sanitized_name = re.sub(r"[^a-zA-Z0-9_.-]", "", command)
+            if config.scan_id:
+                container_name = f"vol3_{config.scan_id[:8]}_{sanitized_name}"
             else:
                 container_name = f"vol3_{sanitized_name}_{str(uuid.uuid4())[:8]}"
 
             # Remove existing container if it exists (fix for 409 Conflict)
-            try:
-                existing_container = client.containers.get(container_name)
-                if show_commands:
-                    print(f"[DEBUG] Removing existing container: {container_name}", flush=True)
-                existing_container.remove(force=True)
-            except docker.errors.NotFound:
-                pass
-            except Exception as e:
-                self.safe_print(f"[!] Warning: Failed to cleanup existing container {container_name}: {e}", lock)
+            if config.show_commands:
+                print(
+                    f"[DEBUG] Removing existing container: {container_name}",
+                    flush=True,
+                )
+            self._cleanup_existing_container(client, container_name, lock)
 
-            container = client.containers.run(
-                image=docker_image,
-                name=container_name,
-                command=cmd_with_redirect,
-                volumes=volumes,
-                tty=False,  # No TTY needed when redirecting to file
-                detach=True,
-                remove=False,
-                log_config={"type": "none"}  # Disable Docker logging - output goes to file
+            container = self.run_detached_container(
+                client, config.docker_image, cmd_with_redirect, volumes, name=container_name
             )
-            
+
             # Wait for container to finish (output is written to file, not logs)
             wait_result = container.wait()
-            exit_code = wait_result.get('StatusCode', 0)
+            exit_code = wait_result.get("StatusCode", 0)
             # Don't remove container - API will check status and clean up
-            # container.remove()
 
-        except Exception as e:
-             self.safe_print(f"[!] Error running {command}: {e}", lock)
-             return (command, False)
-        
-        time.sleep(0.5)
-        if format == "json":
-            try:
-                with open(self.output_file,"r") as f:
-                    lines = f.readlines()
-                if lines:
-                     with open(self.output_file,"w") as f:
-                        f.writelines(lines[2:])
-            except:
-                pass
-        
-        # Filescan filtering logic (commented out in original)
-        """
-        if command == "windows.filescan.FileScan":
-            try:
-                with open(os.path.join(output_dir, "windows.filescan.FileScan_filtered_output.json"), "w") as file:
-                   # ... implementation details omitted as logic matches original structure ...
-                   pass
-            except:
-                pass
-        """
+            if config.format == "json":
+                self._trim_output_file(output_file, command, start=2)
 
-
+        except Exception as e:  # pylint: disable=broad-except
+            self.safe_print(f"[!] Error running {command}: {e}", lock)
+            logging.exception("Volatility3 container failed for %s", command)
+            return (command, False)
 
         if not quiet:
             self.safe_print(f"[+] {command} finished.", lock)
-            
-        # Validation
-        success = False
-        
-        # Check Exit Code first
+
         if exit_code != 0:
-            success = False
-        else:
-            try:
-                with open(self.output_file, "r") as f:
-                    content = f.read()
-                
-                # Check for known error strings
-                # "Volatility experienced": General runtime error
-                # "vol.py: error:": Command line argument error
-                # "usage: vol": Often printed on argument error
-                if "Volatility experienced" in content or "vol.py: error:" in content or "vol: error:" in content:
-                    success = False
-                elif format == "json":
-                    # Simple validation check matching API logic
-                    start_index = content.find('[')
-                    if start_index == -1:
-                        start_index = content.find('{')
-                    
-                    if start_index != -1:
-                        json.loads(content[start_index:])
-                        success = True
-                    else:
-                        # Fallback check
-                         lines = content.splitlines()
-                         if len(lines) > 1:
-                             json.loads('\n'.join(lines[1:]))
-                             success = True
-                else:
-                    success = True # Assume text output is successful if no crash and no error string
-            except:
-                success = False
+            return (command, False)
 
-        return (command, success)
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                content = f.read()
 
-    def safe_print(self, message, lock):
-        if lock:
-            with lock:
-                rprint(message)
-        else:
-            rprint(message)
+            if (
+                "Volatility experienced" in content
+                or "vol.py: error:" in content
+                or "vol: error:" in content
+            ):
+                return (command, False)
+            if config.format == "json":
+                start_index = content.find("[")
+                if start_index == -1:
+                    start_index = content.find("{")
 
-    def getCommands(self, opsys):
+                if start_index != -1:
+                    json.loads(content[start_index:])
+                    return (command, True)
+                lines = content.splitlines()
+                if len(lines) > 1:
+                    json.loads("\n".join(lines[1:]))
+                    return (command, True)
+                return (command, False)
+            return (command, True)
+        except Exception as e:  # pylint: disable=broad-except
+            logging.warning("Could not validate output for %s: %s", command, e)
+            return (command, False)
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-
-        yaml_path = os.path.join(base_dir, "plugins_list", f"vol3_{opsys}.yaml")
-        if not os.path.exists(yaml_path):
-            raise FileNotFoundError(f"File not found : {yaml_path}")
-
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-            modules_list = data["modules"]
-
-            return modules_list
+    def get_commands(self, opsys: str) -> list[str]:
+        """Return the list of plugin commands for the given operating system."""
+        return self._load_commands_yaml("vol3", opsys)

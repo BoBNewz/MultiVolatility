@@ -91,13 +91,18 @@ function App() {
     return () => clearInterval(interval);
   }, [isLoggedIn]);
 
-  const handleLogin = (password: string) => {
-    const envPassword = import.meta.env.VITE_APP_PASSWORD;
-    if (password === envPassword) {
-      setIsLoggedIn(true);
-      localStorage.setItem('isLoggedIn', 'true');
-      navigate('/dashboard');
-      return true;
+  const handleLogin = async (password: string) => {
+    try {
+      const response = await api.login(password);
+      if (response.success && response.token) {
+        setIsLoggedIn(true);
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('API_TOKEN', response.token);
+        navigate('/dashboard');
+        return true;
+      }
+    } catch (e) {
+      console.error("Login failed", e);
     }
     return false;
   };

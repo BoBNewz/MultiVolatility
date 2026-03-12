@@ -12,3 +12,9 @@ memdump.elf
 memory.dump
 config.yml
 Win7SP1x86.dmp
+.env
+CLI/build
+CLI/dist
+CLI/multivol.egg-info
+.ruff_cache
+.pytest_cache

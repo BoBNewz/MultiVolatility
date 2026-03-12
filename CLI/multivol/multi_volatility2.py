@@ -1,117 +1,79 @@
-# multi_volatility2.py
-# Implements Volatility2 memory analysis orchestration, Docker command generation, and backend communication.
-import time
+"""Volatility 2 memory analysis orchestration using Docker containers."""
+
+# pylint: disable=line-too-long
+import logging
 import os
-import json
-from rich import print as rprint
+import re
+import time
 import docker
+from multivol.multi_volatility_base import MultiVolatilityBase, Vol2RunConfig
 
 
-class multi_volatility2:
-    def __init__(self):
-        # Constructor for multi_volatility2 class
-        pass
-    
-    def resolve_path(self, path, host_path):
-        # If host_path is set, replacing the current working directory prefix with host_path
-        if host_path:
-            if path.startswith("/storage"):
-                 # Handle special storage mapping for Docker
-                 # Map /storage -> {host_path}/storage/data
-                 rel_path = os.path.relpath(path, "/storage")
-                 return os.path.join(host_path, "storage", "data", rel_path)
+class MultiVolatility2(MultiVolatilityBase):
+    """Orchestrate Volatility 2 commands executed inside Docker containers."""
 
-            if path.startswith(os.getcwd()):
-                rel_path = os.path.relpath(path, os.getcwd())
-                return os.path.join(host_path, rel_path)
-        return path
+    def _output_file_info(self, command: str, output_dir: str, fmt: str) -> tuple[str, str]:
+        """Return (output_file_path, output_filename) for the given command and format."""
+        ext = "json" if fmt == "json" else "txt"
+        filename = f"{command}_output.{ext}"
+        return os.path.join(output_dir, filename), filename
 
-    def execute_command_volatility2(self, command, dump, dump_dir, profiles_path, docker_image, profile, output_dir, format, quiet=False, lock=None, host_path=None, show_commands=False):
-        # Executes a Volatility2 command in Docker and handles output
+    def execute_command_volatility2(
+        self, command: str, config: Vol2RunConfig, quiet: bool = False, lock=None
+    ) -> tuple[str, bool]:  # pylint: disable=too-many-locals
+        """Execute a Volatility 2 command in Docker and handle output."""
         if not quiet:
             self.safe_print(f"[+] Starting {command}...", lock)
-        
+
         client = docker.from_env()
 
-        # Resolve paths for DooD
-        host_profiles_path = self.resolve_path(os.path.abspath(profiles_path), host_path)
-        host_dump_path_src = self.resolve_path(os.path.abspath(dump_dir), host_path) # dump_dir here is actually the full file path from main.py
-        host_output_dir = self.resolve_path(os.path.abspath(output_dir), host_path)
+        host_profiles_path = self.resolve_path(
+            os.path.abspath(config.profiles_path), config.host_path
+        )
+        host_dump_path_src = self.resolve_path(
+            os.path.abspath(config.dump_file_path), config.host_path
+        )
+        host_output_dir = self.resolve_path(os.path.abspath(config.output_dir), config.host_path)
 
         volumes = {
-            host_dump_path_src: {'bind': f'/dumps/{dump}', 'mode': 'rw'},
-            host_profiles_path: {'bind': '/home/vol/profiles', 'mode': 'rw'},
-            host_output_dir: {'bind': '/output', 'mode': 'rw'}
+            host_dump_path_src: {"bind": f"/dumps/{config.dump}", "mode": "rw"},
+            host_profiles_path: {"bind": "/home/vol/profiles", "mode": "rw"},
+            host_output_dir: {"bind": "/output", "mode": "rw"},
         }
-        
-        # Construct the command string to run inside the container
-        cmd_args = f"--plugins=/home/vol/profiles -f /dumps/{dump} --profile={profile} --output={format} {command}"
-        if show_commands:
+
+        cmd_args = f"--plugins=/home/vol/profiles -f /dumps/{config.dump} --profile={config.profile} --output={config.format} {command}"
+        if config.show_commands:
             print(f"[DEBUG] Volatility 2 Command: vol.py {cmd_args}", flush=True)
 
-        if format == "json":
-            self.output_file = os.path.join(output_dir, f"{command}_output.json")
-            output_filename = f"{command}_output.json"
-        else:
-            self.output_file = os.path.join(output_dir, f"{command}_output.txt")
-            output_filename = f"{command}_output.txt"
-        
-        # Redirect output to file inside container (avoids Docker log rotation issues)
+        output_file, output_filename = self._output_file_info(
+            command, config.output_dir, config.format
+        )
         cmd_with_redirect = f"/bin/sh -c 'vol.py {cmd_args} > /output/{output_filename} 2>&1'"
-            
-        try:
-            container = client.containers.run(
-                image=docker_image,
-                command=cmd_with_redirect,
-                volumes=volumes,
-                tty=False,  # No TTY needed when redirecting to file
-                remove=False,
-                detach=True,
-                log_config={"type": "none"}  # Disable Docker logging - output goes to file
-            )
-            
-            # Wait for container to finish (output is written to file, not logs)
-            container.wait()
-            container.remove()
 
-        except Exception as e:
-             self.safe_print(f"[!] Error running {command}: {e}", lock)
+        sanitized_name = re.sub(r"[^a-zA-Z0-9_.-]", "", command)
+        scan_id = os.path.basename(os.path.normpath(config.output_dir))
+        container_name = f"vol2_{scan_id[:8]}_{sanitized_name}"
+
+        self._cleanup_existing_container(client, container_name, lock)
+
+        try:
+            container = self.run_detached_container(
+                client, config.docker_image, cmd_with_redirect, volumes, name=container_name
+            )
+            container.wait()
+        except Exception as e:  # pylint: disable=broad-except
+            self.safe_print(f"[!] Error running {command}: {e}", lock)
+            logging.exception("Volatility2 container failed for %s", command)
+            return (command, False)
 
         time.sleep(0.5)
-        if format == "json":
-            try:
-                with open(self.output_file,"r") as f:
-                    lines = f.readlines()
-                if lines: # Check if lines is not empty
-                    with open(self.output_file,"w") as f:
-                        f.writelines(lines[-1])
-            except:
-                 pass
-        
-
+        if config.format == "json":
+            self._trim_output_file(output_file, command, start=-1)
 
         if not quiet:
             self.safe_print(f"[+] {command} finished.", lock)
-        return command
+        return (command, True)
 
-    def safe_print(self, message, lock):
-        if lock:
-            with lock:
-                rprint(message)
-        else:
-            rprint(message)
-
-    def getCommands(self, opsys):
-
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-
-        yaml_path = os.path.join(base_dir, "plugins_list", f"vol2_{opsys}.yaml")
-        if not os.path.exists(yaml_path):
-            raise FileNotFoundError(f"File not found : {yaml_path}")
-
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-            modules_list = data["modules"]
-
-            return modules_list
+    def get_commands(self, opsys: str) -> list[str]:
+        """Return the list of plugin commands for the given operating system."""
+        return self._load_commands_yaml("vol2", opsys)

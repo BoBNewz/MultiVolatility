@@ -7,7 +7,8 @@ services:
       - "5001:5001"
     environment:
       - HOST_PATH=${PWD} # Valid path to project root on Host, required for DooD
-      - DISABLE_LOCALHOST_ONLY=1 # Allow connections from other containers/host
+      - API_TOKEN=multivol_default_secret_token
+      - APP_PASSWORD=admin
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
       - ./outputs:/app/outputs
@@ -17,11 +18,36 @@ services:
       - ./volatility3_plugins:/app/volatility3_plugins
       - ./volatility3_cache:/app/volatility3_cache
 
-  # React Frontend
   web:
-    build: ./Web
+    build:
+      context: ./Web
+      args:
+        - VITE_API_TOKEN=multivol_default_secret_token
+        - VITE_API_URL=http://localhost:5001
     container_name: multivol-web
     ports:
       - "80:80"
     depends_on:
       - api
+
+  mcp:
+    build: ./MCP
+    container_name: multivol-mcp
+    ports:
+      - "8000:8000"
+    environment:
+      - TARGET_URL=http://api
+      - TARGET_PORT=5001
+      - API_TOKEN=multivol_default_secret_token
+    depends_on:
+      - api
+
+  # Build-only service — produces the multivol-memprocfs image that the API
+  # spawns on-demand (one container per scan).  It exits immediately at
+  # runtime; restart:no keeps it from being restarted by compose.
+  memprocfs:
+    build:
+      context: ./Dockerfiles/memprocfs
+    image: multivol-memprocfs
+    restart: "no"
+    command: ["echo", "MemProcFS image ready"]

@@ -4,3 +4,5 @@ flask
 flask-cors
 docker
 rich
+waitress
+pytest

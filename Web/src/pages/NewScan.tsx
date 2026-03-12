@@ -181,7 +181,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                 {uploading ? (
                                     <div className="flex flex-col items-center animate-fadeIn z-20 p-12 w-full h-full justify-center">
                                         <div className="mb-6 scale-110">
-                                            <CircularProgress progress={uploadProgress} size={80} strokeWidth={5} />
+                                            <CircularProgress progress={uploadProgress} size={80} strokeWidth={5} showValue />
                                         </div>
                                         <h3 className="text-xl font-bold text-white mb-2">Uploading Evidence</h3>
                                         <p className="text-slate-400 font-medium text-base">Transferring to Secure Storage...</p>

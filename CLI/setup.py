@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import os
 
 # Read requirements.txt
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     required = f.read().splitlines()
 
 # Read README.md
@@ -17,7 +17,7 @@ setup(
     description="MultiVolatility: Analyze memory dumps faster than ever with Volatility2 and Volatility3 in parallel using Docker",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/BoBNewz/MultiVolatility", 
+    url="https://github.com/BoBNewz/MultiVolatility",
     packages=find_packages(),
     package_data={
         "multivol": ["plugins_list/*.yaml"],
@@ -33,6 +33,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
     include_package_data=True,
 )
