@@ -1,77 +1,42 @@
 """Tests for memprocfs routes (multivol/api_server/routes/memprocfs.py)."""
 
 from multivol.api_server.routes.memprocfs import (
-    get_sidecar_url,
-    get_next_port,
-    active_sessions,
-    sessions_lock,
-    SIDECAR_PORT,
-    SIDECAR_BASE_PORT,
     MODULE_NAME,
+    SIDECAR_URL,
+    _scan_dump_map,
+    _scan_dump_lock,
 )
-
-
-class TestGetSidecarUrl:
-    def test_returns_none_when_no_session(self):
-        """Returns None if no active session exists for the scan."""
-        url = get_sidecar_url("nonexistent-scan-uuid")
-        assert url is None
-
-    def test_returns_url_when_session_active(self):
-        """Returns the sidecar URL when session is tracked in active_sessions."""
-        scan_id = "test-memprocfs-scan"
-        with sessions_lock:
-            active_sessions[scan_id] = {
-                "container_name": "vol_memprocfs_test",
-                "port": SIDECAR_BASE_PORT,
-                "started_at": 0.0,
-            }
-        try:
-            url = get_sidecar_url(scan_id)
-            assert url is not None
-            assert "vol_memprocfs_test" in url
-            assert str(SIDECAR_PORT) in url
-        finally:
-            with sessions_lock:
-                active_sessions.pop(scan_id, None)
-
-
-class TestGetNextPort:
-    def test_returns_base_port_when_no_sessions(self):
-        """When no sessions are active, returns SIDECAR_BASE_PORT."""
-        with sessions_lock:
-            saved = dict(active_sessions)
-            active_sessions.clear()
-        try:
-            port = get_next_port()
-            assert port == SIDECAR_BASE_PORT
-        finally:
-            with sessions_lock:
-                active_sessions.update(saved)
-
-    def test_skips_used_ports(self):
-        """Returns next available port when base port is already in use."""
-        scan_id = "port-test-scan"
-        with sessions_lock:
-            active_sessions[scan_id] = {
-                "container_name": "test_container",
-                "port": SIDECAR_BASE_PORT,
-                "started_at": 0.0,
-            }
-        try:
-            port = get_next_port()
-            assert port == SIDECAR_BASE_PORT + 1
-        finally:
-            with sessions_lock:
-                active_sessions.pop(scan_id, None)
 
 
 class TestMemprocfsConstants:
     def test_module_name_defined(self):
         assert MODULE_NAME == "MemProcFS.FileList"
 
-    def test_sidecar_base_port_is_valid(self):
-        assert SIDECAR_BASE_PORT > 1024
+    def test_sidecar_url_is_string(self):
+        assert isinstance(SIDECAR_URL, str)
+        assert SIDECAR_URL.startswith("http")
+
+
+class TestScanDumpMap:
+    def test_scan_dump_map_starts_empty_or_dict(self):
+        """_scan_dump_map is a dict mapping scan UUID -> dump path."""
+        assert isinstance(_scan_dump_map, dict)
+
+    def test_scan_dump_lock_is_lock(self):
+        import threading
+        assert isinstance(_scan_dump_lock, type(threading.Lock()))
+
+    def test_scan_entry_can_be_set_and_cleared(self):
+        """Verify the shared map can be written and read under the lock."""
+        scan_id = "test-scan-uuid-memprocfs"
+        with _scan_dump_lock:
+            _scan_dump_map[scan_id] = "/data/test.dmp"
+        try:
+            with _scan_dump_lock:
+                assert _scan_dump_map.get(scan_id) == "/data/test.dmp"
+        finally:
+            with _scan_dump_lock:
+                _scan_dump_map.pop(scan_id, None)
 
 
 class TestMemprocfsRoutes:
