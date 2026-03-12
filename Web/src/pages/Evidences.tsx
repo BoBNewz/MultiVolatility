@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Search, HardDrive, DownloadCloud, Trash2, CheckCircle } from 'lucide-react';
 import { api } from '../services/api';
+import type { Evidence, EvidenceChild } from '../types';
 import { CircularProgress } from '../components/CircularProgress';
 import { formatBytes } from '../utils/format';
 
 export const Evidences: React.FC = () => {
-    const [evidences, setEvidences] = useState<any[]>([]);
+    const [evidences, setEvidences] = useState<Evidence[]>([]);
     const [uploading, setUploading] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
     useEffect(() => {
-        api.getEvidences().then(setEvidences);
+        api.fetchEvidences().then(setEvidences);
     }, []);
 
     return (
@@ -29,7 +30,7 @@ export const Evidences: React.FC = () => {
                 <div className="flex space-x-3 items-center">
                     {uploading && (
                         <div className="flex items-center space-x-3 mr-4 animate-fadeIn">
-                            <span className="text-xs text-slate-400 font-medium">Uploading</span>
+                            <span className="text-xs text-slate-400 font-medium">{uploadProgress >= 70 ? 'Extracting' : 'Uploading'}</span>
                             <CircularProgress progress={uploadProgress} size={24} strokeWidth={3} showValue />
                         </div>
                     )}
@@ -57,7 +58,7 @@ export const Evidences: React.FC = () => {
                                     setUploadSuccess(true);
 
                                     // Refresh evidences list
-                                    api.getEvidences().then(setEvidences);
+                                    api.fetchEvidences().then(setEvidences);
 
                                     // Clear success message after 3s
                                     setTimeout(() => setUploadSuccess(false), 3000);
@@ -153,7 +154,7 @@ export const Evidences: React.FC = () => {
                             {/* Render Children (Extracted Files) */}
                             {f.children && f.children.length > 0 && (
                                 <div className="ml-12 pl-6 border-l-2 border-white/5 space-y-2">
-                                    {f.children.map((child: any) => (
+                                    {f.children && f.children.map((child: EvidenceChild) => (
                                         <div key={child.id} className="bg-[#0b0a12]/30 border border-white/5 rounded-lg p-3 flex items-center justify-between hover:bg-white/5 transition-all">
                                             <div className="flex items-center space-x-3">
                                                 <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-slate-400">

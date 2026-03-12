@@ -1,24 +1,28 @@
 """
 MemProcFS Sidecar Server
 ========================
-A lightweight Flask API that keeps a memprocfs.Vmm handle alive
-for instant VFS operations (file listing & extraction).
+Persistent, request-driven Flask API that holds a single live memprocfs.Vmm
+handle (1-slot session cache).  Instead of being launched per-scan, this
+server runs continuously as a compose service and accepts dump-switching via
+POST /load.
 
 Endpoints:
-  POST /init         — Open VMM handle on a dump file
+  POST /load         — Load (or hot-swap to) a different dump file
+  POST /unload       — Release the current VMM and return to idle
+  GET  /health       — Health check and current session info
   GET  /list         — List all recoverable files (NTFS + files sources)
   GET  /read?path=   — Read/download a specific file from the VFS
-  GET  /health       — Health check
-  POST /shutdown     — Graceful shutdown
 """
 
 import os
-import sys
 import time
 import logging
 import threading
-import signal
+import concurrent.futures
 from flask import Flask, request, jsonify, Response
+
+# Configurable forensic-ready timeout (seconds). Large dumps (>8 GB) can need 10–20 min.
+_FORENSIC_TIMEOUT = int(os.environ.get("MEMPROCFS_FORENSIC_TIMEOUT", "900"))
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
@@ -35,322 +39,416 @@ _PUBLIC_PATHS = {"/health"}
 
 @app.before_request
 def check_sidecar_auth():
-    """Require SIDECAR_TOKEN on all non-public endpoints when the token is configured."""
+    """Require SIDECAR_TOKEN on all non-public endpoints when configured."""
     if not _SIDECAR_TOKEN or request.path in _PUBLIC_PATHS:
         return None
     auth = request.headers.get("Authorization", "")
     token = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else ""
     if not token or token != _SIDECAR_TOKEN:
-        logging.warning(f"Unauthorized sidecar request to {request.path}")
+        logging.warning("Unauthorized sidecar request to %s", request.path)
         return jsonify({"error": "Unauthorized"}), 401
     return None
 
 
 # ──────────────────────────────────────────────
-# Global VMM state
+# 1-slot session state (Actor Pattern)
 # ──────────────────────────────────────────────
-vmm_handle = None
-vmm_lock = threading.Lock()
-file_cache = None  # Cached file listing
+# MemProcFS's C library relies heavily on Thread Local Storage (TLS).
+# Creating a VMM on one thread and calling it from another leads to an instant SIGSEGV.
+# Solution: A single background worker thread owns the Vmm object and executes all calls.
 
+import queue
+import memprocfs
 
-def is_null_bytes(data):
-    """Check if data is entirely null bytes."""
-    return all(b == 0 for b in data)
+_task_queue = queue.Queue()
 
+_session = {
+    "dump_path": None,
+    "status": "idle",  # idle | loading | ready | error
+    "error": None,
+    "files_cache": None,
+}
 
-def wait_for_forensic(vmm, path, timeout=300, poll_interval=5):
-    """Wait for forensic mode to populate the given VFS path."""
-    start = time.time()
-    while time.time() - start < timeout:
-        try:
-            entries = vmm.vfs.list(path)
-            if len(entries) > 0:
-                return True
-        except Exception as e:
-            logging.debug(f"VFS path {path} not ready yet: {e}")
-        time.sleep(poll_interval)
-    return False
+# Coalesces concurrent /list requests: only one enumeration runs at a time.
+# All other callers wait on this event and read from files_cache when it fires.
+_list_lock = threading.Lock()
+_list_event: threading.Event | None = None
 
+def _vmm_worker():
+    """Single thread that owns the vmm object and executes all requests."""
+    global _list_event
+    vmm = None
+    
+    while True:
+        task = _task_queue.get()
+        if task is None:
+            if vmm:
+                try: vmm.close()
+                except: pass
+            break
+            
+        action = task.get("action")
+        
+        if action == "load":
+            if vmm:
+                try: vmm.close()
+                except: pass
+                vmm = None
 
-def list_files_recursive(vmm, vfs_root, file_list, max_depth=50, _depth=0):
-    """Recursively list all files under a VFS path."""
-    if _depth > max_depth:
-        return
+            dump_path = task["dump_path"]
+            _session["dump_path"] = dump_path
+            _session["status"] = "loading"
+            _session["error"] = None
+            _session["files_cache"] = None
+            # Reset list coalescing state for the new dump
+            with _list_lock:
+                if _list_event is not None:
+                    _list_event.set()
+                _list_event = None
+            logging.info("Loading VMM for: %s", dump_path)
 
-    try:
-        entries = vmm.vfs.list(vfs_root)
-    except Exception as e:
-        logging.debug(f"Could not list VFS path {vfs_root}: {e}")
-        return
+            try:
+                vmm = memprocfs.Vmm(["-device", dump_path, "-forensic", "1"])
+                _session["status"] = "ready"
+                logging.info("VMM ready for: %s", dump_path)
+            except Exception as e:
+                logging.error("VMM init failed: %s", e)
+                vmm = None
+                _session["status"] = "error"
+                _session["error"] = str(e)
 
-    for name in entries:
-        if name in [".", ".."]:
-            continue
-
-        vfs_path = f"{vfs_root}/{name}".replace("//", "/")
-        info = entries[name]
-
-        if info.get("f_isdir", False):
-            list_files_recursive(vmm, vfs_path, file_list, max_depth, _depth + 1)
-        else:
-            size = info.get("size", 0)
-            if size > 0:
+        elif action == "unload":
+            if vmm:
+                try: vmm.close()
+                except: pass
+                vmm = None
+            _session["dump_path"] = None
+            _session["status"] = "idle"
+            _session["error"] = None
+            _session["files_cache"] = None
+            with _list_lock:
+                if _list_event is not None:
+                    _list_event.set()
+                _list_event = None
+            logging.info("VMM unloaded, session idle")
+            
+        elif action == "list":
+            result_box = task["result_box"]
+            if not vmm:
+                result_box.put(Exception("VMM not loaded"))
+            else:
+                # A previous queued task may have already populated the cache —
+                # avoid re-enumerating 400 k+ entries for every duplicate request.
+                if _session["files_cache"] is not None:
+                    result_box.put(_session["files_cache"])
+                else:
+                    try:
+                        res = _do_list_files(vmm)
+                        _session["files_cache"] = res
+                        result_box.put(res)
+                    except Exception as e:
+                        logging.exception("Worker list_files failed")
+                        result_box.put(e)
+                    finally:
+                        # Wake any threads waiting via _list_event
+                        with _list_lock:
+                            if _list_event is not None:
+                                _list_event.set()
+                                _list_event = None
+                    
+        elif action == "read":
+            result_box = task["result_box"]
+            vfs_path = task["vfs_path"]
+            if not vmm:
+                result_box.put(Exception("VMM not loaded"))
+            else:
                 try:
-                    sample_size = min(size, 4096)
-                    data = vmm.vfs.read(vfs_path, sample_size, 0)
-                    if data and is_null_bytes(data):
-                        size = 0
+                    parent = os.path.dirname(vfs_path)
+                    basename = os.path.basename(vfs_path)
+                    info_parent = vmm.vfs.list(parent)
+                    if basename not in info_parent:
+                        result_box.put(FileNotFoundError(f"File not found in VFS: {vfs_path}"))
+                    else:
+                        size = info_parent[basename].get("size", 0)
+                        if size == 0:
+                            result_box.put(ValueError("File has zero size"))
+                        else:
+                            data = vmm.vfs.read(vfs_path, size, 0)
+                            if data is None or _is_null_bytes(data):
+                                alt = _try_alternate_source(vmm, vfs_path)
+                                if alt:
+                                    data = alt
+                                else:
+                                    raise ValueError("File content is unrecoverable (null bytes)")
+                            result_box.put(data)
                 except Exception as e:
-                    logging.debug(f"Could not read sample from {vfs_path}: {e}")
-            file_list.append((vfs_path, size))
-
-
-def do_list_files(vmm):
-    """
-    List files from both /forensic/ntfs and /forensic/files,
-    deduplicate by Windows path, and return in filescan-compatible format.
-    """
-    raw_files = {}  # keyed by Windows path to deduplicate
-
-    for source_name, vfs_root in [
-        ("ntfs", "/forensic/ntfs"),
-        ("files", "/forensic/files"),
-    ]:
-        logging.info(f"Waiting for VFS path {vfs_root}...")
-        if not wait_for_forensic(vmm, vfs_root, timeout=120):
-            logging.warning(f"Timeout waiting for VFS path {vfs_root}")
-            continue
-
-        logging.info(f"Listing VFS path {vfs_root}...")
-        file_list = []
-        list_files_recursive(vmm, vfs_root, file_list)
-
-        for vfs_path, size in file_list:
-            # Convert VFS path to Windows-style path
-            # /forensic/ntfs/0/Windows/System32/foo.dll -> \Windows\System32\foo.dll
-            # /forensic/files/ROOT/... -> ...
-            rel = vfs_path
-            if rel.startswith(f"/forensic/{source_name}"):
-                rel = rel[len(f"/forensic/{source_name}") :]
-
-            # Strip the volume number from NTFS paths (e.g., /0/Windows -> /Windows)
-            if source_name == "ntfs":
-                parts = rel.split("/", 2)  # ['', '0', 'Windows/...']
-                if len(parts) >= 3:
-                    rel = "/" + parts[2]
-                elif len(parts) == 2:
-                    rel = "/"
-
-            # Convert forward slashes to Windows backslashes
-            win_path = rel.replace("/", "\\")
-            if not win_path.startswith("\\"):
-                win_path = "\\" + win_path
-
-            # Deduplicate: keep the entry with non-zero size, or the first one
-            key = win_path.lower()
-            if key not in raw_files or (size > 0 and raw_files[key]["Size"] == 0):
-                raw_files[key] = {
-                    "Name": win_path,
-                    "Size": size,
-                    "Source": source_name,
-                    "VfsPath": vfs_path,
-                    "__children": [],
-                }
-
-    results = list(raw_files.values())
-    # Sort by Name
-    results.sort(key=lambda x: x["Name"].lower())
-    logging.info(f"Listed {len(results)} unique files")
-    return results
-
+                    logging.exception("Worker read failed")
+                    result_box.put(e)
 
 # ──────────────────────────────────────────────
 # Flask routes
 # ──────────────────────────────────────────────
+
+_worker_thread = None
+_worker_lock = threading.Lock()
+
+@app.before_request
+def ensure_worker_started():
+    global _worker_thread
+    with _worker_lock:
+        if _worker_thread is None or not _worker_thread.is_alive():
+            _worker_thread = threading.Thread(target=_vmm_worker, daemon=True)
+            _worker_thread.start()
+
+@app.route("/load", methods=["POST"])
+def load():
+    """Dispatch a load command to the worker thread."""
+    data = request.get_json(silent=True) or {}
+    dump_path = data.get("dump_path", "").strip()
+
+    if not dump_path:
+        return jsonify({"error": "dump_path is required"}), 400
+    if not os.path.exists(dump_path):
+        return jsonify({"error": f"Dump file not found: {dump_path}"}), 404
+
+    if _session["dump_path"] == dump_path:
+        if _session["status"] in ("ready", "loading"):
+            msg = "already loaded" if _session["status"] == "ready" else "still loading"
+            return jsonify({"status": _session["status"], "dump_path": dump_path, "message": msg})
+
+    # Push to worker queue asynchronously
+    _task_queue.put({"action": "load", "dump_path": dump_path})
+    return jsonify({"status": "loading", "dump_path": dump_path})
+
+@app.route("/unload", methods=["POST"])
+def unload():
+    """Dispatch an unload command to the worker thread."""
+    _task_queue.put({"action": "unload"})
+    return jsonify({"status": "idle"})
 
 
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify(
         {
-            "status": "ok",
-            "vmm_active": vmm_handle is not None,
-            "files_cached": file_cache is not None,
+            "status": _session["status"],
+            "vmm_active": _session["status"] == "ready",
+            "dump_path": _session["dump_path"],
+            "files_cached": _session["files_cache"] is not None,
+            "error": _session["error"],
+            "forensic_timeout": _FORENSIC_TIMEOUT,
         }
     )
 
 
-@app.route("/init", methods=["POST"])
-def init_vmm():
-    global vmm_handle, file_cache
-    import memprocfs
-
-    data = request.json or {}
-    dump_path = data.get("dump_path", os.environ.get("DUMP_PATH", "/src/dump.dmp"))
-
-    if not os.path.exists(dump_path):
-        return jsonify({"error": f"Dump file not found: {dump_path}"}), 404
-
-    with vmm_lock:
-        if vmm_handle is not None:
-            return jsonify({"status": "already_initialized"})
-
-        try:
-            logging.info(
-                f"Initializing MemProcFS with forensic mode for {dump_path}..."
-            )
-            vmm_handle = memprocfs.Vmm(["-device", dump_path, "-forensic", "1"])
-            file_cache = None  # Reset cache
-            logging.info("VMM initialized successfully")
-            return jsonify({"status": "initialized"})
-        except Exception as e:
-            return jsonify({"error": f"Failed to initialize VMM: {str(e)}"}), 500
-
-
 @app.route("/list", methods=["GET"])
 def list_files_endpoint():
-    global file_cache
+    if _session["status"] != "ready":
+        return jsonify({"error": f"VMM not ready (status={_session['status']})"}), 503
 
-    if vmm_handle is None:
-        return jsonify({"error": "VMM not initialized. Call /init first."}), 400
+    # Fast path: cache is hot
+    if _session["files_cache"] is not None:
+        return jsonify(_session["files_cache"])
 
-    # Return cached results if available
-    if file_cache is not None:
-        return jsonify(file_cache)
+    global _list_event
 
+    with _list_lock:
+        # Re-check inside the lock — another thread may have finished while we waited
+        if _session["files_cache"] is not None:
+            return jsonify(_session["files_cache"])
+
+        if _list_event is not None:
+            # Enumeration already in progress — subscribe to the existing event
+            event_to_wait = _list_event
+            result_box = None
+        else:
+            # We are first — create event and dispatch exactly one worker task
+            _list_event = threading.Event()
+            event_to_wait = None
+            result_box = queue.Queue()
+            _task_queue.put({"action": "list", "result_box": result_box})
+
+    wait_seconds = _FORENSIC_TIMEOUT * 2
+
+    if event_to_wait is not None:
+        # Wait for the in-progress enumeration then return from cache
+        if not event_to_wait.wait(timeout=wait_seconds):
+            return jsonify({"error": "Worker thread timeout waiting for list"}), 504
+        cached = _session.get("files_cache")
+        if cached is None:
+            return jsonify({"error": "List enumeration failed"}), 500
+        return jsonify(cached)
+
+    # We dispatched the task — wait for the result directly
     try:
-        results = do_list_files(vmm_handle)
-        file_cache = results
-        return jsonify(results)
-    except Exception as e:
+        res = result_box.get(timeout=wait_seconds)
+    except queue.Empty:
+        return jsonify({"error": "Worker thread timeout"}), 504
+
+    if isinstance(res, Exception):
         logging.exception("Failed to list files")
-        return jsonify({"error": f"Failed to list files: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to list files: {str(res)}"}), 500
+
+    return jsonify(res)
 
 
 @app.route("/read", methods=["GET"])
 def read_file():
-    if vmm_handle is None:
-        return jsonify({"error": "VMM not initialized"}), 400
-
-    vfs_path = request.args.get("path")
+    vfs_path = request.args.get("path", "")
     if not vfs_path:
-        return jsonify({"error": "Missing 'path' parameter"}), 400
+        return jsonify({"error": "path parameter required"}), 400
 
-    # Try reading from the given VFS path directly
+    if _session["status"] != "ready":
+        return jsonify({"error": "VMM not ready"}), 503
+
+    result_box = queue.Queue()
+    _task_queue.put({"action": "read", "vfs_path": vfs_path, "result_box": result_box})
+
     try:
-        parent = os.path.dirname(vfs_path)
-        basename = os.path.basename(vfs_path)
-        info_parent = vmm_handle.vfs.list(parent)
-        if basename not in info_parent:
-            return jsonify({"error": f"File not found in VFS: {vfs_path}"}), 404
+        data = result_box.get(timeout=120)  # 2 minute read timeout
+    except queue.Empty:
+        return jsonify({"error": "Worker thread timeout"}), 504
 
-        size = info_parent[basename].get("size", 0)
-        if size == 0:
-            return jsonify({"error": "File has zero size"}), 404
+    if isinstance(data, Exception):
+        return jsonify({"error": str(data)}), 500 if not isinstance(data, (FileNotFoundError, ValueError)) else 404
 
-        data = vmm_handle.vfs.read(vfs_path, size, 0)
-        if data is None:
-            return jsonify({"error": "Failed to read file"}), 500
-
-        if is_null_bytes(data):
-            # Try alternate source
-            alt_data = try_alternate_source(vfs_path)
-            if alt_data:
-                data = alt_data
-            else:
-                return jsonify(
-                    {"error": "File content is entirely null bytes (unrecoverable)"}
-                ), 404
-
-        filename = os.path.basename(vfs_path)
-        return Response(
-            data,
-            mimetype="application/octet-stream",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
-                "Content-Length": str(len(data)),
-            },
-        )
-    except Exception as e:
-        logging.exception("Read failed for VFS path %s", vfs_path)
-        return jsonify({"error": f"Read failed: {str(e)}"}), 500
+    filename = os.path.basename(vfs_path)
+    return Response(
+        data,
+        mimetype="application/octet-stream",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(data)),
+        },
+    )
 
 
-def try_alternate_source(vfs_path):
-    """If the primary source returns null bytes, try the alternate source."""
-    if vmm_handle is None:
-        return None
+# ──────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────
 
-    # Determine relative path and try the other source
-    rel = None
+
+def _is_null_bytes(data: bytes) -> bool:
+    return len(data) > 0 and all(b == 0 for b in data)
+
+
+def _wait_for_forensic(vmm, path: str, timeout: int | None = None) -> bool:
+    """Poll until the VFS path is non-empty or timeout expires."""
+    if timeout is None:
+        timeout = _FORENSIC_TIMEOUT
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            if len(vmm.vfs.list(path)) > 0:
+                return True
+        except Exception:  # pylint: disable=broad-except
+            pass
+        time.sleep(5)
+    return False
+
+
+def _list_recursive(
+    vmm, vfs_root: str, results: list, max_depth: int = 50, depth: int = 0
+) -> None:
+    """Walk the VFS tree and collect (path, size) pairs.
+
+    No per-file read probe — null-byte detection is deferred to /read time.
+    This eliminates thousands of unnecessary VFS reads during the listing phase.
+    """
+    if depth > max_depth:
+        return
+    try:
+        entries = vmm.vfs.list(vfs_root)
+    except Exception:  # pylint: disable=broad-except
+        return
+    for name, info in entries.items():
+        if name in (".", ".."):
+            continue
+        vfs_path = f"{vfs_root}/{name}".replace("//", "/")
+        if info.get("f_isdir", False):
+            _list_recursive(vmm, vfs_path, results, max_depth, depth + 1)
+        else:
+            results.append((vfs_path, info.get("size", 0)))
+
+
+def _list_source(vmm, source: str, root: str) -> list[tuple[str, int]]:
+    """Wait for one forensic source and return its (vfs_path, size) list."""
+    logging.info("Waiting for %s...", root)
+    if not _wait_for_forensic(vmm, root):
+        logging.warning("Timeout waiting for %s — skipping", root)
+        return []
+    logging.info("%s is ready, enumerating...", root)
+    file_list: list[tuple[str, int]] = []
+    _list_recursive(vmm, root, file_list)
+    logging.info("%s: found %d entries", source, len(file_list))
+    return file_list
+
+
+def _do_list_files(vmm) -> list:
+    """Build the unified file list from NTFS and files forensic sources.
+
+    Both sources are waited on in parallel so a slow NTFS scan does not delay
+    the files source (and vice-versa).  NTFS entries take priority; files
+    entries fill in gaps where NTFS reported size 0.
+    """
+    sources = [("ntfs", "/forensic/ntfs"), ("files", "/forensic/files")]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        futures = {
+            pool.submit(_list_source, vmm, src, root): src
+            for src, root in sources
+        }
+        results_by_source: dict[str, list[tuple[str, int]]] = {}
+        for fut in concurrent.futures.as_completed(futures):
+            src = futures[fut]
+            try:
+                results_by_source[src] = fut.result()
+            except Exception:  # pylint: disable=broad-except
+                logging.exception("Error listing source %s", src)
+                results_by_source[src] = []
+
+    raw: dict = {}
+    for source in ("ntfs", "files"):  # ntfs first so it wins on conflicts
+        for vfs_path, size in results_by_source.get(source, []):
+            rel = vfs_path[len(f"/forensic/{source}"):]
+            if source == "ntfs":
+                parts = rel.split("/", 2)
+                rel = ("/" + parts[2]) if len(parts) >= 3 else "/"
+            win_path = rel.replace("/", "\\")
+            if not win_path.startswith("\\"):
+                win_path = "\\" + win_path
+            key = win_path.lower()
+            if key not in raw or (size > 0 and raw[key]["Size"] == 0):
+                raw[key] = {
+                    "Name": win_path,
+                    "Size": size,
+                    "Source": source,
+                    "VfsPath": vfs_path,
+                    "__children": [],
+                }
+
+    results = sorted(raw.values(), key=lambda x: x["Name"].lower())
+    logging.info("Listed %d unique files", len(results))
+    return results
+
+
+def _try_alternate_source(vmm, vfs_path: str):
     if "/forensic/ntfs" in vfs_path:
-        # Extract relative path from ntfs, try files
-        parts = vfs_path.split("/forensic/ntfs", 1)
-        if len(parts) == 2:
-            rel = parts[1]
-            alt_path = f"/forensic/files{rel}"
+        alt = vfs_path.replace("/forensic/ntfs", "/forensic/files", 1)
     elif "/forensic/files" in vfs_path:
-        parts = vfs_path.split("/forensic/files", 1)
-        if len(parts) == 2:
-            rel = parts[1]
-            alt_path = f"/forensic/ntfs{rel}"
+        alt = vfs_path.replace("/forensic/files", "/forensic/ntfs", 1)
     else:
         return None
-
     try:
-        parent = os.path.dirname(alt_path)
-        basename = os.path.basename(alt_path)
-        info_parent = vmm_handle.vfs.list(parent)
-        if basename not in info_parent:
+        parent = os.path.dirname(alt)
+        basename = os.path.basename(alt)
+        info = vmm.vfs.list(parent)
+        if basename not in info:
             return None
-        size = info_parent[basename].get("size", 0)
-        if size == 0:
+        size = info[basename].get("size", 0)
+        if not size:
             return None
-        data = vmm_handle.vfs.read(alt_path, size, 0)
-        if data and not is_null_bytes(data):
-            return data
-    except Exception as e:
-        logging.debug(f"Alternate path read failed for {alt_path}: {e}")
-    return None
-
-
-@app.route("/shutdown", methods=["POST"])
-def shutdown():
-    global vmm_handle, file_cache
-    with vmm_lock:
-        vmm_handle = None
-        file_cache = None
-    logging.info("VMM handle released")
-
-    # Schedule shutdown after response
-    def do_shutdown():
-        time.sleep(1)
-        os.kill(os.getpid(), signal.SIGTERM)
-
-    threading.Thread(target=do_shutdown, daemon=True).start()
-    return jsonify({"status": "shutting_down"})
-
-
-if __name__ == "__main__":
-    # Auto-init if DUMP_PATH is set and AUTO_INIT is true
-    dump_path = os.environ.get("DUMP_PATH")
-    auto_init = os.environ.get("AUTO_INIT", "true").lower() == "true"
-
-    if dump_path and auto_init and os.path.exists(dump_path):
-        import memprocfs
-
-        # Initialize VMM in the MAIN thread before Flask starts.
-        # memprocfs.Vmm spawns internal C-level threads for forensic mode.
-        # Doing this in a Python daemon thread causes SIGSEGV when the
-        # daemon thread is cleaned up while C threads are still running.
-        try:
-            logging.info(f"Auto-initializing VMM for {dump_path}...")
-            vmm_handle = memprocfs.Vmm(["-device", dump_path, "-forensic", "1"])
-            logging.info("VMM auto-initialized successfully")
-        except Exception as e:
-            logging.error(f"Auto-init failed: {e}")
-            sys.exit(1)
-
-    # Use threaded=False to avoid threading conflicts with native VMM code
-    app.run(host="0.0.0.0", port=5002, threaded=False)  # nosec B104
+        data = vmm.vfs.read(alt, size, 0)
+        return data if data and not _is_null_bytes(data) else None
+    except Exception:  # pylint: disable=broad-except
+        return None

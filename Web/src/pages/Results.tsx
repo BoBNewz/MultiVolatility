@@ -22,6 +22,7 @@ import {
     HardDrive
 } from 'lucide-react';
 import { api, getApiToken, API_BASE_URL } from '../services/api';
+import type { ModuleResult, StringsResponse, ModuleStatus, Scan } from '../types';
 import { FileTreeView } from '../components/FileTreeView';
 import { ProcessTreeView } from '../components/ProcessTreeView';
 import { NetworkGraphView } from '../components/NetworkGraphView';
@@ -41,20 +42,20 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [showErrorModal, setShowErrorModal] = React.useState<{ module: string, error: string } | null>(null);
     const [showRunModal, setShowRunModal] = React.useState(false);
     const [runPluginName, setRunPluginName] = React.useState('');
-    const [results, setResults] = React.useState<any[]>([]);
+    const [results, setResults] = React.useState<ModuleResult[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [moduleSearchTerm, setModuleSearchTerm] = React.useState('');
-    const [selectedResult, setSelectedResult] = React.useState<any | null>(null);
+    const [selectedResult, setSelectedResult] = React.useState<ModuleResult | null>(null);
     const [isFullScreen, setIsFullScreen] = React.useState(false);
     const [wrapText, setWrapText] = React.useState(false);
     const [hiddenCols, setHiddenCols] = React.useState<string[]>([]);
     const [viewMode, setViewMode] = React.useState<'table' | 'tree' | 'graph'>('table');
-    const [caseDetails, setCaseDetails] = React.useState<any | null>(null);
+    const [caseDetails, setCaseDetails] = React.useState<Scan | null>(null);
     const [error, setError] = React.useState<string | null>(null);
 
     // Strings View State
-    const [stringsContent, setStringsContent] = React.useState<{ content: string[], total: number, page: number, limit: number } | null>(null);
+    const [stringsContent, setStringsContent] = React.useState<StringsResponse | null>(null);
     const [stringsQuery, setStringsQuery] = React.useState('');
     const [stringsPage, setStringsPage] = React.useState(1);
     const [stringsContext, setStringsContext] = React.useState(0);
@@ -74,49 +75,31 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
 
     // Polling effect
-    React.useEffect(() => {
-        if (!caseId) return;
-        loadModules();
-        loadCaseDetails(); // Load case details once when caseId changes
-        const interval = setInterval(loadModules, 3000); // 3 seconds polling
-        return () => clearInterval(interval);
-    }, [caseId]);
-
-    const loadCaseDetails = async () => {
+    const loadCaseDetails = React.useCallback(async () => {
         if (!caseId) return;
         try {
-            const details = await api.getScan(caseId);
+            const details = await api.fetchScan(caseId);
             setCaseDetails(details);
         } catch (e) {
             console.error("Failed to load case details", e);
         }
-    };
+    }, [caseId]);
 
-    // Reset view mode when module changes
-    React.useEffect(() => {
-        setViewMode('table');
-        setHiddenCols([]);
-        setSearchTerm('');
-        setColWidths({});
-        setRowsLimit(50);
-    }, [activeModule]);
-
-    const loadModules = async () => {
+    const loadModules = React.useCallback(async () => {
         if (!caseId) return;
         try {
-            // Only fetch status from DB (single source of truth)
-            const statusData = await api.getScanModulesStatus(caseId);
+            const statusData = await api.fetchScanModulesStatus(caseId);
 
             const merged: Record<string, ModuleState> = {};
 
             if (Array.isArray(statusData)) {
-                statusData.forEach((s: any) => {
+                statusData.forEach((s: ModuleStatus) => {
                     const modName = s.module;
                     if (!modName) return;
 
                     merged[modName] = {
                         name: modName,
-                        status: s.status?.toUpperCase() || 'PENDING',
+                        status: (s.status?.toUpperCase() || 'PENDING') as ModuleState['status'],
                         error: s.error_message
                     };
                 });
@@ -127,10 +110,10 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             // Only update modules state if something actually changed
             // This prevents unnecessary re-renders that can reset scroll position
             setModules((prevModules: ModuleState[]) => {
-                // Quick check: if lengths differ, definitely update
+                // Never wipe an existing list due to a transient empty response.
+                if (sorted.length === 0 && prevModules.length > 0) return prevModules;
                 if (prevModules.length !== sorted.length) return sorted;
 
-                // Check if any module status changed
                 const hasChanges = sorted.some((mod: ModuleState, i: number) => {
                     const prev = prevModules[i];
                     return !prev || prev.name !== mod.name || prev.status !== mod.status;
@@ -140,7 +123,6 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             });
 
             // Auto-select first module ONLY on initial load (when no module is selected yet)
-            // Use functional update to avoid stale closure issues
             setActiveModule((prev: string | null) => {
                 if (prev === null && sorted.length > 0) {
                     return sorted[0].name;
@@ -150,32 +132,9 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         } catch (error) {
             console.error('Failed to load modules:', error);
         }
-    };
+    }, [caseId]);
 
-    // Auto-reload results when active module's status changes to COMPLETED
-    React.useEffect(() => {
-        if (!activeModule || !modules.length) return;
-
-        const currentModule = modules.find((m: ModuleState) => m.name === activeModule);
-        const currentStatus = currentModule?.status || null;
-        const prevStatus = prevActiveModuleStatusRef.current;
-
-        // If status changed to COMPLETED from something else, reload results
-        if (currentStatus === 'COMPLETED' && prevStatus !== null && prevStatus !== 'COMPLETED') {
-            loadResults();
-        }
-
-        // Update the ref
-        prevActiveModuleStatusRef.current = currentStatus;
-    }, [activeModule, modules]);
-
-    React.useEffect(() => {
-        if (caseId && activeModule) {
-            loadResults();
-        }
-    }, [caseId, activeModule]);
-
-    const loadResults = async () => {
+    const loadResults = React.useCallback(async () => {
         if (!caseId || !activeModule) return;
         setLoading(true);
         setError(null);
@@ -193,17 +152,15 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                 try {
                     const data = await api.getStrings(caseId as string, queryParams);
                     setStringsContent(data);
-                    setResults([]); // Clear standard results
-                } catch (err: any) {
-                    setError(err.message || 'Failed to load strings');
+                    setResults([]);
+                } catch (err: unknown) {
+                    setError(err instanceof Error ? err.message : 'Failed to load strings');
                     setStringsContent(null);
                 } finally {
                     setStringsLoading(false);
                 }
             } else if (activeModule === 'MemProcFS.FileList') {
-                // Use dedicated MemProcFS API with server-side search
-                // The server has ALL files cached; we only fetch a page of 500
-                const data = await api.getMemProcFSFiles(caseId as string, 500, 0, searchTerm);
+                const data = await api.fetchMemProcFSFiles(caseId as string, 500, 0, searchTerm);
                 if (data && data.results) {
                     setResults(data.results);
                 } else {
@@ -211,7 +168,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                 }
                 setStringsContent(null);
             } else {
-                const data = await api.getScanResults(caseId, activeModule);
+                const data = await api.fetchScanResults(caseId, activeModule);
                 setResults(Array.isArray(data) ? data : []);
                 setStringsContent(null);
             }
@@ -221,23 +178,62 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         } finally {
             setLoading(false);
         }
-    };
+    }, [caseId, activeModule, stringsPage, stringsQuery, stringsContext, searchTerm]);
+
+    // Polling effect
+    React.useEffect(() => {
+        if (!caseId) return;
+        loadModules();
+        loadCaseDetails();
+        const interval = setInterval(loadModules, 3000);
+        return () => clearInterval(interval);
+    }, [caseId, loadModules, loadCaseDetails]);
+
+    // Reset view mode when module changes
+    React.useEffect(() => {
+        setViewMode('table');
+        setHiddenCols([]);
+        setSearchTerm('');
+        setColWidths({});
+        setRowsLimit(50);
+    }, [activeModule]);
+
+    // Auto-reload results when active module's status changes to COMPLETED
+    React.useEffect(() => {
+        if (!activeModule || !modules.length) return;
+
+        const currentModule = modules.find((m: ModuleState) => m.name === activeModule);
+        const currentStatus = currentModule?.status || null;
+        const prevStatus = prevActiveModuleStatusRef.current;
+
+        if (currentStatus === 'COMPLETED' && prevStatus !== null && prevStatus !== 'COMPLETED') {
+            loadResults();
+        }
+
+        prevActiveModuleStatusRef.current = currentStatus;
+    }, [activeModule, modules, loadResults]);
+
+    React.useEffect(() => {
+        if (caseId && activeModule) {
+            loadResults();
+        }
+    }, [caseId, activeModule, loadResults]);
 
     // Reload strings when pagination or query changes
     React.useEffect(() => {
         if (activeModule === 'strings') {
             loadResults();
         }
-    }, [stringsPage, stringsQuery, stringsContext]);
+    }, [stringsPage, stringsQuery, stringsContext, activeModule, loadResults]);
 
     // Reload MemProcFS results when search term changes (debounced)
     React.useEffect(() => {
         if (activeModule !== 'MemProcFS.FileList') return;
         const timer = setTimeout(() => {
             loadResults();
-        }, 300);  // 300ms debounce
+        }, 300);
         return () => clearTimeout(timer);
-    }, [searchTerm]);
+    }, [searchTerm, activeModule, loadResults]);
 
     const handleDownload = () => {
         if (!results || !activeModule || !caseId) return;
@@ -252,7 +248,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         a.remove();
     };
 
-    const handleDownloadFile = async (nodeData: any) => {
+    const handleDownloadFile = async (nodeData: ModuleResult) => {
         if (!caseId || !caseDetails) {
             toast.error("Case details not loaded.");
             return;
@@ -285,13 +281,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         try {
             // Start Task
-            const filePath = nodeData['FilePath'] || nodeData['Path'];
+            const filePath = (nodeData['FilePath'] || nodeData['Path']) as string | undefined;
             const { task_id } = await api.startDumpTask(caseId, String(virtAddr), image, filePath);
 
             // Poll
             const pollInterval = setInterval(async () => {
                 try {
-                    const status = await api.getDumpTaskStatus(task_id);
+                    const status = await api.fetchDumpTaskStatus(task_id);
                     if (status.status === 'completed') {
                         clearInterval(pollInterval);
                         toast.success("Download ready!");
@@ -301,34 +297,23 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                         clearInterval(pollInterval);
                         toast.error(`Extraction failed: ${status.error}`);
                     }
-                } catch (e) {
+                } catch {
                     clearInterval(pollInterval);
                     toast.error("Failed to check status");
                 }
             }, 2000);
 
-        } catch (e: any) {
-            toast.error(e.message || "Failed to start extraction");
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Failed to start extraction");
         }
     };
 
     // --- Column Resizing Logic ---
-    const handleMouseDown = React.useCallback((e: React.MouseEvent, col: string) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const currentWidth = colWidths[col] || 200; // Default width assumption
-        resizingRef.current = { col, startX: e.clientX, startWidth: currentWidth };
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-    }, [colWidths]);
-
     const handleMouseMove = React.useCallback((e: MouseEvent) => {
         if (!resizingRef.current) return;
         const { col, startX, startWidth } = resizingRef.current;
         const diff = e.clientX - startX;
-        const newWidth = Math.max(50, startWidth + diff); // Minimum width 50px
+        const newWidth = Math.max(50, startWidth + diff);
         setColWidths(prev => ({ ...prev, [col]: newWidth }));
     }, []);
 
@@ -339,6 +324,17 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
     }, [handleMouseMove]);
+
+    const handleMouseDown = React.useCallback((e: React.MouseEvent, col: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentWidth = colWidths[col] || 200;
+        resizingRef.current = { col, startX: e.clientX, startWidth: currentWidth };
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    }, [colWidths, handleMouseMove, handleMouseUp]);
     // -----------------------------
 
     const toggleColumnVisibility = (col: string) => {
@@ -464,10 +460,6 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         // Special View for RecoverFs
         if (activeModule === 'linux.pagecache.RecoverFs') {
-            console.log('DEBUG RecoverFs: results =', results);
-            console.log('DEBUG RecoverFs: results[0] =', results[0]);
-            console.log('DEBUG RecoverFs: results[0]?.name =', results[0]?.name);
-
             return (
                 <FileTreeView
                     data={results}
@@ -476,7 +468,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                     onToggleView={() => { }}
                     onDownload={(nodeData) => {
                         if (nodeData.type !== 'file') return;
-                        const filePath = nodeData.path;
+                        const filePath = nodeData.path as string | undefined;
                         if (!filePath) {
                             toast.error("Invalid file path");
                             return;
@@ -514,10 +506,10 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         if (viewMode === 'tree' && isFileScan && !forceTableView) {
             // New dedicated component handling its own hooks correctly
             const downloadHandler = activeModule === 'MemProcFS.FileList'
-                ? (nodeData: any) => {
+                ? (nodeData: ModuleResult) => {
                     const vfsPath = nodeData['VfsPath'];
                     if (!vfsPath) { toast.error('No VFS path available for this file'); return; }
-                    window.open(api.getMemProcFSDownloadUrl(caseId as string, vfsPath), '_blank');
+                    window.open(api.getMemProcFSDownloadUrl(caseId as string, String(vfsPath)), '_blank');
                 }
                 : caseDetails?.os?.toLowerCase() === 'linux' ? undefined : handleDownloadFile;
 
@@ -543,17 +535,17 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         if (viewMode === 'graph' && isNetScan) {
             return (
-                <NetworkGraphView data={results} />
+                <NetworkGraphView data={results as never} />
             );
         }
 
         // Helper to flatten nested data (Vol3 __children) for Table View
-        const flattenData = (items: any[]): any[] => {
-            let flat: any[] = [];
+        const flattenData = (items: ModuleResult[]): ModuleResult[] => {
+            let flat: ModuleResult[] = [];
             items.forEach(item => {
                 // Create a copy without __children to avoid circular JSON issues in table rendering
                 const { __children, ...rest } = item;
-                flat.push(rest);
+                flat.push(rest as ModuleResult);
                 if (__children && Array.isArray(__children)) {
                     flat = flat.concat(flattenData(__children));
                 }
@@ -665,9 +657,12 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                                 }`}
                                             style={{ maxWidth: colWidths[key] || 'auto' }}
                                         >
-                                            {typeof row[key] === 'object'
-                                                ? JSON.stringify(row[key])
-                                                : String(row[key])}
+                                            {(() => {
+                                                const v = row[key];
+                                                return typeof v === 'object' && v !== null
+                                                    ? JSON.stringify(v)
+                                                    : String(v ?? '');
+                                            })()}
                                             {/* Cell-level Resize Handle for persistent visual aid */}
                                             <div
                                                 className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/50 group-hover/cell:bg-white/5 transition-colors z-20 opacity-0 group-hover/cell:opacity-100"
@@ -679,7 +674,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                     {/* MemProcFS download button */}
                                     {activeModule === 'MemProcFS.FileList' && (
                                         <td className="px-6 py-4 text-right">
-                                            {row['VfsPath'] && row['Size'] > 0 && (
+                                            {!!row['VfsPath'] && (row['Size'] as number) > 0 && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -733,13 +728,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [executingPlugin, setExecutingPlugin] = React.useState(false);
     const [isPluginDropdownOpen, setIsPluginDropdownOpen] = React.useState(false);
 
-    React.useEffect(() => {
-        if (showRunModal && availablePlugins.length === 0 && caseDetails?.image) {
-            fetchPlugins();
-        }
-    }, [showRunModal, caseDetails]);
-
-    const fetchPlugins = async () => {
+    const fetchPlugins = React.useCallback(async () => {
         if (!caseDetails?.image) return;
         setLoadingPlugins(true);
         try {
@@ -764,7 +753,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         } finally {
             setLoadingPlugins(false);
         }
-    };
+    }, [caseDetails]);
+
+    React.useEffect(() => {
+        if (showRunModal && availablePlugins.length === 0 && caseDetails?.image) {
+            fetchPlugins();
+        }
+    }, [showRunModal, caseDetails, availablePlugins.length, fetchPlugins]);
 
     const handleExecutePlugin = async () => {
         if (!caseId || !runPluginName) return;
@@ -775,8 +770,8 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             setShowRunModal(false);
             // Optional: Start polling for result or just refresh modules list after a delay
             setTimeout(loadModules, 2000);
-        } catch (e: any) {
-            toast.error(e.message || "Failed to execute plugin");
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Failed to execute plugin");
         } finally {
             setExecutingPlugin(false);
         }
@@ -795,18 +790,18 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                 // Refresh modules to pick up the new MemProcFS.FileList module
                 setTimeout(loadModules, 2000);
             }
-        } catch (e: any) {
-            toast.error(e.message || 'Failed to start MemProcFS');
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : 'Failed to start MemProcFS');
         } finally {
             setMemprocfsStarting(false);
         }
     };
 
     // MemProcFS download handler for table view rows
-    const handleMemProcFSDownload = (nodeData: any) => {
+    const handleMemProcFSDownload = (nodeData: ModuleResult) => {
         const vfsPath = nodeData['VfsPath'];
         if (!vfsPath) { toast.error('No VFS path available for this file'); return; }
-        window.open(api.getMemProcFSDownloadUrl(caseId as string, vfsPath), '_blank');
+        window.open(api.getMemProcFSDownloadUrl(caseId as string, String(vfsPath)), '_blank');
     };
 
     return (

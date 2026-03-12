@@ -9,7 +9,8 @@ from multivol.api_server.config import STORAGE_DIR
 def get_db_connection() -> sqlite3.Connection:
     """Open and return a SQLite connection to the scans database."""
     db_path = os.path.join(STORAGE_DIR, "scans.db")
-    conn = sqlite3.connect(db_path, timeout=10.0)  # wait up to 10s if db is locked
+    conn = sqlite3.connect(db_path, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 

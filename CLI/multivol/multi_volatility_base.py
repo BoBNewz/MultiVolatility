@@ -143,6 +143,13 @@ class MultiVolatilityBase:
             "detach": True,
             "remove": False,
             "log_config": {"type": "none"},
+            # Least-privilege: no Linux capabilities, no setuid binaries.
+            # read_only is intentionally omitted: bind-mount parent dirs (/root/.cache etc.)
+            # may not exist in the image, which causes container start failures on a
+            # read-only rootfs (Docker cannot create missing mount-point dirs).
+            "cap_drop": ["ALL"],
+            "security_opt": ["no-new-privileges:true"],
+            "tmpfs": {"/tmp": "size=64m,mode=1777"},
         }
         if name is not None:
             run_kwargs["name"] = name

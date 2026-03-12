@@ -98,5 +98,6 @@ def run_api(runner_cb: Callable[[argparse.Namespace], None], debug_mode: bool = 
             threads=10,
             max_request_body_size=53687091200,
             channel_timeout=86400,
+            recv_bytes=65536,  # 64 KiB recv buffer (default 8 KiB is far too small for large dumps)
         )  # nosec B104
         # 50GB limit, 24h timeout

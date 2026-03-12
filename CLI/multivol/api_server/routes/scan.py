@@ -266,7 +266,7 @@ def _build_args_from_request(
         full=bool(data.get("full", False)),
         profile=data.get("profile"),
         processes=data.get("processes"),
-        host_path=data.get("host_path", os.environ.get("HOST_PATH")),
+        host_path=os.environ.get("HOST_PATH"),
         debug=bool(data.get("debug", True)),
         fetch_symbol=is_linux and bool(data.get("fetch_symbol", True)),
         custom_symbol=data.get("custom_symbol"),
@@ -542,37 +542,18 @@ def _ingest_module_output(c: sqlite3.Cursor, uuid: str, module_name: str, output
         logging.exception("Failed to ingest %s for scan %s", module_name, uuid)
 
 
-def _handle_exited_container(
-    c: sqlite3.Cursor,
-    uuid: str,
-    module_name: str,
-    output_dir: Optional[str],
-    container: Any,
-) -> None:
-    """Handle a container that has exited: ingest output, mark COMPLETED, remove container."""
-    if module_name == "linux.pagecache.RecoverFs" and output_dir:
-        process_recover_fs(output_dir)
-    if output_dir:
-        _ingest_module_output(c, uuid, module_name, output_dir)
-    c.execute(
-        "UPDATE scan_module_status SET status = 'COMPLETED',"
-        " updated_at = ? WHERE scan_id = ? AND module = ?",
-        (time.time(), uuid, module_name),
-    )
-    try:
-        container.remove()
-    except docker.errors.APIError as rm_err:
-        logging.debug("Container removal skipped (already gone or API error): %s", rm_err)
-
 
 def _refresh_module_from_docker(
-    c: sqlite3.Cursor,
     docker_client: Any,
     uuid: str,
     mod_dict: dict,
     output_dir: Optional[str],
 ) -> None:
-    """Update mod_dict status by inspecting the corresponding Docker container."""
+    """Update mod_dict status by inspecting the corresponding Docker container.
+
+    DB writes are best-effort: if the DB is locked (background scan thread is writing),
+    the in-memory mod_dict is still updated so the HTTP response is correct.
+    """
     module_name = mod_dict["module"]
     try:
         container = _find_container(docker_client, uuid, module_name)
@@ -580,14 +561,37 @@ def _refresh_module_from_docker(
             return
         if container.status == "running":
             mod_dict["status"] = "RUNNING"
-            c.execute(
-                "UPDATE scan_module_status SET status = 'RUNNING',"
-                " updated_at = ? WHERE scan_id = ? AND module = ?",
-                (time.time(), uuid, module_name),
-            )
+            try:
+                with get_db_connection() as _conn:
+                    _conn.execute(
+                        "UPDATE scan_module_status SET status = 'RUNNING',"
+                        " updated_at = ? WHERE scan_id = ? AND module = ?",
+                        (time.time(), uuid, module_name),
+                    )
+            except sqlite3.OperationalError:
+                pass  # locked — background thread will reconcile
         elif container.status == "exited":
-            _handle_exited_container(c, uuid, module_name, output_dir, container)
             mod_dict["status"] = "COMPLETED"
+            try:
+                with get_db_connection() as _conn:
+                    c2 = _conn.cursor()
+                    if module_name == "linux.pagecache.RecoverFs" and output_dir:
+                        process_recover_fs(output_dir)
+                    if output_dir:
+                        _ingest_module_output(c2, uuid, module_name, output_dir)
+                    c2.execute(
+                        "UPDATE scan_module_status SET status = 'COMPLETED',"
+                        " updated_at = ? WHERE scan_id = ? AND module = ?",
+                        (time.time(), uuid, module_name),
+                    )
+                    try:
+                        container.remove()
+                    except docker.errors.APIError as rm_err:
+                        logging.debug(
+                            "Container removal skipped (already gone or API error): %s", rm_err
+                        )
+            except sqlite3.OperationalError:
+                pass  # locked — background thread will reconcile
     except Exception:  # pylint: disable=broad-except
         logging.exception("Exception checking container for module %s", module_name)
 
@@ -625,7 +629,12 @@ def _append_strings_module(status_list: list[dict], output_dir: str) -> None:
 
 @scan_bp.route("/scans/<uuid>/modules", methods=["GET"])
 def get_scan_modules_status(uuid: str) -> Response:
-    """Get status of all modules for a scan, with live Docker refresh."""
+    """Get status of all modules for a scan, with live Docker refresh.
+
+    This handler is read-only against the DB.  Docker-refresh writes happen on
+    short-lived connections inside _refresh_module_from_docker and are silently
+    skipped when the DB is locked (the background scan thread reconciles state).
+    """
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -649,9 +658,8 @@ def get_scan_modules_status(uuid: str) -> Response:
                 if mod_dict["status"] in ("PENDING", "RUNNING"):
                     if docker_client is None:
                         docker_client = docker.from_env()
-                    _refresh_module_from_docker(c, docker_client, uuid, mod_dict, output_dir)
+                    _refresh_module_from_docker(docker_client, uuid, mod_dict, output_dir)
                 status_list.append(mod_dict)
-            conn.commit()
         else:
             status_list = _status_list_from_results(c, uuid)
 

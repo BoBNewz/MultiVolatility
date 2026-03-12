@@ -186,21 +186,31 @@ def _run_vol3_pool(
             commands.remove(info_module)
             vol_instance.execute_command_volatility3(info_module, _make_vol3_cfg(), False, lock)
 
+    console.print("\n[+] Starting strings in background...")
+    strings_future = pool.apply_async(
+        get_strings,
+        args=(
+            os.path.basename(arguments.dump),
+            os.path.abspath(arguments.dump),
+            output_dir,
+            arguments.image,
+            lock,
+            arguments.host_path,
+        )
+    )
+
     tasks = [(vol_instance, (cmd, _make_vol3_cfg(), False, lock)) for cmd in commands]
     successful, failed = [], []
     for command_name, is_success in pool.imap_unordered(vol3_wrapper, tasks):
         (successful if is_success else failed).append(command_name)
 
-    console.print("\n[+] Starting strings...")
-    get_strings(
-        os.path.basename(arguments.dump),
-        os.path.abspath(arguments.dump),
-        output_dir,
-        arguments.image,
-        lock,
-        arguments.host_path,
-    )
-    console.print("\n[+] Strings complete !")
+    # Make sure strings finishes before returning
+    try:
+        strings_future.get()
+        console.print("[+] Strings complete !")
+    except Exception as e:
+        console.print(f"[!] Strings failed: {e}")
+        
     return successful, failed
 
 

@@ -1,4 +1,32 @@
 services:
+  # Docker socket proxy — restricts what Docker API operations the API container
+  # can perform.  The API container talks to this proxy instead of the raw socket,
+  # so a compromised API container cannot exec into other containers, manage
+  # networks/volumes, or use the Docker daemon as a root-shell escape.
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: multivol-dockerproxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Allow only what the API needs: list images, create/inspect/remove containers
+      CONTAINERS: 1
+      IMAGES: 1
+      POST: 1
+      DELETE: 1
+      # Block everything dangerous
+      EXEC: 0
+      VOLUMES: 0
+      NETWORKS: 0
+      BUILD: 0
+      COMMIT: 0
+      SWARM: 0
+      AUTH: 0
+      SECRETS: 0
+      CONFIGS: 0
+      EVENTS: 0
+
   # Python Backend API
   api:
     build: ./CLI
@@ -9,14 +37,17 @@ services:
       - HOST_PATH=${PWD} # Valid path to project root on Host, required for DooD
       - API_TOKEN=multivol_default_secret_token
       - APP_PASSWORD=admin
+      - DOCKER_HOST=tcp://dockerproxy:2375 # Use proxy instead of raw socket
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
+      # docker.sock removed — API uses the dockerproxy service over TCP instead
       - ./outputs:/app/outputs
       - ./storage:/app/storage
       - ./volatility3_symbols:/app/volatility3_symbols
       - ./volatility2_profiles:/app/volatility2_profiles
       - ./volatility3_plugins:/app/volatility3_plugins
       - ./volatility3_cache:/app/volatility3_cache
+    depends_on:
+      - dockerproxy
 
   web:
     build:
@@ -42,12 +73,21 @@ services:
     depends_on:
       - api
 
-  # Build-only service — produces the multivol-memprocfs image that the API
-  # spawns on-demand (one container per scan).  It exits immediately at
-  # runtime; restart:no keeps it from being restarted by compose.
+  # Persistent MemProcFS sidecar — always running, accepts /load to switch dumps.
+  # The API backend talks to this service instead of spawning per-scan containers.
   memprocfs:
     build:
       context: ./Dockerfiles/memprocfs
     image: multivol-memprocfs
-    restart: "no"
-    command: ["echo", "MemProcFS image ready"]
+    container_name: multivol-memprocfs
+    restart: unless-stopped
+    environment:
+      # Seconds to wait for /forensic/ntfs and /forensic/files to become ready.
+      # Large dumps (>8 GB) may need 900–1800. Default: 900.
+      MEMPROCFS_FORENSIC_TIMEOUT: ${MEMPROCFS_FORENSIC_TIMEOUT:-900}
+    volumes:
+      # Mount the same dump directories as the API so paths are identical
+      - ./outputs:/app/outputs:ro
+      - ./storage:/app/storage:ro
+    depends_on:
+      - api

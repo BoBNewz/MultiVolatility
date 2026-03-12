@@ -13,30 +13,26 @@ interface ProcessNode {
     id: string;
     name: string;
     children?: ProcessNode[];
-    data: any;
+    data: Record<string, unknown>;
     pid: number;
     ppid: number;
 }
 
 interface ProcessTreeViewProps {
-    data: any[];
+    data: Record<string, unknown>[];
     onToggleView: (mode: 'table' | 'tree') => void;
     viewMode: 'table' | 'tree';
 }
 
-const buildProcessTree = (data: any[]): ProcessNode[] => {
-    // Helper to recursively map Children
-    // Input node is straight from JSON (Vol3 format with __children)
-    // We map it to ProcessNode structure needed for display
-
-    const transformNode = (item: any): ProcessNode => {
-        const children = item['__children'] ? item['__children'].map(transformNode) : undefined;
+const buildProcessTree = (data: Record<string, unknown>[]): ProcessNode[] => {
+    const transformNode = (item: Record<string, unknown>): ProcessNode => {
+        const children = item['__children'] ? (item['__children'] as Record<string, unknown>[]).map(transformNode) : undefined;
 
         return {
             id: `pid-${item['PID']}-${Math.random()}`, // Unique ID for arborist
-            name: item['ImageFileName'] || item['COMM'] || 'Unknown',
-            pid: item['PID'],
-            ppid: item['PPID'],
+            name: (item['ImageFileName'] || item['COMM'] || 'Unknown') as string,
+            pid: item['PID'] as number,
+            ppid: item['PPID'] as number,
             data: item,
             children: children && children.length > 0 ? children : undefined
         };
@@ -47,10 +43,10 @@ const buildProcessTree = (data: any[]): ProcessNode[] => {
 
 const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<ProcessNode>) => {
     const isRoot = node.level === 0;
-    const item = node.data.data;
+    const item = node.data.data as Record<string, unknown>;
 
     // Format Time if exists
-    const createTime = item['CreateTime'] ? new Date(item['CreateTime']).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+    const createTime = item['CreateTime'] ? new Date(item['CreateTime'] as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
 
     return (
         <div
@@ -62,20 +58,20 @@ const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<ProcessNode
             <div className="mr-2 text-slate-400 flex items-center min-w-[200px]">
                 {/* Indentation Visual Guide included in padding/indent of tree */}
                 <Activity size={14} className={`mr-2 ${isRoot ? 'text-primary' : 'text-slate-500'}`} />
-                <span className="truncate text-slate-200 text-sm font-semibold">{node.data.name}</span>
-                <span className="ml-2 text-xs text-slate-500 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">{node.data.pid}</span>
+                <span className="truncate text-slate-200 text-sm font-semibold">{String(node.data.name ?? '')}</span>
+                <span className="ml-2 text-xs text-slate-500 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">{String(node.data.pid ?? '')}</span>
             </div>
 
             {/* Additional Columns for Tree Row */}
             <div className="flex items-center space-x-4 text-xs text-slate-500">
-                {item['Threads'] && (
+                {!!item['Threads'] && (
                     <div className="flex items-center w-16" title="Thread Count">
                         <Hash size={12} className="mr-1" />
-                        {item['Threads']}
+                        {String(item['Threads'])}
                     </div>
                 )}
                 {createTime && (
-                    <div className="flex items-center w-20" title={`Created: ${item['CreateTime']}`}>
+                    <div className="flex items-center w-20" title={`Created: ${String(item['CreateTime'] ?? '')}`}>
                         <Clock size={12} className="mr-1" />
                         {createTime}
                     </div>
@@ -83,10 +79,10 @@ const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<ProcessNode
             </div>
 
             {/* Command Line Preview (Faded) */}
-            {item['Cmd'] && (
-                <div className="ml-4 flex-1 truncate text-xs text-slate-600 font-mono hidden md:block" title={item['Cmd']}>
+            {!!item['Cmd'] && (
+                <div className="ml-4 flex-1 truncate text-xs text-slate-600 font-mono hidden md:block" title={String(item['Cmd'])}>
                     <Terminal size={10} className="inline mr-1" />
-                    {item['Cmd']}
+                    {String(item['Cmd'])}
                 </div>
             )}
         </div>

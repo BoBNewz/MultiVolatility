@@ -25,19 +25,11 @@ function App() {
       localStorage.removeItem('selectedCaseId');
     }
   }, [selectedCaseId]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [cases, setCases] = useState<Scan[]>([]);
   const [healthStatus, setHealthStatus] = useState(false);
   const seenModulesRef = useRef<Record<string, Set<string>>>({});
 
-  // ...
-
-  useEffect(() => {
-    const auth = localStorage.getItem('isLoggedIn');
-    if (auth === 'true') {
-      setIsLoggedIn(true);
-    }
-  }, []);
 
   // Real Data Polling
   useEffect(() => {
@@ -48,14 +40,14 @@ function App() {
       setHealthStatus(isHealthy);
 
       if (isHealthy) {
-        const data = await api.getScans();
+        const data = await api.fetchScans();
         setCases(data);
 
         // Check for new modules in running scans
         const runningScans = data.filter(c => c.status === 'running');
         for (const scan of runningScans) {
           try {
-            const currentModules = await api.getScanModules(scan.id);
+            const currentModules = await api.fetchScanModules(scan.id);
 
             // Initialize if first time seeing this scan in this session
             if (!seenModulesRef.current[scan.id]) {

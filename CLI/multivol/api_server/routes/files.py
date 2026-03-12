@@ -1,11 +1,16 @@
 """Evidence file upload, symbol management, and file listing routes."""
 
+import io
 import os
 import sqlite3
+import subprocess
+import tarfile
 import time
 import shutil
 import logging
 import threading
+import uuid
+import zipfile
 from typing import Any
 from flask import Blueprint, request, jsonify, send_from_directory, Response
 from werkzeug.utils import secure_filename
@@ -15,10 +20,207 @@ from multivol.api_server.database import get_db_connection
 
 files_bp = Blueprint("files_bp", __name__)
 
+# In-memory extraction task registry  {task_id: {progress, status, files, error}}
+_extraction_tasks: dict[str, dict] = {}
+_extraction_lock = threading.Lock()
+
+_ARCHIVE_SUFFIXES = (".zip", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tar.xz")
+# Dump file extensions — used to pick the "primary" file after extraction
+_DUMP_EXTENSIONS = (".raw", ".mem", ".vmem", ".dd", ".img", ".bin", ".dmp", ".lime", ".E01", ".e01")
+
+
+def _is_archive(filename: str) -> bool:
+    lower = filename.lower()
+    return any(lower.endswith(s) for s in _ARCHIVE_SUFFIXES)
+
+
+def _safe_extract_path(dest_dir: str, member_path: str) -> str | None:
+    """Return the absolute destination path for *member_path* or None if unsafe."""
+    member_path = member_path.lstrip("/")
+    if ".." in member_path.split(os.sep):
+        return None
+    full = os.path.realpath(os.path.join(dest_dir, member_path))
+    if not full.startswith(os.path.realpath(dest_dir)):
+        return None
+    return full
+
+
+def _extract_archive(task_id: str, archive_path: str, dest_dir: str) -> None:
+    """Extract *archive_path* into *dest_dir*, updating progress in _extraction_tasks."""
+    def _set(progress: int, status: str, files: list[str] | None = None, error: str = "") -> None:
+        with _extraction_lock:
+            _extraction_tasks[task_id].update(
+                {"progress": progress, "status": status, "files": files or [], "error": error}
+            )
+
+    try:
+        os.makedirs(dest_dir, exist_ok=True)
+        lower = archive_path.lower()
+        extracted: list[str] = []
+
+        if lower.endswith(".zip"):
+            with zipfile.ZipFile(archive_path, "r") as zf:
+                members = [m for m in zf.infolist() if not m.is_dir()]
+                total = max(sum(m.file_size for m in members), 1)
+                done = 0
+                CHUNK = 8 * 1024 * 1024
+                for member in members:
+                    dest = _safe_extract_path(dest_dir, member.filename)
+                    if dest is None:
+                        logging.warning("Skipping unsafe zip entry: %s", member.filename)
+                        continue
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
+                    with zf.open(member) as src, open(dest, "wb") as dst:
+                        while True:
+                            chunk = src.read(CHUNK)
+                            if not chunk:
+                                break
+                            dst.write(chunk)
+                            done += len(chunk)
+                            _set(int(done / total * 100), "extracting")
+                    extracted.append(dest)
+
+        else:  # tar family
+            # ── Use native `tar` for ~10× faster extraction (C vs Python) ──
+            archive_bytes = os.path.getsize(archive_path)
+            total_blocks = archive_bytes // 512 + 1
+            # Emit ~200 progress ticks across the extraction
+            cp_interval = max(total_blocks // 200, 1)
+
+            # Extract into a temp subdirectory so we can track which files are new
+            tmp_dir = os.path.join(dest_dir, f".extract_{task_id}")
+            os.makedirs(tmp_dir, exist_ok=True)
+            try:
+                proc = subprocess.Popen(
+                    [
+                        "tar", "xf", archive_path,
+                        "-C", tmp_dir,
+                        "--no-same-owner",
+                        f"--checkpoint={cp_interval}",
+                        "--checkpoint-action=echo=%u",
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                # Read checkpoint ticks from stdout for real-time progress
+                for line in proc.stdout:  # type: ignore[union-attr]
+                    try:
+                        block_num = int(line.strip())
+                        pct = min(int(block_num / total_blocks * 100), 99)
+                        _set(pct, "extracting")
+                    except ValueError:
+                        pass
+                proc.wait()
+                if proc.returncode != 0:
+                    stderr_txt = proc.stderr.read() if proc.stderr else ""  # type: ignore[union-attr]
+                    raise RuntimeError(f"tar extraction failed (rc={proc.returncode}): {stderr_txt}")
+            except FileNotFoundError:
+                # `tar` not on PATH — fall back to Python tarfile (slower)
+                logging.warning("Native tar not found; falling back to Python tarfile")
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+                os.makedirs(tmp_dir, exist_ok=True)
+                with tarfile.open(archive_path, "r") as tf:
+                    for member in tf:
+                        if not member.isfile():
+                            continue
+                        dest = _safe_extract_path(tmp_dir, member.name)
+                        if dest is None:
+                            continue
+                        os.makedirs(os.path.dirname(dest), exist_ok=True)
+                        src = tf.extractfile(member)
+                        if src is None:
+                            continue
+                        with open(dest, "wb") as dst:
+                            shutil.copyfileobj(src, dst, 8 * 1024 * 1024)
+                        try:
+                            pos = tf.fileobj.tell()
+                            _set(min(int(pos / archive_bytes * 100), 99), "extracting")
+                        except (AttributeError, OSError):
+                            pass
+
+            # Move extracted files from tmp_dir → dest_dir (same FS = instant rename)
+            for root, _, fnames in os.walk(tmp_dir):
+                for fname in fnames:
+                    src_path = os.path.join(root, fname)
+                    rel = os.path.relpath(src_path, tmp_dir)
+                    dst_path = os.path.join(dest_dir, rel)
+                    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+                    shutil.move(src_path, dst_path)
+                    extracted.append(dst_path)
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+        # Delete the archive itself after successful extraction
+        try:
+            os.remove(archive_path)
+        except OSError:
+            pass
+
+        # Sort: prefer known dump extensions, then largest file
+        def _rank(p: str) -> tuple[int, int]:
+            ext = os.path.splitext(p)[1].lower()
+            pref = 0 if ext in _DUMP_EXTENSIONS else 1
+            size = -os.path.getsize(p) if os.path.exists(p) else 0
+            return (pref, size)
+
+        extracted.sort(key=_rank)
+        _set(100, "done", extracted)
+        logging.info("Extraction complete, %d files: %s", len(extracted), extracted)
+
+    except Exception as exc:  # pylint: disable=broad-except
+        logging.exception("Extraction failed for task %s", task_id)
+        _set(0, "error", error=str(exc))
+
+
+def _save_stream(stream, save_path: str) -> None:
+    """Write *stream* to *save_path* using the fastest available method.
+
+    Priority:
+    1. os.sendfile (Linux zero-copy, data stays in kernel buffers)
+    2. shutil.copyfileobj with a 64 MiB buffer (userspace fallback)
+    """
+    try:
+        stream.seek(0)
+    except (AttributeError, io.UnsupportedOperation):
+        pass
+
+    src_fd: int | None = None
+    try:
+        src_fd = stream.fileno()
+    except (AttributeError, io.UnsupportedOperation):
+        pass
+
+    with open(save_path, "wb") as dst:
+        if src_fd is not None and hasattr(os, "sendfile"):
+            dst_fd = dst.fileno()
+            try:
+                remaining = os.fstat(src_fd).st_size
+                offset = 0
+                while remaining > 0:
+                    sent = os.sendfile(dst_fd, src_fd, offset, min(remaining, 256 * 1024 * 1024))
+                    if sent == 0:
+                        break
+                    offset += sent
+                    remaining -= sent
+                return
+            except OSError:
+                # sendfile failed (cross-device, unsupported FS, etc.) — fall through
+                try:
+                    stream.seek(0)
+                except (AttributeError, io.UnsupportedOperation):
+                    pass
+
+        shutil.copyfileobj(stream, dst, 64 * 1024 * 1024)
+
 
 @files_bp.route("/upload", methods=["POST"])
 def upload_file() -> Response:
-    """Upload a memory dump or evidence file to the storage directory."""
+    """Upload a memory dump or evidence file to the storage directory.
+
+    Archives (.zip, .tar, .tar.gz, .tgz, .tar.bz2, .tar.xz) are saved then
+    extracted asynchronously.  The response includes a ``task_id`` which the
+    client polls via GET /upload/progress/<task_id>.
+    """
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
     file = request.files["file"]
@@ -30,28 +232,47 @@ def upload_file() -> Response:
         save_path = os.path.join(STORAGE_DIR, filename)
 
         try:
-            logging.debug("Streaming file to %s", save_path)
-            # Stream directly from the request to disk — avoids Werkzeug's
-            # internal temp-file copy, so large dumps are written only once.
-            chunk_size = 1024 * 1024  # 1 MiB chunks
-            with open(save_path, "wb") as dst:
-                while True:
-                    chunk = file.stream.read(chunk_size)
-                    if not chunk:
-                        break
-                    dst.write(chunk)
-            logging.debug("File saved successfully")
-
-            # Hash computation can take minutes for large dumps — do it in the
-            # background so the upload response is returned immediately.
-            threading.Thread(target=get_file_hash, args=(save_path,), daemon=True).start()
-
-            return jsonify({"status": "success", "path": save_path, "server_path": save_path})
+            logging.debug("Saving upload to %s", save_path)
+            _save_stream(file.stream, save_path)
+            logging.debug("File saved to %s", save_path)
         except OSError as e:
             logging.exception("Failed to save file")
             return jsonify({"error": str(e)}), 500
 
+        if _is_archive(filename):
+            task_id = str(uuid.uuid4())
+            extract_dir = STORAGE_DIR  # extract flat into storage root
+            with _extraction_lock:
+                _extraction_tasks[task_id] = {"progress": 0, "status": "extracting", "files": [], "error": ""}
+            threading.Thread(
+                target=_extract_archive, args=(task_id, save_path, extract_dir), daemon=True
+            ).start()
+            return jsonify({"status": "extracting", "task_id": task_id, "path": save_path})
+
+        # Plain file — background hash, immediate success
+        threading.Thread(target=get_file_hash, args=(save_path,), daemon=True).start()
+        return jsonify({"status": "success", "path": save_path, "server_path": save_path})
+
     return jsonify({"error": "No file content"}), 400
+
+
+@files_bp.route("/upload/progress/<task_id>", methods=["GET"])
+def upload_progress(task_id: str) -> Response:
+    """Return extraction progress for an archive upload task."""
+    with _extraction_lock:
+        task = _extraction_tasks.get(task_id)
+    if task is None:
+        return jsonify({"error": "Unknown task"}), 404
+
+    resp = dict(task)
+    if task["status"] == "done":
+        # Start background hash for each extracted file
+        for f in task.get("files", []):
+            threading.Thread(target=get_file_hash, args=(f,), daemon=True).start()
+        # Clean up completed task after client retrieves it
+        with _extraction_lock:
+            _extraction_tasks.pop(task_id, None)
+    return jsonify(resp)
 
 
 @files_bp.route("/symbols", methods=["GET"])
@@ -62,8 +283,17 @@ def list_symbols() -> Response:
     symbols = []
     for root, _, files in os.walk(symbols_dir):
         for file in files:
-            rel_path = os.path.relpath(os.path.join(root, file), symbols_dir)
-            symbols.append(rel_path)
+            full_path = os.path.join(root, file)
+            rel_path = os.path.relpath(full_path, symbols_dir)
+            try:
+                stat = os.stat(full_path)
+                size = stat.st_size
+                modified = time.strftime("%Y-%m-%d %H:%M", time.localtime(stat.st_mtime))
+            except OSError:
+                size = 0
+                modified = ""
+            symbols.append({"name": rel_path, "size": size, "modified": modified})
+    symbols.sort(key=lambda s: s["name"].lower())
     return jsonify({"symbols": symbols})
 
 

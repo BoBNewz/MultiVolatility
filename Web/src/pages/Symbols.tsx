@@ -21,7 +21,7 @@ export const Symbols: React.FC = () => {
     const fetchSymbols = async () => {
         setLoading(true);
         try {
-            const data = await api.getSymbols();
+            const data = await api.fetchSymbols();
             setSymbols(data);
         } catch (error) {
             console.error(error);

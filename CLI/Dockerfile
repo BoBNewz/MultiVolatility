@@ -5,16 +5,15 @@ WORKDIR /app
 ENV STORAGE_DIR=/app/storage/data
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies if any (we might need gcc for some python packages, but trying slim first)
-# Volatility usage inside is via Docker SDK, so we don't need vol2/vol3 deps here, 
-# just the MultiVol CLI deps.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+    curl xz-utils \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # Copy source code
 COPY . .

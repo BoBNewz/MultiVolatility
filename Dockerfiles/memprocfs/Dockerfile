@@ -1,9 +1,8 @@
 FROM debian
 
-# Install system dependencies (matches working Dockerfile-test exactly)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
-    python3-pip \
     python3-dev \
     gcc \
     wget \
@@ -11,12 +10,14 @@ RUN apt-get update && apt-get install -y \
     libusb-1.0-0-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Download the pre-compiled MemProcFS/LeechCore C-libraries based on architecture
-ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "arm64" ]; then \
-    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.2-linux_aarch64-20260224.tar.gz"; \
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+ENV UV_BREAK_SYSTEM_PACKAGES=1
+# Download MemProcFS/LeechCore C-libraries based on architecture
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
+    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.3-linux_aarch64-20260301.tar.gz"; \
     else \
-    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.2-linux_x64-20260224.tar.gz"; \
+    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.3-linux_x64-20260301.tar.gz"; \
     fi && \
     wget "$URL" -O memprocfs.tar.gz && \
     tar -xzvf memprocfs.tar.gz && \
@@ -24,13 +25,15 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     cp leechcore.so /usr/lib/ && \
     rm -rf memprocfs.tar.gz vmm.so leechcore.so
 
-# Install Python packages
-RUN pip install --break-system-packages --no-cache-dir memprocfs flask
+RUN uv pip install --system --no-cache memprocfs flask gunicorn
 
 WORKDIR /app
 
-# Copy the sidecar server
 COPY memprocfs_server.py .
 
 EXPOSE 5002
-CMD ["python3", "memprocfs_server.py"]
+# Single worker is mandatory — the VMM session state lives in-process.
+# Threads handle concurrent health polls while a dump is loading.
+# Timeout is long to accommodate /list which can take several minutes on large dumps.
+CMD ["gunicorn", "--workers", "1", "--threads", "4", "--worker-class", "gthread", \
+    "--timeout", "600", "--bind", "0.0.0.0:5002", "memprocfs_server:app"]

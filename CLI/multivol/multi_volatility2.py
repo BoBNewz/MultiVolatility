@@ -60,7 +60,25 @@ class MultiVolatility2(MultiVolatilityBase):
             container = self.run_detached_container(
                 client, config.docker_image, cmd_with_redirect, volumes, name=container_name
             )
-            container.wait()
+            
+            # Polling loop to wait for container without breaking the connection
+            # on the docker proxy for long-running containers
+            import time as _time
+            exit_code = 0
+            while True:
+                try:
+                    container.reload()
+                    if container.status not in ["running", "created", "restarting"]:
+                        exit_code = container.attrs.get("State", {}).get("ExitCode", 0)
+                        break
+                    _time.sleep(5)
+                except docker.errors.NotFound:
+                    exit_code = 127
+                    break
+            
+            if exit_code != 0:
+                return (command, False)
+                
         except Exception as e:  # pylint: disable=broad-except
             self.safe_print(f"[!] Error running {command}: {e}", lock)
             logging.exception("Volatility2 container failed for %s", command)

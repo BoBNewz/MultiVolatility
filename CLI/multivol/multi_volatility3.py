@@ -121,10 +121,20 @@ class MultiVolatility3(MultiVolatilityBase):
                 client, config.docker_image, cmd_with_redirect, volumes, name=container_name
             )
 
-            # Wait for container to finish (output is written to file, not logs)
-            wait_result = container.wait()
-            exit_code = wait_result.get("StatusCode", 0)
-            # Don't remove container - API will check status and clean up
+            # Polling loop to wait for container without breaking the connection
+            # on the docker proxy for long-running containers (like MFTScan)
+            import time as _time
+            exit_code = 0
+            while True:
+                try:
+                    container.reload()
+                    if container.status not in ["running", "created", "restarting"]:
+                        exit_code = container.attrs.get("State", {}).get("ExitCode", 0)
+                        break
+                    _time.sleep(5)
+                except docker.errors.NotFound:
+                    exit_code = 127
+                    break
 
             if config.format == "json":
                 self._trim_output_file(output_file, command, start=2)

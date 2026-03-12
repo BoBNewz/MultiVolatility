@@ -49,7 +49,7 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const data = await api.getStats();
+                const data = await api.fetchStats();
                 setStats(data);
             } catch (e) {
                 console.error("Failed to fetch stats", e);
@@ -175,7 +175,7 @@ export const Dashboard: React.FC<{ onCaseClick?: (id: string) => void, cases: Sc
                                     align="center"
                                     wrapperStyle={{ paddingTop: '20px' }}
                                     formatter={(value, entry) => {
-                                        const { payload } = entry as any;
+                                        const { payload } = entry as { payload?: { count?: number } };
                                         return <span style={{ color: '#fff' }}>{value}: {payload?.count || 0}</span>;
                                     }}
                                 />

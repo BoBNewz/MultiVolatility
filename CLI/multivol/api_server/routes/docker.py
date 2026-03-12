@@ -84,10 +84,13 @@ def list_volatility_plugins() -> Response:
             entrypoint="python3",
             command="/list_plugins.py",
             volumes={host_script_path: {"bind": "/list_plugins.py", "mode": "ro"}},
-            working_dir="/volatility3",  # Set working dir to repo root avoids some path issues
-            environment={"PYTHONPATH": "/volatility3"},  # Explicitly set pythonpath
+            working_dir="/volatility3",
+            environment={"PYTHONPATH": "/volatility3"},
             stderr=True,
             remove=True,
+            cap_drop=["ALL"],
+            security_opt=["no-new-privileges:true"],
+            tmpfs={"/tmp": "size=64m,mode=1777"},
         )
 
         # Parse output

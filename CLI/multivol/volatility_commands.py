@@ -39,8 +39,24 @@ def get_strings(
 
     try:
         container = base.run_detached_container(client, docker_image, cmd_with_redirect, volumes)
-        container.wait()
-        container.remove()
+        
+        # Polling loop to avoid docker proxy connection timeouts 
+        # on very large memory dumps taking a long time to run strings
+        import time as _time
+        while True:
+            try:
+                container.reload()
+                if container.status not in ["running", "created", "restarting"]:
+                    break
+                _time.sleep(5)
+            except docker.errors.NotFound:
+                break
+                
+        # Clean up container
+        try:
+            container.remove()
+        except Exception:
+            pass
 
     except Exception as e:  # pylint: disable=broad-except
         base.safe_print(f"[!] Error running strings: {e}", lock)
