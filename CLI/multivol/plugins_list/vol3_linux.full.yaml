@@ -8,23 +8,31 @@ modules:
   - linux.library_list.LibraryList
   - linux.lsmod.Lsmod
   - linux.lsof.Lsof
-  - linux.malfind.Malfind
+  - linux.malware.check_afinfo.Check_afinfo
+  - linux.malware.check_creds.Check_creds
+  - linux.malware.check_idt.Check_idt
+  - linux.malware.check_modules.Check_modules
+  - linux.malware.check_syscall.Check_syscall
+  - linux.malware.hidden_modules.Hidden_modules
+  - linux.malware.keyboard_notifiers.Keyboard_notifiers
+  - linux.malware.malfind.Malfind
+  - linux.malware.modxview.Modxview
   - linux.mountinfo.MountInfo
+  - linux.boottime.Boottime
+  - linux.ip.Addr
+  - linux.ip.Link
+  - linux.netfilter.Netfilter
+  - linux.pagecache.Files
+  - linux.pagecache.InodePages
+  - linux.pidhashtable.PIDHashTable
+  - linux.proc.Maps
   - linux.psaux.PsAux
+  - linux.pscallstack.PsCallStack
   - linux.pslist.PsList
   - linux.psscan.PsScan
   - linux.pstree.PsTree
+  - linux.ptrace.Ptrace
   - linux.sockstat.Sockstat
-  - linux.boottime.Boottime
-  - linux.check_creds.Check_creds
-  - linux.hidden_modules.Hidden_modules
-  - linux.ip.Addr
-  - linux.ip.Link
-  - linux.keyboard_notifiers.Keyboard_notifiers
-  - linux.modxview.Modxview
-  - linux.netfilter.Netfilter
-  - linux.pagecache.Files
-  - linux.pidhashtable.PIDHashTable
   - linux.tracing.ftrace.CheckFtrace
   - linux.tracing.perf_events.PerfEvents
   - linux.tracing.tracepoints.CheckTracepoints

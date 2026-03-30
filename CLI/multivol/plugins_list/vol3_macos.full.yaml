@@ -1,0 +1,24 @@
+modules:
+  - mac.bash.Bash
+  - mac.check_syscall.Check_syscall
+  - mac.check_sysctl.Check_sysctl
+  - mac.check_trap_table.Check_trap_table
+  - mac.dmesg.Dmesg
+  - mac.ifconfig.Ifconfig
+  - mac.kauth_listeners.Kauth_listeners
+  - mac.kauth_scopes.Kauth_scopes
+  - mac.kevents.Kevents
+  - mac.list_files.List_Files
+  - mac.lsmod.Lsmod
+  - mac.lsof.Lsof
+  - mac.malfind.Malfind
+  - mac.mount.Mount
+  - mac.netstat.Netstat
+  - mac.proc_maps.Maps
+  - mac.psaux.Psaux
+  - mac.pslist.PsList
+  - mac.pstree.PsTree
+  - mac.socket_filters.Socket_filters
+  - mac.timers.Timers
+  - mac.trustedbsd.Trustedbsd
+  - mac.vfsevents.VFSevents

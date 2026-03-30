@@ -85,6 +85,8 @@ def _resolve_commands(
             cmds = instance.get_commands("windows.light" if arguments.light else "windows.full")
         elif arguments.linux:
             cmds = instance.get_commands("linux.light" if arguments.light else "linux.full")
+        elif arguments.macos:
+            cmds = instance.get_commands("macos.light" if arguments.light else "macos.full")
         else:
             cmds = []
         return cmds, instance
@@ -96,6 +98,8 @@ def _resolve_commands(
             cmds = instance.get_commands("windows.light" if arguments.light else "windows.full")
         elif arguments.linux:
             cmds = instance.get_commands("linux.light" if arguments.light else "linux.full")
+        elif arguments.macos:
+            cmds = instance.get_commands("macos.light" if arguments.light else "macos.full")
         else:
             cmds = []
         return cmds, instance
@@ -270,11 +274,11 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
         parser.print_help()
         raise SystemExit(1)
 
-    if not args.linux and not args.windows:
-        print("[-] --linux or --windows required.")
+    if not args.linux and not args.windows and not args.macos:
+        print("[-] --linux, --windows or --macos required.")
         raise SystemExit(1)
 
-    if getattr(args, "fetch_symbol", False) and not args.linux:
+    if getattr(args, "fetch_symbol", False) and not args.linux and not args.macos:
         print("[-] --fetch-symbol only available with --linux")
         raise SystemExit(1)
 
@@ -325,6 +329,7 @@ def main():
     vol2_os_group = vol2_parser.add_mutually_exclusive_group(required=True)
     vol2_os_group.add_argument("--linux", action="store_true", help="For a Linux memory dump")
     vol2_os_group.add_argument("--windows", action="store_true", help="For a Windows memory dump")
+    vol2_os_group.add_argument("--macos", action="store_true", help="For a MacOS memory dump")
     vol2_parser.add_argument("--light", action="store_true", help="Use the main modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
     vol2_parser.add_argument(
@@ -381,6 +386,7 @@ def main():
     vol3_os_group = vol3_parser.add_mutually_exclusive_group(required=True)
     vol3_os_group.add_argument("--linux", action="store_true", help="It's a Linux memory dump.")
     vol3_os_group.add_argument("--windows", action="store_true", help="It's a Windows memory dump.")
+    vol3_os_group.add_argument("--macos", action="store_true", help="It's a MacOS memory dump.")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
     vol3_parser.add_argument(
         "--fetch-symbol",

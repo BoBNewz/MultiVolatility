@@ -1,29 +1,61 @@
 modules:
   - windows.cmdline.CmdLine
+  - windows.cmdscan.CmdScan
+  - windows.consoles.Consoles
   - windows.cachedump.Cachedump
   - windows.dlllist.DllList
   - windows.driverirp.DriverIrp
   - windows.drivermodule.DriverModule
   - windows.driverscan.DriverScan
   - windows.envars.Envars
+  - windows.deskscan.DeskScan
+  - windows.desktops.Desktops
   - windows.filescan.FileScan
+  - windows.hollowprocesses.HollowProcesses
   - windows.getservicesids.GetServiceSIDs
   - windows.getsids.GetSIDs
   - windows.handles.Handles
-  - windows.hashdump.Hashdump
-  - windows.lsadump.Lsadump
   - windows.info.Info
-  - windows.malfind.Malfind
+  - windows.mftscan.ADS
   - windows.mftscan.MFTScan
+  - windows.mftscan.ResidentData
+  - windows.modscan.ModScan
   - windows.modules.Modules
-  - windows.netscan.NetScan
-  - windows.netstat.NetStat
   - windows.privileges.Privs
   - windows.pslist.PsList
   - windows.psscan.PsScan
   - windows.pstree.PsTree
+  - windows.mutantscan.MutantScan
+  - windows.netscan.NetScan
+  - windows.netstat.NetStat
+  - windows.orphan_kernel_threads.Threads
+  - windows.registry.amcache.Amcache
+  - windows.registry.cachedump.Cachedump
+  - windows.registry.hashdump.Hashdump
   - windows.registry.hivelist.HiveList
-  - windows.registry.certificates.Certificates
   - windows.registry.hivescan.HiveScan
+  - windows.registry.lsadump.Lsadump
+  - windows.registry.scheduled_tasks.ScheduledTasks
   - windows.registry.userassist.UserAssist
   - windows.sessions.Sessions
+  - windows.malware.direct_system_calls.DirectSystemCalls
+  - windows.malware.drivermodule.DriverModule
+  - windows.malware.hollowprocesses.HollowProcesses
+  - windows.malware.indirect_system_calls.IndirectSystemCalls
+  - windows.malware.ldrmodules.LdrModules
+  - windows.malware.malfind.Malfind
+  - windows.malware.pebmasquerade.PebMasquerade
+  - windows.malware.processghosting.ProcessGhosting
+  - windows.malware.psxview.PsXView
+  - windows.malware.skeleton_key_check.Skeleton_Key_Check
+  - windows.malware.suspicious_threads.SuspiciousThreads
+  - windows.malware.svcdiff.SvcDiff
+  - windows.malware.unhooked_system_calls.UnhookedSystemCalls
+  - windows.suspended_threads.SuspendedThreads
+  - windows.svclist.SvcList
+  - windows.svcscan.SvcScan
+  - windows.symlinkscan.SymlinkScan
+  - windows.thrdscan.ThrdScan
+  - windows.threads.Threads
+  - windows.timers.Timers
+  - windows.truecrypt.Passphrase
