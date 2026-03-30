@@ -5,7 +5,6 @@ modules:
   - linux.check_syscall.Check_syscall
   - linux.elfs.Elfs
   - linux.envars.Envars
-  - linux.library_list.LibraryList
   - linux.lsmod.Lsmod
   - linux.lsof.Lsof
   - linux.malware.check_afinfo.Check_afinfo
