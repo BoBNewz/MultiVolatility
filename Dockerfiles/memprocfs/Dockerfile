@@ -15,9 +15,9 @@ ENV UV_BREAK_SYSTEM_PACKAGES=1
 # Download MemProcFS/LeechCore C-libraries based on architecture
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
-    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.4-linux_aarch64-20260325.tar.gz"; \
+    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.8-linux_aarch64-20260611.tar.gz"; \
     else \
-    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.4-linux_x64-20260325.tar.gz"; \
+    URL="https://github.com/ufrisk/MemProcFS/releases/download/v5.17/MemProcFS_files_and_binaries_v5.17.8-linux_x64-20260611.tar.gz"; \
     fi && \
     wget "$URL" -O memprocfs.tar.gz && \
     tar -xzvf memprocfs.tar.gz && \
