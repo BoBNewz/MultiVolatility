@@ -29,6 +29,20 @@ MultiVol orchestrates **Volatility 2** (WIP) and **Volatility 3** analysis in pa
 
 The easiest way to run the full stack (API + Web UI) is using Docker Compose.
 
+> **⚠️ Security notice — keep port 5001 local**
+>
+> The API on port 5001 uses Docker-outside-of-Docker: the API container can
+> create new containers on your host.  Even with the Docker socket proxy in
+> place, an authenticated caller can still mount arbitrary host paths into a
+> container, which is an irreducible consequence of needing to run scan
+> containers dynamically.
+>
+> **Do not expose port 5001 to any untrusted network.**  If you choose to do
+> so anyway, you accept full responsibility for the security implications —
+> including the possibility of a privileged host escape.  For local forensic
+> work, bind the port to localhost only (`127.0.0.1:5001:5001` in
+> `docker-compose.yml`).
+
 1.  **Build the base images:**
     
     Before starting, you must build the Volatility worker images:

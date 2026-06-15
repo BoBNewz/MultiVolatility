@@ -1,341 +1,436 @@
-# multivol.py
-# Entry point for MultiVolatility: orchestrates running Volatility2 and Volatility3 memory analysis in parallel using multiprocessing.
-import multiprocessing, time, os, argparse, sys
-import docker
+"""Entry point for MultiVolatility: orchestrate Volatility 2/3 analysis in parallel."""
+
+# pylint: disable=line-too-long
+import multiprocessing
+import time
+import os
+import argparse
+import sys
+import logging
 from datetime import datetime
+from typing import Any, Union
+import docker
 from rich.console import Console
 from rich.theme import Theme
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 try:
-    from .multi_volatility2 import multi_volatility2
-    from .multi_volatility3 import multi_volatility3
-    from .strings import get_strings
+    from .multi_volatility2 import MultiVolatility2
+    from .multi_volatility3 import MultiVolatility3
+    from .multi_volatility_base import Vol2RunConfig, Vol3RunConfig
+    from .volatility_commands import get_strings
 except ImportError:
-    from multi_volatility2 import multi_volatility2
-    from multi_volatility3 import multi_volatility3
+    from multi_volatility2 import MultiVolatility2
+    from multi_volatility3 import MultiVolatility3
+    from multi_volatility_base import Vol2RunConfig, Vol3RunConfig
     from strings import get_strings
 
 
-
-# Wrapper for Volatility 3 to use with imap
-
-
-# Wrapper for Volatility 3 to use with imap
-def vol3_wrapper(packed_args):
+def vol3_wrapper(packed_args: Any) -> tuple[str, bool]:
+    """Unpack arguments and call execute_command_volatility3."""
     instance, args = packed_args
     return instance.execute_command_volatility3(*args)
 
-def runner(arguments):
-    # Ensure required directories exist for output, symbols, profiles, and plugins
-    os.makedirs(os.path.join(os.getcwd(), "volatility3_symbols"), exist_ok=True)
-    os.makedirs(os.path.join(os.getcwd(), "volatility2_profiles"), exist_ok=True)
-    os.makedirs(os.path.join(os.getcwd(), "volatility3_cache"), exist_ok=True)
-    os.makedirs(os.path.join(os.getcwd(), "volatility3_plugins"), exist_ok=True)
 
-    # Default to light mode if neither light nor full is specified
-    if not arguments.light and not arguments.full:
-        arguments.light = True
+def vol2_wrapper(packed_args: Any) -> tuple[str, bool]:
+    """Unpack arguments and call execute_command_volatility2."""
+    instance, args = packed_args
+    return instance.execute_command_volatility2(*args)
 
-    if hasattr(arguments, "output_dir") and arguments.output_dir:
-        output_dir = arguments.output_dir
-    elif hasattr(arguments, "output") and arguments.output:
-        output_dir = arguments.output
-    else:
-        output_dir = f"output_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
-    os.makedirs(output_dir, exist_ok=True)
 
-    # Handle Volatility2 mode
-    if arguments.mode == "vol2":
-        volatility2_instance = multi_volatility2()
-        # Determine commands to run based on arguments
-        if arguments.commands:
-            commands = arguments.commands.split(",")
-        elif arguments.windows:
-            if arguments.light:
-                commands = volatility2_instance.getCommands("windows.light")
-            else:
-                commands = volatility2_instance.getCommands("windows.full")
-        elif arguments.linux:
-            if arguments.light:
-                commands = volatility2_instance.getCommands("linux.light")
-            else:
-                commands = volatility2_instance.getCommands("linux.full")
-
-    # Handle Volatility3 mode
-    elif arguments.mode == "vol3":
-        volatility3_instance = multi_volatility3()
-        # Determine commands to run based on arguments
-        if arguments.commands:
-            commands = arguments.commands.split(",")
-        elif arguments.windows:
-            if arguments.light:
-                commands = volatility3_instance.getCommands("windows.light")
-            else:
-                commands = volatility3_instance.getCommands("windows.full")
-        elif arguments.linux:
-            if arguments.light:
-                commands = volatility3_instance.getCommands("linux.light")
-            else:
-                commands = volatility3_instance.getCommands("linux.full")
-
-    # Limit the number of parallel processes
-    # Default to len(commands) (unlimited) if processes arg is not set or None
-    max_procs = getattr(arguments, 'processes', None)
-    if max_procs is None:
-        # Default to CPU count to avoid system thrashing with too many Docker containers
-        try:
-            max_processes = os.cpu_count() or 4
-        except:
-            max_processes = 4
-    else:
-        max_processes = min(max_procs, len(commands))
-    start_time = time.time()
-    
-    custom_theme = Theme({"info": "dim cyan", "warning": "magenta", "danger": "bold red"})
-    console = Console(theme=custom_theme)
-
-    # Docker Image Check & Pull
+def _ensure_docker_image(image_name: str, console: Console) -> None:
+    """Check that the Docker image is available locally, pulling it if needed."""
     try:
         client = docker.from_env()
-        image_name = arguments.image
-        # Check if --image was passed in args. rudimentary check.
         user_provided_image = "--image" in sys.argv
-        
         try:
             client.images.get(image_name)
             if not user_provided_image:
-                 console.print(f"[dim cyan][*] No --image provided, using default image: {image_name}[/dim cyan]")
+                console.print(
+                    f"[dim cyan][*] No --image provided, using default image: {image_name}[/dim cyan]"
+                )
         except docker.errors.ImageNotFound:
-            msg = f"[*] No --image provided, pulling default image: {image_name}" if not user_provided_image else f"[*] Pulling image: {image_name}"
-            
-            # Use Progress with custom columns to put spinner at the end
+            msg = (
+                f"[*] Pulling image: {image_name}"
+                if user_provided_image
+                else f"[*] No --image provided, pulling default image: {image_name}"
+            )
             with Progress(
                 TextColumn("{task.description}"),
                 SpinnerColumn("dots"),
                 transient=True,
-                console=console
+                console=console,
             ) as progress:
                 progress.add_task(f"[bold green]{msg}[/bold green]", total=None)
                 client.images.pull(image_name)
-            
-            # Re-print the message so it persists in the log
             console.print(f"[bold green]{msg}[/bold green]")
             console.print(f"[bold green][*] Image {image_name} ready.[/bold green]")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         console.print(f"[bold red]Warning: Docker check failed: {e}[/bold red]")
-        # We don't exit here, we let the individual/pool commands fail if they must, or maybe user has local setup issues.
+        logging.warning("Docker image check failed for %s", image_name, exc_info=True)
 
+
+def _resolve_commands(
+    arguments: argparse.Namespace,
+) -> tuple[list[str], Union[MultiVolatility2, MultiVolatility3]]:
+    """Return (commands, vol_instance) based on arguments.mode.
+
+    Raises ValueError for unknown modes.
+    """
+    if arguments.mode == "vol2":
+        instance = MultiVolatility2()
+        if arguments.commands:
+            cmds = arguments.commands.split(",")
+        elif arguments.windows:
+            cmds = instance.get_commands("windows.light" if arguments.light else "windows.full")
+        elif arguments.linux:
+            cmds = instance.get_commands("linux.light" if arguments.light else "linux.full")
+        elif arguments.macos:
+            cmds = instance.get_commands("macos.light" if arguments.light else "macos.full")
+        else:
+            cmds = []
+        return cmds, instance
+    if arguments.mode == "vol3":
+        instance = MultiVolatility3()
+        if arguments.commands:
+            cmds = arguments.commands.split(",")
+        elif arguments.windows:
+            cmds = instance.get_commands("windows.light" if arguments.light else "windows.full")
+        elif arguments.linux:
+            cmds = instance.get_commands("linux.light" if arguments.light else "linux.full")
+        elif arguments.macos:
+            cmds = instance.get_commands("macos.light" if arguments.light else "macos.full")
+        else:
+            cmds = []
+        return cmds, instance
+    raise ValueError(f"Unknown mode: {arguments.mode!r}. Expected 'vol2' or 'vol3'.")
+
+
+def _print_scan_summary(
+    console: Console,
+    successful_modules: list[str],
+    failed_modules: list[str],
+    arguments: argparse.Namespace,
+) -> None:
+    """Print success/failure counts and per-module status."""
+    console.print(
+        f"\n[bold green]Scan Complete![/bold green] "
+        f"Success: {len(successful_modules)}, Failed: {len(failed_modules)}"
+    )
+    if successful_modules:
+        console.print("\n[bold green]Successful Modules:[/bold green]")
+        for mod in successful_modules:
+            console.print(f"  - [green]{mod}[/green]")
+    if failed_modules:
+        console.print("\n[bold red]Failed Modules:[/bold red]")
+        for mod in failed_modules:
+            console.print(f"  - [red]{mod}[/red]")
+            if arguments.format == "json":
+                console.print(f"[red][!] Failed to validate JSON for {mod}[/red]")
+
+
+def _run_vol2_pool(
+    pool: Any,
+    vol_instance: MultiVolatility2,
+    commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    arguments: argparse.Namespace,
+    output_dir: str,
+    lock: Any,
+) -> tuple[list[str], list[str]]:
+    """Run vol2 commands via pool and return (successful, failed) module lists."""
+    vol2_cfg = Vol2RunConfig(
+        dump=os.path.basename(arguments.dump),
+        dump_file_path=os.path.abspath(arguments.dump),
+        profiles_path=arguments.profiles_path,
+        docker_image=arguments.image,
+        profile=arguments.profile,
+        output_dir=output_dir,
+        format=arguments.format,
+        host_path=arguments.host_path,
+        show_commands=getattr(arguments, "debug", False),
+    )
+    tasks = [(vol_instance, (cmd, vol2_cfg, False, lock)) for cmd in commands]
+    successful, failed = [], []
+    for command_name, is_success in pool.imap_unordered(vol2_wrapper, tasks):
+        (successful if is_success else failed).append(command_name)
+    return successful, failed
+
+
+def _run_vol3_pool(
+    pool: Any,
+    vol_instance: MultiVolatility3,
+    commands: list[str],  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    arguments: argparse.Namespace,
+    output_dir: str,
+    lock: Any,
+    console: Console,
+) -> tuple[list[str], list[str]]:
+    """Run vol3 commands via pool, including info bootstrap and strings, return (successful, failed)."""
+
+    def _make_vol3_cfg() -> Vol3RunConfig:
+        return Vol3RunConfig(
+            dump=os.path.basename(arguments.dump),
+            dump_dir=os.path.abspath(arguments.dump),
+            symbols_path=arguments.symbols_path,
+            docker_image=arguments.image,
+            cache_dir=os.path.abspath(arguments.cache_path),
+            plugin_dir=os.path.abspath(arguments.plugins_dir),
+            output_dir=output_dir,
+            format=arguments.format,
+            host_path=arguments.host_path,
+            fetch_symbols=getattr(arguments, "fetch_symbol", False),
+            show_commands=getattr(arguments, "debug", False),
+            custom_symbol=getattr(arguments, "custom_symbol", None),
+            scan_id=getattr(arguments, "scan_id", None),
+        )
+
+    if arguments.windows or arguments.linux:
+        info_module = "windows.info.Info" if arguments.windows else "linux.bash.Bash"
+        if info_module in commands:
+            commands.remove(info_module)
+            vol_instance.execute_command_volatility3(info_module, _make_vol3_cfg(), False, lock)
+
+    console.print("\n[+] Starting strings in background...")
+    strings_future = pool.apply_async(
+        get_strings,
+        args=(
+            os.path.basename(arguments.dump),
+            os.path.abspath(arguments.dump),
+            output_dir,
+            arguments.image,
+            lock,
+            arguments.host_path,
+        )
+    )
+
+    tasks = [(vol_instance, (cmd, _make_vol3_cfg(), False, lock)) for cmd in commands]
+    successful, failed = [], []
+    for command_name, is_success in pool.imap_unordered(vol3_wrapper, tasks):
+        (successful if is_success else failed).append(command_name)
+
+    # Make sure strings finishes before returning
+    try:
+        strings_future.get()
+        console.print("[+] Strings complete !")
+    except Exception as e:
+        console.print(f"[!] Strings failed: {e}")
+        
+    return successful, failed
+
+
+def run_analysis(arguments: argparse.Namespace) -> None:
+    """Run the full analysis pipeline based on parsed CLI arguments."""
+    for d in (
+        "volatility3_symbols",
+        "volatility2_profiles",
+        "volatility3_cache",
+        "volatility3_plugins",
+    ):
+        os.makedirs(os.path.join(os.getcwd(), d), exist_ok=True)
+
+    if not arguments.light and not arguments.full:
+        arguments.light = True
+
+    output_dir = (
+        getattr(arguments, "output_dir", None)
+        or getattr(arguments, "output", None)
+        or f"output_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
+    )
+    os.makedirs(output_dir, exist_ok=True)
+
+    commands, vol_instance = _resolve_commands(arguments)
+
+    max_procs = getattr(arguments, "processes", None)
+    max_processes = min(max_procs, len(commands)) if max_procs else (os.cpu_count() or 4)
+    start_time = time.time()
+
+    console = Console(theme=Theme({"info": "dim cyan", "warning": "magenta", "danger": "bold red"}))
+    _ensure_docker_image(arguments.image, console)
+    console.print(f"[bold cyan][*] Output directory: {os.path.abspath(output_dir)}[/bold cyan]")
     console.print("\n[bold green][+] Launching all commands...[/bold green]\n")
 
-    # Use multiprocessing Manager for Lock
     manager = multiprocessing.Manager()
     lock = manager.Lock()
-    
-    # Use multiprocessing to run commands in parallel
+
     with multiprocessing.Pool(processes=max_processes) as pool:
         if arguments.mode == "vol2":
-            pool.starmap(
-                volatility2_instance.execute_command_volatility2, 
-                [(cmd, 
-                os.path.basename(arguments.dump), 
-                os.path.abspath(arguments.dump), 
-                arguments.profiles_path, 
-                arguments.image, 
-                arguments.profile, 
-                output_dir, # output_dir
-                arguments.format,
-                False, # quiet
-                lock,  # lock
-                arguments.host_path,
-                getattr(arguments, "debug", False)
-                ) for cmd in commands]
+            successful_modules, failed_modules = _run_vol2_pool(
+                pool, vol_instance, commands, arguments, output_dir, lock
             )
-            # Vol2 Starmap doesn't use wrapper, so we can't easily report running/completed per module unless we wrap it too.
-            # For now we focus on Vol3
-            # But we should probably fix Vol2 too.
-            # TODO: Add wrapper for Vol2 or update vol2 logic.
         else:
-
-            # Enforce priority execution for Info module to ensure symbols are downloaded/cached
-            if arguments.windows:
-                info_module = "windows.info.Info"
-            else:
-                info_module = "linux.bash.Bash"
-            if arguments.windows or arguments.linux:
-                if info_module in commands:
-                    commands.remove(info_module)
-                    volatility3_instance.execute_command_volatility3(info_module, 
-                                                                    os.path.basename(arguments.dump), 
-                                                                    os.path.abspath(arguments.dump), 
-                                                                    arguments.symbols_path, 
-                                                                    arguments.image,
-                                                                    os.path.abspath(arguments.cache_path),
-                                                                    os.path.abspath(arguments.plugins_dir),
-                                                                    output_dir,
-                                                                    arguments.format,
-                                                                    False, # quiet
-                                                                    lock,  # lock
-                                                                    arguments.host_path,
-                                                                    True if getattr(arguments, "fetch_symbol", False) else False,
-                                                                    getattr(arguments, "debug", False),
-                                                                    getattr(arguments, "custom_symbol", None),
-                                                                    getattr(arguments, "scan_id", None)
-                                                                )
-
-
-            
-            # Prepare arguments for imap
-            # We must pass the instance because wrapper is global and doesn't see local variable
-            # Signature: command, dump, dump_dir, symbols_path, docker_image, cache_dir, plugin_dir, output_dir, format, 
-            #            quiet=False, lock=None, host_path=None, fetch_symbols=False, show_commands=False, custom_symbol=None, scan_id=None
-            tasks_args = [(volatility3_instance, (cmd, 
-                os.path.basename(arguments.dump), 
-                os.path.abspath(arguments.dump), 
-                arguments.symbols_path, 
-                arguments.image, 
-                os.path.abspath(arguments.cache_path),
-                os.path.abspath(arguments.plugins_dir), 
-                output_dir,
-                arguments.format,
-                False,  # quiet=False so we see the output as it happens
-                lock,   # lock
-                arguments.host_path,
-                getattr(arguments, "fetch_symbol", False),  # fetch_symbols
-                getattr(arguments, "debug", False),         # show_commands
-                getattr(arguments, "custom_symbol", None),  # custom_symbol
-                getattr(arguments, "scan_id", None)         # scan_id
-                )) for cmd in commands]
-            
-            # Progress counters
-            success_count = 0
-            failed_count = 0
-            successful_modules = []
-            failed_modules = []
-            
-            # Use imap_unordered for real-time results collection
-            for result in pool.imap_unordered(vol3_wrapper, tasks_args):
-                command_name, is_success = result
-                
-                if is_success:
-                    success_count += 1
-                    successful_modules.append(command_name)
-                else:
-                    failed_count += 1
-                    failed_modules.append(command_name)
-                    if arguments.format == "json":
-                         console.print(f"[red][!] Failed to validate JSON for {command_name}[/red]")
-
-            console.print("\n[+] Starting strings...")
-
-            get_strings(
-                os.path.basename(arguments.dump),
-                os.path.abspath(arguments.dump),
-                output_dir,
-                arguments.image,
-                lock,
-                arguments.host_path
+            successful_modules, failed_modules = _run_vol3_pool(
+                pool, vol_instance, commands, arguments, output_dir, lock, console
             )
 
-            console.print("\n[+] Strings complete !")
-            
-            console.print(f"\n[bold green]Scan Complete![/bold green] Success: {success_count}, Failed: {failed_count}")
-            
-            if successful_modules:
-                console.print("\n[bold green]Successful Modules:[/bold green]")
-                for mod in successful_modules:
-                    console.print(f"  - [green]{mod}[/green]")
-            
-            if failed_modules:
-                console.print("\n[bold red]Failed Modules:[/bold red]")
-                for mod in failed_modules:
-                    console.print(f"  - [red]{mod}[/red]")
+    _print_scan_summary(console, successful_modules, failed_modules, arguments)
+    console.print(
+        f"\n[bold yellow]⏱️  Time : {time.time() - start_time:.2f} seconds for {len(commands)} modules.[/bold yellow]"
+    )
 
-    last_time = time.time()
-    console.print(f"\n[bold yellow]⏱️  Time : {last_time - start_time:.2f} seconds for {len(commands)} modules.[/bold yellow]")
+
+def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Validate parsed CLI arguments, printing help and raising SystemExit on invalid input."""
+    if args.mode is None:
+        parser.print_help()
+        raise SystemExit(1)
+
+    if not args.linux and not args.windows and not args.macos:
+        print("[-] --linux, --windows or --macos required.")
+        raise SystemExit(1)
+
+    if getattr(args, "fetch_symbol", False) and not args.linux and not args.macos:
+        print("[-] --fetch-symbol only available with --linux")
+        raise SystemExit(1)
+
+    if args.mode == "vol2" and getattr(args, "fetch_symbol", False):
+        print("[-] --fetch-symbol only available with vol3")
+        raise SystemExit(1)
+
+    if args.format not in ("json", "text"):
+        print("Format not supported !")
+        raise SystemExit(1)
 
 
 def main():
+    """Parse CLI arguments and dispatch to API server or analysis runner."""
     # Argument parsing for CLI usage
     parser = argparse.ArgumentParser("multivol")
     parser.add_argument("--api", action="store_true", help="Start API server")
     parser.add_argument("--dev", action="store_true", help="Enable developer mode (hot reload)")
-    parser.add_argument("--host-path", type=str, required=False, default=None, help="Root path of the project on the Host machine (required for Docker-in-Docker)")
+    parser.add_argument(
+        "--host-path",
+        type=str,
+        required=False,
+        default=None,
+        help="Root path of the project on the Host machine (required for Docker-in-Docker)",
+    )
     subparser = parser.add_subparsers(dest="mode", required=False)
 
     # Volatility2 argument group
     vol2_parser = subparser.add_parser("vol2", help="Use volatility2.")
-    vol2_parser.add_argument("--profiles-path", help="Path to the directory with the profiles.", default=os.path.join(os.getcwd(), "volatility2_profiles"))
+    vol2_parser.add_argument(
+        "--profiles-path",
+        help="Path to the directory with the profiles.",
+        default=os.path.join(os.getcwd(), "volatility2_profiles"),
+    )
     vol2_parser.add_argument("--profile", help="Profile to use.", required=True)
     vol2_parser.add_argument("--dump", help="Dump to parse.", required=True)
-    vol2_parser.add_argument("--image", help="Docker image to use.", required=False, default="sp00kyskelet0n/volatility2")
-    vol2_parser.add_argument("--commands", help="Commands to run : command1,command2,command3", required=False)
+    vol2_parser.add_argument(
+        "--image",
+        help="Docker image to use.",
+        required=False,
+        default="sp00kyskelet0n/volatility2",
+    )
+    vol2_parser.add_argument(
+        "--commands",
+        help="Commands to run : command1,command2,command3",
+        required=False,
+    )
     vol2_os_group = vol2_parser.add_mutually_exclusive_group(required=True)
     vol2_os_group.add_argument("--linux", action="store_true", help="For a Linux memory dump")
     vol2_os_group.add_argument("--windows", action="store_true", help="For a Windows memory dump")
+    vol2_os_group.add_argument("--macos", action="store_true", help="For a MacOS memory dump")
     vol2_parser.add_argument("--light", action="store_true", help="Use the main modules.")
     vol2_parser.add_argument("--full", action="store_true", help="Use all modules.")
-    vol2_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
-    vol2_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes.")
-    vol2_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
+    vol2_parser.add_argument(
+        "--format",
+        help="Format of the outputs: json, text",
+        required=False,
+        default="text",
+    )
+    vol2_parser.add_argument(
+        "--processes",
+        type=int,
+        required=False,
+        default=None,
+        help="Max number of concurrent processes.",
+    )
+    vol2_parser.add_argument(
+        "--output",
+        required=False,
+        help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).",
+    )
 
     # Volatility3 argument group
     vol3_parser = subparser.add_parser("vol3", help="Use volatility3.")
     vol3_parser.add_argument("--dump", help="Dump to parse.", required=True)
-    vol3_parser.add_argument("--image", help="Docker image to use.", required=False, default="sp00kyskelet0n/volatility3")
-    vol3_parser.add_argument("--symbols-path", help="Path to the directory with the symbols.", required=False, default=os.path.join(os.getcwd(), "volatility3_symbols"))
-    vol3_parser.add_argument("--cache-path", help="Path to directory with the cache for volatility3.", required=False, default=os.path.join(os.getcwd(), "volatility3_cache"))
-    vol3_parser.add_argument("--plugins-dir", help="Path to directory with the plugins", required=False, default=os.path.join(os.getcwd(), "volatility3_plugins"))
-    vol3_parser.add_argument("--commands", help="Commands to run : command1,command2,command3", required=False)
+    vol3_parser.add_argument(
+        "--image",
+        help="Docker image to use.",
+        required=False,
+        default="sp00kyskelet0n/volatility3",
+    )
+    vol3_parser.add_argument(
+        "--symbols-path",
+        help="Path to the directory with the symbols.",
+        required=False,
+        default=os.path.join(os.getcwd(), "volatility3_symbols"),
+    )
+    vol3_parser.add_argument(
+        "--cache-path",
+        help="Path to directory with the cache for volatility3.",
+        required=False,
+        default=os.path.join(os.getcwd(), "volatility3_cache"),
+    )
+    vol3_parser.add_argument(
+        "--plugins-dir",
+        help="Path to directory with the plugins",
+        required=False,
+        default=os.path.join(os.getcwd(), "volatility3_plugins"),
+    )
+    vol3_parser.add_argument(
+        "--commands",
+        help="Commands to run : command1,command2,command3",
+        required=False,
+    )
     vol3_os_group = vol3_parser.add_mutually_exclusive_group(required=True)
     vol3_os_group.add_argument("--linux", action="store_true", help="It's a Linux memory dump.")
     vol3_os_group.add_argument("--windows", action="store_true", help="It's a Windows memory dump.")
+    vol3_os_group.add_argument("--macos", action="store_true", help="It's a MacOS memory dump.")
     vol3_parser.add_argument("--light", action="store_true", help="Use the principal modules.")
-    vol3_parser.add_argument("--fetch-symbol", action="store_true", help="Fetch automatically symbol from github.com/Abyss-W4tcher/volatility3-symbols", required=False)
+    vol3_parser.add_argument(
+        "--fetch-symbol",
+        action="store_true",
+        help="Fetch automatically symbol from github.com/Abyss-W4tcher/volatility3-symbols",
+        required=False,
+    )
     vol3_parser.add_argument("--full", action="store_true", help="Use all modules.")
-    vol3_parser.add_argument("--format", help="Format of the outputs: json, text", required=False, default="text")
-    vol3_parser.add_argument("--processes", type=int, required=False, default=None, help="Max number of concurrent processes")
-    vol3_parser.add_argument("--output", required=False, help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).")
-    
+    vol3_parser.add_argument(
+        "--format",
+        help="Format of the outputs: json, text",
+        required=False,
+        default="text",
+    )
+    vol3_parser.add_argument(
+        "--processes",
+        type=int,
+        required=False,
+        default=None,
+        help="Max number of concurrent processes",
+    )
+    vol3_parser.add_argument(
+        "--output",
+        required=False,
+        help="Directory where outputs will be written (Default: output_YYYY_MM_DD_HH_MM_SS).",
+    )
+
     # Global arguments
     parser.add_argument("--debug", action="store_true", help="Show executed Docker commands")
-    parser.add_argument("--scan-id", help="Scan UUID for API status updates", required=False)
 
     args = parser.parse_args()
 
     if args.api:
         try:
-            from .api import run_api
+            from .api_server import run_api  # pylint: disable=import-outside-toplevel
         except ImportError:
-            from api import run_api
-        run_api(runner, debug_mode=args.dev)
-        sys.exit(0)
+            from api_server import run_api  # pylint: disable=import-outside-toplevel
+        run_api(run_analysis, debug_mode=args.dev)
+        return
 
-    if args.mode is None:
-        parser.print_help()
-        sys.exit(1)
+    _validate_args(parser, args)
 
-    # Validate required OS type
-    if not args.linux and not args.windows:
-        print("[-] --linux or --windows required.")
-        sys.exit(1)
+    run_analysis(args)
 
-    if getattr(args, "fetch_symbol", False) and not args.linux:
-        print("[-] --fetch-symbol only available with --linux")
-        sys.exit(1)
-
-    if args.mode == "vol2" and getattr(args, "fetch_symbol", False):
-        print("[-] --fetch-symbol only available with vol3")
-        sys.exit(1)
-
-    # Validate output format
-    if (args.format != "json") and (args.format != "text"):
-        print("Format not supported !")
-        sys.exit(1)
-    
-    # Start the runner with parsed arguments
-    runner(args)
 
 if __name__ == "__main__":
     main()

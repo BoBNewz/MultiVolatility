@@ -16,26 +16,26 @@ interface TreeNode {
     id: string;
     name: string;
     children?: TreeNode[];
-    data?: any;
+    data?: Record<string, unknown>;
     isFolder?: boolean;
 }
 
 interface FileTreeViewProps {
-    data: any[];
+    data: Record<string, unknown>[];
     onToggleView: (mode: 'table' | 'tree') => void;
     viewMode: 'table' | 'tree';
-    onDownload?: (node: any) => void;
+    onDownload?: (node: Record<string, unknown>) => void;
     isPrebuilt?: boolean;
 }
 
-const buildFileTree = (data: any[]): TreeNode[] => {
+const buildFileTree = (data: Record<string, unknown>[]): TreeNode[] => {
     // ... no change here, but need to keep it unless I can skip it ...
     // To safe complexity, I will just reference the function but I need to include it if I replace the whole file or large chunk.
     // I can stick to modifying the interfaces and components.
     const root: TreeNode[] = [];
 
-    const getPath = (item: any): string => {
-        return item['Path'] || item['ImageFileName'] || item['FilePath'] || item['Name'] || '';
+    const getPath = (item: Record<string, unknown>): string => {
+        return (item['Path'] || item['ImageFileName'] || item['FilePath'] || item['Name'] || '') as string;
     };
 
     data.forEach((item, index) => {
@@ -57,7 +57,7 @@ const buildFileTree = (data: any[]): TreeNode[] => {
             let isFolder = !isLastPart;
             if (isLastPart) {
                 if (item['FileType'] === 'DIR') isFolder = true;
-                if (item['Attribute'] && item['Attribute'].includes('Directory')) isFolder = true;
+                if (item['Attribute'] && (item['Attribute'] as string).includes('Directory')) isFolder = true;
             }
 
             currentPath = currentPath ? `${currentPath}\\${part}` : part;
@@ -99,34 +99,24 @@ const buildFileTree = (data: any[]): TreeNode[] => {
     return root;
 };
 
-const mapPrebuiltTree = (nodes: any[]): TreeNode[] => {
+const mapPrebuiltTree = (nodes: Record<string, unknown>[]): TreeNode[] => {
     if (!nodes) return [];
-
-    // Debug: log first node to understand structure
-    if (nodes.length > 0) {
-        console.log('mapPrebuiltTree received:', {
-            'nodes.length': nodes.length,
-            'nodes[0]': nodes[0],
-            'nodes[0].name': nodes[0]?.name,
-            'Object.keys(nodes[0])': nodes[0] ? Object.keys(nodes[0]) : 'N/A'
-        });
-    }
 
     return nodes.map((node, index) => {
         // Robust name resolution
-        const name = node.name || (node.path ? node.path.split('/').pop() : `UNNAMED_${index}`);
+        const name = (node.name as string) || (node.path ? (node.path as string).split('/').pop() : `UNNAMED_${index}`);
 
         return {
-            id: node.path || `node-${index}-${name}`,
-            name: name,
+            id: (node.path as string) || `node-${index}-${name}`,
+            name: name ?? `UNNAMED_${index}`,
             isFolder: node.type === 'directory',
-            children: node.children ? mapPrebuiltTree(node.children) : undefined,
+            children: node.children ? mapPrebuiltTree(node.children as Record<string, unknown>[]) : undefined,
             data: node
         };
     });
 };
 
-const TreeContext = React.createContext<{ onContextMenu: (e: React.MouseEvent, node: any) => void }>({ onContextMenu: () => { } });
+const TreeContext = React.createContext<{ onContextMenu: (e: React.MouseEvent, node: Record<string, unknown>) => void }>({ onContextMenu: () => { } });
 
 const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<TreeNode>) => {
     const { onContextMenu } = React.useContext(TreeContext);
@@ -144,7 +134,7 @@ const NodeRenderer = ({ node, style, dragHandle }: NodeRendererProps<TreeNode>) 
             onClick={() => node.toggle()}
             onContextMenu={(e) => {
                 if (!treeNode.isFolder) {
-                    onContextMenu(e, treeNode.data);
+                    onContextMenu(e, treeNode.data ?? {});
                 }
             }}
         >
@@ -175,7 +165,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
     const [searchTerm, setSearchTerm] = React.useState('');
 
     // Context Menu State
-    const [contextMenu, setContextMenu] = React.useState<{ x: number, y: number, node: any } | null>(null);
+    const [contextMenu, setContextMenu] = React.useState<{ x: number, y: number, node: Record<string, unknown> } | null>(null);
 
     React.useEffect(() => {
         const handleClick = () => setContextMenu(null);
@@ -183,7 +173,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({ data, onToggleView, 
         return () => window.removeEventListener('click', handleClick);
     }, []);
 
-    const handleContextMenu = (e: React.MouseEvent, nodeData: any) => {
+    const handleContextMenu = (e: React.MouseEvent, nodeData: Record<string, unknown>) => {
         e.preventDefault();
         setContextMenu({
             x: e.clientX,

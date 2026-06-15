@@ -1,0 +1,15 @@
+modules:
+  - mac_arp
+  - mac_bash
+  - mac_calendar
+  - mac_contacts
+  - mac_ifconfig
+  - mac_machine_info
+  - mac_malfind
+  - mac_netstat
+  - mac_network_conns
+  - mac_psaux
+  - mac_psenv
+  - mac_pslist
+  - mac_pstree
+  - mac_psxview

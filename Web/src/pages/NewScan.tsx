@@ -22,7 +22,7 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
     useEffect(() => {
         const fetchImages = async () => {
             try {
-                const images = await api.getDockerImages();
+                const images = await api.fetchDockerImages();
                 if (images && images.length > 0) {
                     setAvailableImages(images);
                     setDockerImage(images[0]);
@@ -181,9 +181,9 @@ export const NewScan: React.FC<{ onStartScan?: (newCase: Scan) => void }> = ({ o
                                 {uploading ? (
                                     <div className="flex flex-col items-center animate-fadeIn z-20 p-12 w-full h-full justify-center">
                                         <div className="mb-6 scale-110">
-                                            <CircularProgress progress={uploadProgress} size={80} strokeWidth={5} />
+                                            <CircularProgress progress={uploadProgress} size={80} strokeWidth={5} showValue />
                                         </div>
-                                        <h3 className="text-xl font-bold text-white mb-2">Uploading Evidence</h3>
+                                        <h3 className="text-xl font-bold text-white mb-2">{uploadProgress >= 70 ? 'Extracting Archive' : 'Uploading Evidence'}</h3>
                                         <p className="text-slate-400 font-medium text-base">Transferring to Secure Storage...</p>
                                         <p className="text-slate-500 text-xs mt-4 font-mono">{selectedFile?.name}</p>
                                     </div>

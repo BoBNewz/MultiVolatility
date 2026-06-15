@@ -14,13 +14,14 @@ export const Symbols: React.FC = () => {
     const [symbols, setSymbols] = useState<SymbolFile[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
     const fetchSymbols = async () => {
         setLoading(true);
         try {
-            const data = await api.getSymbols();
+            const data = await api.fetchSymbols();
             setSymbols(data);
         } catch (error) {
             console.error(error);
@@ -35,16 +36,19 @@ export const Symbols: React.FC = () => {
     }, []);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!event.target.files || event.target.files.length === 0) return;
+        const file = event.target.files?.[0];
+        if (!file) return;
 
-        const file = event.target.files[0];
         setUploading(true);
-        setUploadSuccess(false);
+        setUploadProgress(0);
+        setUploadSuccess(false); // Keep this for the CheckCircle display
         const toastId = toast.loading(`Uploading ${file.name}...`);
 
         try {
-            await api.uploadSymbol(file);
-            toast.success("Symbol uploaded successfully", { id: toastId });
+            await api.uploadSymbol(file, (progress) => {
+                setUploadProgress(progress);
+            });
+            toast.success('Symbol uploaded successfully', { id: toastId });
             setUploadSuccess(true);
             fetchSymbols();
 
@@ -90,8 +94,8 @@ export const Symbols: React.FC = () => {
                 <div className="flex space-x-3 items-center">
                     {uploading && (
                         <div className="flex items-center space-x-3 mr-4 animate-fadeIn">
-                            <span className="text-xs text-slate-400 font-medium">Uploading</span>
-                            <CircularProgress progress={50} size={24} strokeWidth={3} /> {/* Indeterminate or fake progress */}
+                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap">Uploading</span>
+                            <CircularProgress progress={uploadProgress} size={24} strokeWidth={3} showValue />
                         </div>
                     )}
                     {uploadSuccess && (

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ForceGraph2D from 'react-force-graph-2d';
+import ForceGraph2D, { type ForceGraphMethods } from 'react-force-graph-2d';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
 interface NetScanResult {
@@ -15,20 +15,20 @@ interface NetScanResult {
 }
 
 interface GraphData {
-    nodes: any[];
-    links: any[];
+    nodes: Record<string, unknown>[];
+    links: Record<string, unknown>[];
 }
 
 interface NetworkGraphViewProps {
     data: NetScanResult[];
-    onNodeClick?: (node: any) => void;
+    onNodeClick?: (node: Record<string, unknown>) => void;
 }
 
 export const NetworkGraphView: React.FC<NetworkGraphViewProps> = ({ data, onNodeClick }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const fgRef = useRef<any>(null);
+    const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-    const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
+
 
     // Handle Resize
     useEffect(() => {
@@ -47,56 +47,36 @@ export const NetworkGraphView: React.FC<NetworkGraphViewProps> = ({ data, onNode
         return () => window.removeEventListener('resize', updateDimensions);
     }, []);
 
-    // Process Data
-    useEffect(() => {
-        if (!data || data.length === 0) return;
+    // Derive graph data from props — no state+effect needed
+    const graphData = React.useMemo((): GraphData => {
+        if (!data || data.length === 0) return { nodes: [], links: [] };
 
-        const nodesMap = new Map();
-        const links: any[] = [];
+        const nodesMap = new Map<string, Record<string, unknown>>();
+        const links: Record<string, unknown>[] = [];
+
+        const getNodeVals = (ip: string) => {
+            if (ip === '0.0.0.0' || ip === '::' || ip === '*') return { color: '#64748b', type: 'wildcard' };
+            if (ip.startsWith('127.') || ip === '::1') return { color: '#10b981', type: 'loopback' };
+            if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.16.')) return { color: '#3b82f6', type: 'private' };
+            return { color: '#f59e0b', type: 'public' };
+        };
 
         data.forEach(item => {
             const local = item.LocalAddr;
             const foreign = item.ForeignAddr;
 
-            // Filter out empty/invalid
             if (!local || !foreign) return;
 
-            // Heuristic for node type/color
-            const getNodeVals = (ip: string) => {
-                if (ip === '0.0.0.0' || ip === '::' || ip === '*') return { color: '#64748b', type: 'wildcard' }; // Slate-500
-                if (ip.startsWith('127.') || ip === '::1') return { color: '#10b981', type: 'loopback' }; // Emerald-500
-                if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.16.')) return { color: '#3b82f6', type: 'private' }; // Blue-500
-                return { color: '#f59e0b', type: 'public' }; // Amber-500
-            };
+            if (!nodesMap.has(local)) nodesMap.set(local, { id: local, val: 1, ...getNodeVals(local) });
+            if (!nodesMap.has(foreign)) nodesMap.set(foreign, { id: foreign, val: 1, ...getNodeVals(foreign) });
 
-            // Add Nodes
-            if (!nodesMap.has(local)) {
-                nodesMap.set(local, { id: local, val: 1, ...getNodeVals(local) });
-            }
-            if (!nodesMap.has(foreign)) {
-                nodesMap.set(foreign, { id: foreign, val: 1, ...getNodeVals(foreign) });
-            }
+            links.push({ source: local, target: foreign, color: '#475569', ...item });
 
-            // Create Link
-            links.push({
-                source: local,
-                target: foreign,
-                color: '#475569',
-                ...item
-            });
-
-            // Increment node size (val) based on connections
-            nodesMap.get(local).val += 0.2;
-            nodesMap.get(foreign).val += 0.2;
+            (nodesMap.get(local) as { val: number }).val += 0.2;
+            (nodesMap.get(foreign) as { val: number }).val += 0.2;
         });
 
-        // Add dummy links to spread out disconnected components slightly? 
-        // Or just rely on charge.
-
-        setGraphData({
-            nodes: Array.from(nodesMap.values()),
-            links: links
-        });
+        return { nodes: Array.from(nodesMap.values()), links };
     }, [data]);
 
     const handleZoomIn = () => {
@@ -167,19 +147,19 @@ export const NetworkGraphView: React.FC<NetworkGraphViewProps> = ({ data, onNode
                 linkCurvature={0.1}
 
                 // Node Styling (Custom Canvas Paint)
-                nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-                    const label = node.id;
+                nodeCanvasObject={(node: Record<string, unknown>, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                    const label = node.id as string;
                     const fontSize = 12 / globalScale;
-                    node.color = node.color || '#fff';
+                    if (!node.color) node.color = '#fff';
 
                     // Draw outer glow
-                    const radius = Math.max(3, Math.sqrt(node.val) * 2);
+                    const radius = Math.max(3, Math.sqrt(node.val as number) * 2);
 
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
-                    ctx.shadowColor = node.color;
+                    ctx.arc(node.x as number, node.y as number, radius, 0, 2 * Math.PI, false);
+                    ctx.shadowColor = node.color as string;
                     ctx.shadowBlur = 10;
-                    ctx.fillStyle = node.color;
+                    ctx.fillStyle = node.color as string;
                     ctx.fill();
 
                     // Reset shadow
@@ -187,23 +167,23 @@ export const NetworkGraphView: React.FC<NetworkGraphViewProps> = ({ data, onNode
 
                     // Draw Inner Circle
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, radius * 0.7, 0, 2 * Math.PI, false);
+                    ctx.arc(node.x as number, node.y as number, radius * 0.7, 0, 2 * Math.PI, false);
                     ctx.fillStyle = '#0b0a12'; // match bg
                     ctx.fill();
 
                     // Fill Inner
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, radius * 0.5, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = node.color;
+                    ctx.arc(node.x as number, node.y as number, radius * 0.5, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = node.color as string;
                     ctx.fill();
 
                     // Text Label
-                    if (globalScale > 1.5 || node.val > 5) {
+                    if (globalScale > 1.5 || (node.val as number) > 5) {
                         ctx.font = `${fontSize}px Sans-Serif`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                        ctx.fillText(label, node.x, node.y + radius + fontSize);
+                        ctx.fillText(label, node.x as number, (node.y as number) + radius + fontSize);
                     }
                 }}
                 nodeCanvasObjectMode={() => 'replace'} // We take full control
@@ -217,7 +197,7 @@ export const NetworkGraphView: React.FC<NetworkGraphViewProps> = ({ data, onNode
                     handleZoomFit();
                     if (onNodeClick) onNodeClick(node);
                 }}
-                linkLabel={(link: any) => `[${link.Proto}] ${link.LocalPort} -> ${link.ForeignPort} (${link.State})`}
+                linkLabel={(link: Record<string, unknown>) => `[${link.Proto}] ${link.LocalPort} -> ${link.ForeignPort} (${link.State})`}
             />
         </div>
     );

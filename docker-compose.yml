@@ -1,4 +1,5 @@
 services:
+
   # Python Backend API
   api:
     build: ./CLI
@@ -7,7 +8,8 @@ services:
       - "5001:5001"
     environment:
       - HOST_PATH=${PWD} # Valid path to project root on Host, required for DooD
-      - DISABLE_LOCALHOST_ONLY=1 # Allow connections from other containers/host
+      - API_TOKEN=multivol_default_secret_token
+      - APP_PASSWORD=admin
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Access to host Docker
       - ./outputs:/app/outputs
@@ -17,11 +19,45 @@ services:
       - ./volatility3_plugins:/app/volatility3_plugins
       - ./volatility3_cache:/app/volatility3_cache
 
-  # React Frontend
   web:
-    build: ./Web
+    build:
+      context: ./Web
+      args:
+        - VITE_API_TOKEN=multivol_default_secret_token
+        - VITE_API_URL=http://localhost:5001
     container_name: multivol-web
     ports:
       - "80:80"
+    depends_on:
+      - api
+
+  mcp:
+    build: ./MCP
+    container_name: multivol-mcp
+    ports:
+      - "8000:8000"
+    environment:
+      - TARGET_URL=http://api
+      - TARGET_PORT=5001
+      - API_TOKEN=multivol_default_secret_token
+    depends_on:
+      - api
+
+  # Persistent MemProcFS sidecar — always running, accepts /load to switch dumps.
+  # The API backend talks to this service instead of spawning per-scan containers.
+  memprocfs:
+    build:
+      context: ./Dockerfiles/memprocfs
+    image: multivol-memprocfs
+    container_name: multivol-memprocfs
+    restart: unless-stopped
+    environment:
+      # Seconds to wait for /forensic/ntfs and /forensic/files to become ready.
+      # Large dumps (>8 GB) may need 900–1800. Default: 900.
+      MEMPROCFS_FORENSIC_TIMEOUT: ${MEMPROCFS_FORENSIC_TIMEOUT:-900}
+    volumes:
+      # Mount the same dump directories as the API so paths are identical
+      - ./outputs:/app/outputs:ro
+      - ./storage:/app/storage:ro
     depends_on:
       - api

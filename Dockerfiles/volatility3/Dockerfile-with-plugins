@@ -3,12 +3,14 @@ FROM accenturecifr/volatility3
 
 RUN apk add git curl gcc musl-dev linux-headers python3-dev
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 RUN git clone https://github.com/spitfirerxf/vol3-plugins.git && \
     git clone https://github.com/kudelskisecurity/volatility-gpg.git && \
     git clone https://github.com/fox-it/OpenSSH-Session-Key-Recovery.git 
 
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.1
-RUN python3 -m pip install --use-pep517 cryptography stream_sqlite --break-system-packages
+RUN uv pip install --system --no-cache --use-pep517 cryptography stream_sqlite
 RUN cd OpenSSH-Session-Key-Recovery && cd pip-package && python3 setup.py install
 RUN cp vol3-plugins/* /opt/volatility3/volatility3/framework/plugins/windows
 RUN cp volatility-gpg/linux/* /opt/volatility3/volatility3/framework/plugins/linux

@@ -18,9 +18,11 @@ import {
     XCircle,
     AlertTriangle,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    HardDrive
 } from 'lucide-react';
-import { api } from '../services/api';
+import { api, getApiToken, API_BASE_URL } from '../services/api';
+import type { ModuleResult, StringsResponse, ModuleStatus, Scan } from '../types';
 import { FileTreeView } from '../components/FileTreeView';
 import { ProcessTreeView } from '../components/ProcessTreeView';
 import { NetworkGraphView } from '../components/NetworkGraphView';
@@ -40,21 +42,23 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [showErrorModal, setShowErrorModal] = React.useState<{ module: string, error: string } | null>(null);
     const [showRunModal, setShowRunModal] = React.useState(false);
     const [runPluginName, setRunPluginName] = React.useState('');
-    const [results, setResults] = React.useState<any[]>([]);
+    const [results, setResults] = React.useState<ModuleResult[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [selectedResult, setSelectedResult] = React.useState<any | null>(null);
+    const [moduleSearchTerm, setModuleSearchTerm] = React.useState('');
+    const [selectedResult, setSelectedResult] = React.useState<ModuleResult | null>(null);
     const [isFullScreen, setIsFullScreen] = React.useState(false);
     const [wrapText, setWrapText] = React.useState(false);
     const [hiddenCols, setHiddenCols] = React.useState<string[]>([]);
     const [viewMode, setViewMode] = React.useState<'table' | 'tree' | 'graph'>('table');
-    const [caseDetails, setCaseDetails] = React.useState<any | null>(null);
+    const [caseDetails, setCaseDetails] = React.useState<Scan | null>(null);
     const [error, setError] = React.useState<string | null>(null);
 
     // Strings View State
-    const [stringsContent, setStringsContent] = React.useState<{ content: string[], total: number, page: number, limit: number } | null>(null);
+    const [stringsContent, setStringsContent] = React.useState<StringsResponse | null>(null);
     const [stringsQuery, setStringsQuery] = React.useState('');
     const [stringsPage, setStringsPage] = React.useState(1);
+    const [stringsContext, setStringsContext] = React.useState(0);
     const [stringsLoading, setStringsLoading] = React.useState(false);
 
     // Column resizing state
@@ -62,55 +66,40 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const resizingRef = React.useRef<{ col: string; startX: number; startWidth: number } | null>(null);
     const [rowsLimit, setRowsLimit] = React.useState(50);
 
+    // MemProcFS state
+    const [memprocfsStarting, setMemprocfsStarting] = React.useState(false);
+
     // Track previous status of active module to detect completion
     const prevActiveModuleStatusRef = React.useRef<string | null>(null);
 
 
 
     // Polling effect
-    React.useEffect(() => {
-        if (!caseId) return;
-        loadModules();
-        loadCaseDetails(); // Load case details once when caseId changes
-        const interval = setInterval(loadModules, 3000); // 3 seconds polling
-        return () => clearInterval(interval);
-    }, [caseId]);
-
-    const loadCaseDetails = async () => {
+    const loadCaseDetails = React.useCallback(async () => {
         if (!caseId) return;
         try {
-            const details = await api.getScan(caseId);
+            const details = await api.fetchScan(caseId);
             setCaseDetails(details);
         } catch (e) {
             console.error("Failed to load case details", e);
         }
-    };
+    }, [caseId]);
 
-    // Reset view mode when module changes
-    React.useEffect(() => {
-        setViewMode('table');
-        setHiddenCols([]);
-        setSearchTerm('');
-        setColWidths({});
-        setRowsLimit(50);
-    }, [activeModule]);
-
-    const loadModules = async () => {
+    const loadModules = React.useCallback(async () => {
         if (!caseId) return;
         try {
-            // Only fetch status from DB (single source of truth)
-            const statusData = await api.getScanModulesStatus(caseId);
+            const statusData = await api.fetchScanModulesStatus(caseId);
 
             const merged: Record<string, ModuleState> = {};
 
             if (Array.isArray(statusData)) {
-                statusData.forEach((s: any) => {
+                statusData.forEach((s: ModuleStatus) => {
                     const modName = s.module;
                     if (!modName) return;
 
                     merged[modName] = {
                         name: modName,
-                        status: s.status?.toUpperCase() || 'PENDING',
+                        status: (s.status?.toUpperCase() || 'PENDING') as ModuleState['status'],
                         error: s.error_message
                     };
                 });
@@ -121,10 +110,10 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             // Only update modules state if something actually changed
             // This prevents unnecessary re-renders that can reset scroll position
             setModules((prevModules: ModuleState[]) => {
-                // Quick check: if lengths differ, definitely update
+                // Never wipe an existing list due to a transient empty response.
+                if (sorted.length === 0 && prevModules.length > 0) return prevModules;
                 if (prevModules.length !== sorted.length) return sorted;
 
-                // Check if any module status changed
                 const hasChanges = sorted.some((mod: ModuleState, i: number) => {
                     const prev = prevModules[i];
                     return !prev || prev.name !== mod.name || prev.status !== mod.status;
@@ -134,7 +123,6 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             });
 
             // Auto-select first module ONLY on initial load (when no module is selected yet)
-            // Use functional update to avoid stale closure issues
             setActiveModule((prev: string | null) => {
                 if (prev === null && sorted.length > 0) {
                     return sorted[0].name;
@@ -144,32 +132,9 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         } catch (error) {
             console.error('Failed to load modules:', error);
         }
-    };
+    }, [caseId]);
 
-    // Auto-reload results when active module's status changes to COMPLETED
-    React.useEffect(() => {
-        if (!activeModule || !modules.length) return;
-
-        const currentModule = modules.find((m: ModuleState) => m.name === activeModule);
-        const currentStatus = currentModule?.status || null;
-        const prevStatus = prevActiveModuleStatusRef.current;
-
-        // If status changed to COMPLETED from something else, reload results
-        if (currentStatus === 'COMPLETED' && prevStatus !== null && prevStatus !== 'COMPLETED') {
-            loadResults();
-        }
-
-        // Update the ref
-        prevActiveModuleStatusRef.current = currentStatus;
-    }, [activeModule, modules]);
-
-    React.useEffect(() => {
-        if (caseId && activeModule) {
-            loadResults();
-        }
-    }, [caseId, activeModule]);
-
-    const loadResults = async () => {
+    const loadResults = React.useCallback(async () => {
         if (!caseId || !activeModule) return;
         setLoading(true);
         setError(null);
@@ -180,25 +145,30 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                 const queryParams = new URLSearchParams({
                     page: stringsPage.toString(),
                     limit: '1000',
-                    q: stringsQuery
+                    q: stringsQuery,
+                    context: stringsContext.toString()
                 });
 
                 try {
-                    const response = await fetch(`http://localhost:5001/results/${caseId}/strings?${queryParams}`);
-                    if (!response.ok) throw new Error('Failed to load strings');
-                    const data = await response.json();
-                    if (data.error) throw new Error(data.error);
-
+                    const data = await api.getStrings(caseId as string, queryParams);
                     setStringsContent(data);
-                    setResults([]); // Clear standard results
-                } catch (err: any) {
-                    setError(err.message || 'Failed to load strings');
+                    setResults([]);
+                } catch (err: unknown) {
+                    setError(err instanceof Error ? err.message : 'Failed to load strings');
                     setStringsContent(null);
                 } finally {
                     setStringsLoading(false);
                 }
+            } else if (activeModule === 'MemProcFS.FileList') {
+                const data = await api.fetchMemProcFSFiles(caseId as string, 500, 0, searchTerm);
+                if (data && data.results) {
+                    setResults(data.results);
+                } else {
+                    setResults([]);
+                }
+                setStringsContent(null);
             } else {
-                const data = await api.getScanResults(caseId, activeModule);
+                const data = await api.fetchScanResults(caseId, activeModule);
                 setResults(Array.isArray(data) ? data : []);
                 setStringsContent(null);
             }
@@ -208,14 +178,62 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         } finally {
             setLoading(false);
         }
-    };
+    }, [caseId, activeModule, stringsPage, stringsQuery, stringsContext, searchTerm]);
+
+    // Polling effect
+    React.useEffect(() => {
+        if (!caseId) return;
+        loadModules();
+        loadCaseDetails();
+        const interval = setInterval(loadModules, 3000);
+        return () => clearInterval(interval);
+    }, [caseId, loadModules, loadCaseDetails]);
+
+    // Reset view mode when module changes
+    React.useEffect(() => {
+        setViewMode('table');
+        setHiddenCols([]);
+        setSearchTerm('');
+        setColWidths({});
+        setRowsLimit(50);
+    }, [activeModule]);
+
+    // Auto-reload results when active module's status changes to COMPLETED
+    React.useEffect(() => {
+        if (!activeModule || !modules.length) return;
+
+        const currentModule = modules.find((m: ModuleState) => m.name === activeModule);
+        const currentStatus = currentModule?.status || null;
+        const prevStatus = prevActiveModuleStatusRef.current;
+
+        if (currentStatus === 'COMPLETED' && prevStatus !== null && prevStatus !== 'COMPLETED') {
+            loadResults();
+        }
+
+        prevActiveModuleStatusRef.current = currentStatus;
+    }, [activeModule, modules, loadResults]);
+
+    React.useEffect(() => {
+        if (caseId && activeModule) {
+            loadResults();
+        }
+    }, [caseId, activeModule, loadResults]);
 
     // Reload strings when pagination or query changes
     React.useEffect(() => {
         if (activeModule === 'strings') {
             loadResults();
         }
-    }, [stringsPage, stringsQuery]);
+    }, [stringsPage, stringsQuery, stringsContext, activeModule, loadResults]);
+
+    // Reload MemProcFS results when search term changes (debounced)
+    React.useEffect(() => {
+        if (activeModule !== 'MemProcFS.FileList') return;
+        const timer = setTimeout(() => {
+            loadResults();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm, activeModule, loadResults]);
 
     const handleDownload = () => {
         if (!results || !activeModule || !caseId) return;
@@ -230,7 +248,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         a.remove();
     };
 
-    const handleDownloadFile = async (nodeData: any) => {
+    const handleDownloadFile = async (nodeData: ModuleResult) => {
         if (!caseId || !caseDetails) {
             toast.error("Case details not loaded.");
             return;
@@ -263,13 +281,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         try {
             // Start Task
-            const filePath = nodeData['FilePath'] || nodeData['Path'];
+            const filePath = (nodeData['FilePath'] || nodeData['Path']) as string | undefined;
             const { task_id } = await api.startDumpTask(caseId, String(virtAddr), image, filePath);
 
             // Poll
             const pollInterval = setInterval(async () => {
                 try {
-                    const status = await api.getDumpTaskStatus(task_id);
+                    const status = await api.fetchDumpTaskStatus(task_id);
                     if (status.status === 'completed') {
                         clearInterval(pollInterval);
                         toast.success("Download ready!");
@@ -279,34 +297,23 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                         clearInterval(pollInterval);
                         toast.error(`Extraction failed: ${status.error}`);
                     }
-                } catch (e) {
+                } catch {
                     clearInterval(pollInterval);
                     toast.error("Failed to check status");
                 }
             }, 2000);
 
-        } catch (e: any) {
-            toast.error(e.message || "Failed to start extraction");
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Failed to start extraction");
         }
     };
 
     // --- Column Resizing Logic ---
-    const handleMouseDown = React.useCallback((e: React.MouseEvent, col: string) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const currentWidth = colWidths[col] || 200; // Default width assumption
-        resizingRef.current = { col, startX: e.clientX, startWidth: currentWidth };
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-    }, [colWidths]);
-
     const handleMouseMove = React.useCallback((e: MouseEvent) => {
         if (!resizingRef.current) return;
         const { col, startX, startWidth } = resizingRef.current;
         const diff = e.clientX - startX;
-        const newWidth = Math.max(50, startWidth + diff); // Minimum width 50px
+        const newWidth = Math.max(50, startWidth + diff);
         setColWidths(prev => ({ ...prev, [col]: newWidth }));
     }, []);
 
@@ -317,6 +324,17 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
     }, [handleMouseMove]);
+
+    const handleMouseDown = React.useCallback((e: React.MouseEvent, col: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentWidth = colWidths[col] || 200;
+        resizingRef.current = { col, startX: e.clientX, startWidth: currentWidth };
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    }, [colWidths, handleMouseMove, handleMouseUp]);
     // -----------------------------
 
     const toggleColumnVisibility = (col: string) => {
@@ -353,9 +371,25 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 <Search size={14} />
                             </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs text-slate-500 font-medium whitespace-nowrap">Context:</label>
+                            <select
+                                value={stringsContext}
+                                onChange={(e) => setStringsContext(Number(e.target.value))}
+                                className="bg-black/20 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all cursor-pointer"
+                                title="Number of context lines around each match (like grep -C)"
+                            >
+                                <option value="0">None</option>
+                                <option value="3">±3 lines</option>
+                                <option value="5">±5 lines</option>
+                                <option value="10">±10 lines</option>
+                                <option value="25">±25 lines</option>
+                                <option value="50">±50 lines</option>
+                            </select>
+                        </div>
                         <button
                             className="flex items-center px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
-                            onClick={() => window.open(`http://localhost:5001/results/${caseId}/strings/download`, '_blank')}
+                            onClick={() => window.open(`${API_BASE_URL}/results/${caseId}/strings/download?token=${getApiToken()}`, '_blank')}
                         >
                             <Download size={14} className="mr-2" />
                             Download .txt
@@ -370,12 +404,21 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 <p>Reading file...</p>
                             </div>
                         ) : stringsContent?.content?.length ? (
-                            <div className="space-y-1">
-                                {stringsContent.content.map((line, i) => (
-                                    <div key={i} className="whitespace-pre-wrap break-all hover:bg-white/5 px-2 py-0.5 rounded transition-colors selection:bg-primary/30 selection:text-white">
-                                        {line}
-                                    </div>
-                                ))}
+                            <div className="space-y-0">
+                                {stringsContent.content.map((line, i) => {
+                                    const isSeparator = line === '--';
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={`whitespace-pre-wrap break-all px-2 py-0.5 rounded transition-colors selection:bg-primary/30 selection:text-white ${isSeparator
+                                                ? 'text-slate-600 border-t border-b border-white/5 my-1 text-center text-[10px] py-1'
+                                                : 'hover:bg-white/5'
+                                                }`}
+                                        >
+                                            {isSeparator ? '· · ·' : line}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50">
@@ -417,10 +460,6 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         // Special View for RecoverFs
         if (activeModule === 'linux.pagecache.RecoverFs') {
-            console.log('DEBUG RecoverFs: results =', results);
-            console.log('DEBUG RecoverFs: results[0] =', results[0]);
-            console.log('DEBUG RecoverFs: results[0]?.name =', results[0]?.name);
-
             return (
                 <FileTreeView
                     data={results}
@@ -429,12 +468,12 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                     onToggleView={() => { }}
                     onDownload={(nodeData) => {
                         if (nodeData.type !== 'file') return;
-                        const filePath = nodeData.path;
+                        const filePath = nodeData.path as string | undefined;
                         if (!filePath) {
                             toast.error("Invalid file path");
                             return;
                         }
-                        window.open(`http://localhost:5001/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}`, '_blank');
+                        window.open(`${API_BASE_URL}/results/${caseId}/fs/download?path=${encodeURIComponent(filePath)}&token=${getApiToken()}`, '_blank');
                     }}
                 />
             );
@@ -458,19 +497,28 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             );
         }
 
-        const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft') || activeModule?.toLowerCase().includes('pagecache.files');
+        const isFileScan = activeModule?.toLowerCase().includes('filescan') || activeModule?.toLowerCase().includes('mft') || activeModule?.toLowerCase().includes('pagecache.files') || activeModule === 'MemProcFS.FileList';
+        // MemProcFS can have 100k+ files — force table view to prevent memory explosion from tree building
+        const forceTableView = activeModule === 'MemProcFS.FileList';
         const isProcessTree = activeModule?.toLowerCase().includes('pstree');
         const isNetScan = activeModule?.toLowerCase().includes('netscan');
 
-        if (viewMode === 'tree' && isFileScan) {
+        if (viewMode === 'tree' && isFileScan && !forceTableView) {
             // New dedicated component handling its own hooks correctly
+            const downloadHandler = activeModule === 'MemProcFS.FileList'
+                ? (nodeData: ModuleResult) => {
+                    const vfsPath = nodeData['VfsPath'];
+                    if (!vfsPath) { toast.error('No VFS path available for this file'); return; }
+                    window.open(api.getMemProcFSDownloadUrl(caseId as string, String(vfsPath)), '_blank');
+                }
+                : caseDetails?.os?.toLowerCase() === 'linux' ? undefined : handleDownloadFile;
 
             return (
                 <FileTreeView
                     data={results}
                     viewMode={viewMode}
                     onToggleView={setViewMode}
-                    onDownload={caseDetails?.os?.toLowerCase() === 'linux' ? undefined : handleDownloadFile}
+                    onDownload={downloadHandler}
                 />
             );
         }
@@ -487,17 +535,17 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
 
         if (viewMode === 'graph' && isNetScan) {
             return (
-                <NetworkGraphView data={results} />
+                <NetworkGraphView data={results as never} />
             );
         }
 
         // Helper to flatten nested data (Vol3 __children) for Table View
-        const flattenData = (items: any[]): any[] => {
-            let flat: any[] = [];
+        const flattenData = (items: ModuleResult[]): ModuleResult[] => {
+            let flat: ModuleResult[] = [];
             items.forEach(item => {
                 // Create a copy without __children to avoid circular JSON issues in table rendering
                 const { __children, ...rest } = item;
-                flat.push(rest);
+                flat.push(rest as ModuleResult);
                 if (__children && Array.isArray(__children)) {
                     flat = flat.concat(flattenData(__children));
                 }
@@ -537,7 +585,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                 <AlignLeft size={14} className="mr-2" />
                                 Table
                             </button>
-                            {(isFileScan || isProcessTree) && (
+                            {(isFileScan || isProcessTree) && activeModule !== 'MemProcFS.FileList' && (
                                 <button
                                     onClick={() => setViewMode('tree')}
                                     className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'tree' ? 'bg-primary/20 text-primary border border-primary/20 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -588,6 +636,11 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                         />
                                     </th>
                                 ))}
+                                {activeModule === 'MemProcFS.FileList' && (
+                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-white/5 bg-[#13111c] w-32 text-right">
+                                        Actions
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -604,9 +657,12 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                                 }`}
                                             style={{ maxWidth: colWidths[key] || 'auto' }}
                                         >
-                                            {typeof row[key] === 'object'
-                                                ? JSON.stringify(row[key])
-                                                : String(row[key])}
+                                            {(() => {
+                                                const v = row[key];
+                                                return typeof v === 'object' && v !== null
+                                                    ? JSON.stringify(v)
+                                                    : String(v ?? '');
+                                            })()}
                                             {/* Cell-level Resize Handle for persistent visual aid */}
                                             <div
                                                 className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/50 group-hover/cell:bg-white/5 transition-colors z-20 opacity-0 group-hover/cell:opacity-100"
@@ -615,6 +671,24 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                             />
                                         </td>
                                     ))}
+                                    {/* MemProcFS download button */}
+                                    {activeModule === 'MemProcFS.FileList' && (
+                                        <td className="px-6 py-4 text-right">
+                                            {!!row['VfsPath'] && (row['Size'] as number) > 0 && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMemProcFSDownload(row);
+                                                    }}
+                                                    className="opacity-0 group-hover/row:opacity-100 p-1.5 rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 hover:text-emerald-300 transition-all"
+                                                    title="Download via MemProcFS"
+                                                >
+                                                    <Download size={14} className="mr-1 inline" />
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Download</span>
+                                                </button>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -654,13 +728,7 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
     const [executingPlugin, setExecutingPlugin] = React.useState(false);
     const [isPluginDropdownOpen, setIsPluginDropdownOpen] = React.useState(false);
 
-    React.useEffect(() => {
-        if (showRunModal && availablePlugins.length === 0 && caseDetails?.image) {
-            fetchPlugins();
-        }
-    }, [showRunModal, caseDetails]);
-
-    const fetchPlugins = async () => {
+    const fetchPlugins = React.useCallback(async () => {
         if (!caseDetails?.image) return;
         setLoadingPlugins(true);
         try {
@@ -685,7 +753,13 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
         } finally {
             setLoadingPlugins(false);
         }
-    };
+    }, [caseDetails]);
+
+    React.useEffect(() => {
+        if (showRunModal && availablePlugins.length === 0 && caseDetails?.image) {
+            fetchPlugins();
+        }
+    }, [showRunModal, caseDetails, availablePlugins.length, fetchPlugins]);
 
     const handleExecutePlugin = async () => {
         if (!caseId || !runPluginName) return;
@@ -696,11 +770,38 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
             setShowRunModal(false);
             // Optional: Start polling for result or just refresh modules list after a delay
             setTimeout(loadModules, 2000);
-        } catch (e: any) {
-            toast.error(e.message || "Failed to execute plugin");
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Failed to execute plugin");
         } finally {
             setExecutingPlugin(false);
         }
+    };
+
+    // ── MemProcFS handlers ──
+    const handleStartMemProcFS = async () => {
+        if (!caseId) return;
+        setMemprocfsStarting(true);
+        try {
+            const resp = await api.startMemProcFS(caseId);
+            if (resp.error) {
+                toast.error(resp.error);
+            } else {
+                toast.success('MemProcFS session starting...', { duration: 3000 });
+                // Refresh modules to pick up the new MemProcFS.FileList module
+                setTimeout(loadModules, 2000);
+            }
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : 'Failed to start MemProcFS');
+        } finally {
+            setMemprocfsStarting(false);
+        }
+    };
+
+    // MemProcFS download handler for table view rows
+    const handleMemProcFSDownload = (nodeData: ModuleResult) => {
+        const vfsPath = nodeData['VfsPath'];
+        if (!vfsPath) { toast.error('No VFS path available for this file'); return; }
+        window.open(api.getMemProcFSDownloadUrl(caseId as string, String(vfsPath)), '_blank');
     };
 
     return (
@@ -724,13 +825,42 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             </div>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowRunModal(true)}
-                        className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg shadow-purple-900/20 transition-all hover:scale-105 active:scale-95 border border-white/10"
-                    >
-                        <Play className="w-4 h-4 mr-2" />
-                        Run Plugin
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {/* MemProcFS Button — Windows scans only */}
+                        {caseDetails?.os?.toLowerCase() === 'windows' && (() => {
+                            const memprocfsMod = modules.find(m => m.name === 'MemProcFS.FileList');
+                            const isCompleted = memprocfsMod?.status === 'COMPLETED';
+                            const isRunning = memprocfsMod?.status === 'RUNNING';
+                            const isFailed = memprocfsMod?.status === 'FAILED';
+                            const canStart = !memprocfsStarting && !isCompleted && !isRunning;
+                            const label = isCompleted ? 'MemProcFS Active'
+                                : isRunning ? 'MemProcFS Initializing...'
+                                    : isFailed ? 'Retry MemProcFS'
+                                        : 'Start MemProcFS';
+                            return (
+                                <button
+                                    onClick={handleStartMemProcFS}
+                                    disabled={!canStart}
+                                    className="bg-emerald-600/80 hover:bg-emerald-600 disabled:bg-emerald-800/30 disabled:text-emerald-500/50 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95 border border-white/10 disabled:hover:scale-100"
+                                    title={isCompleted ? 'MemProcFS already active' : 'Start MemProcFS for advanced file recovery'}
+                                >
+                                    {(memprocfsStarting || isRunning) ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <HardDrive className="w-4 h-4 mr-2" />
+                                    )}
+                                    {label}
+                                </button>
+                            );
+                        })()}
+                        <button
+                            onClick={() => setShowRunModal(true)}
+                            className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg shadow-purple-900/20 transition-all hover:scale-105 active:scale-95 border border-white/10"
+                        >
+                            <Play className="w-4 h-4 mr-2" />
+                            Run Plugin
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -745,8 +875,8 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                                     className="w-full bg-[#0b0a12]/50 border border-transparent rounded-lg pl-10 pr-3 py-2 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary focus:border-primary/50 transition-all outline-none"
                                     type="text"
                                     placeholder="Filter modules..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    value={moduleSearchTerm}
+                                    onChange={(e) => setModuleSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -761,14 +891,14 @@ export const Results: React.FC<{ onBack?: () => void; caseId?: string | null }> 
                             ) : (
 
                                 modules
-                                    .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .filter(mod => mod.name.toLowerCase().includes(moduleSearchTerm.toLowerCase()))
                                     .length === 0 && modules.length > 0 ? (
                                     <div className="px-4 py-8 text-center text-slate-500 text-xs">
                                         No modules match your filter
                                     </div>
                                 ) : (
                                     modules
-                                        .filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                        .filter(mod => mod.name.toLowerCase().includes(moduleSearchTerm.toLowerCase()))
                                         .map((mod) => (
                                             <div key={mod.name} className="relative group">
                                                 <button

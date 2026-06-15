@@ -1,0 +1,11 @@
+modules:
+  - mac.bash.Bash
+  - mac.ifconfig.Ifconfig
+  - mac.list_files.List_Files
+  - mac.malfind.Malfind
+  - mac.mount.Mount
+  - mac.netstat.Netstat
+  - mac.psaux.Psaux
+  - mac.pslist.PsList
+  - mac.pstree.PsTree
+  - mac.socket_filters.Socket_filters
