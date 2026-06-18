@@ -47,10 +47,8 @@ The easiest way to run the full stack (API + Web UI) is using Docker Compose.
     
     Before starting, you must build the Volatility worker images:
     ```bash
-    cd CLI
     docker build Dockerfiles/volatility2/ -t volatility2:latest
     docker build Dockerfiles/volatility3/ -t volatility3:latest
-    cd ..
     ```
 
 2.  **Launch the platform:**
@@ -60,7 +58,7 @@ The easiest way to run the full stack (API + Web UI) is using Docker Compose.
     ```
 
 3.  **Access the UI:**
-    Open your browser and navigate to `http://localhost`.
+    Open your browser and navigate to `http://localhost`. The password to log in is stored in `Web/.env`.
 
 ## CLI Usage
 
